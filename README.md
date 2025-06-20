@@ -23,36 +23,55 @@ PageLive improves web accessibility by proactively informing users of content up
 
 ---
 
-## 📄 Page Type System
+## Page Adapter System
 
-Each supported website or web app is categorized under a **`pageType`**, allowing PageLive to tailor its behavior to each environment. Examples:
+In `PageLive`, a `Page` is conceptually a web page that is identified with a list of URLs or URL patterns. This allows the extension to recognize and apply specific customized handlers.
 
-| URL Pattern              | Page Type  | Description                        |
+A page has :
+
+- List of matching URL or URL patterns
+- Label to call the page, e.g.: 'gemini.google.com' has label 'gemini'
+
+A `PageAdapter` is a specific rules, listeners, handlers, or shortcuts for a certain `page`.
+
+## 📄 Page Type Adapter System
+
+Each supported `page` can be categorized under a **`pageType`**, allowing PageLive to tailor certain 'listeners' to each `pageType`. Examples:
+
+| URL Pattern              | Page | Page Type | Description                        |
 |--------------------------|------------|------------------------------------|
-| `gemini.google.com`      | `gemini`   | Google Gemini AI chat              |
-| `chat.openai.com`        | `chatgpt`  | OpenAI ChatGPT                     |
-| `mail.google.com`        | `gmail`    | Gmail inbox                        |
-| `web.whatsapp.com`       | `whatsapp` | WhatsApp Web                       |
-| `discord.com/app`        | `discord`  | Discord web app                    |
+| `gemini.google.com`      | `gemini` | `chat`  | Google Gemini AI chat              |
+| `chat.openai.com`        | `chatgpt`  | `chat` | OpenAI ChatGPT                     |
+| `web.whatsapp.com`       | `whatsapp` | `chat` | WhatsApp Web                       |
+| `mail.google.com`        | `gmail`     | `email` | Gmail inbox                        |
+| `discord.com/app`        | `discord`  | `group` | Discord web app                    |
 
 Users and developers can define their own `pageType` rules via the extension settings in a future release.
 
+A `PageTypeAdapter` is a specific rules, listeners, handlers, or shortcuts for pages categorized in a certain `PageType`
+
 ---
+
+## General Adapter System
+
+`GeneralAdapter`is an adapter, like `PageTypeAdapter` and `PageAdapter`, for all pages.
+
+Every time a web page is loaded, the adapters are executed in the following order: `GeneralAdapter`, `PageTypeAdapter`, and `PageAdapter`.
 
 ## 🔧 Architecture Overview
 
 ### Content Script
 
 - Injected into matching URLs.
-- Detects page type and loads relevant logic.
+- Detects the page type and loads the relevant logic.
 - Sets up observers to detect new messages, alerts, or updates.
-- Passes changes to announcer module.
+- Passes detected changes to the announcer module.
 
 ### Announcer Module
 
 - Converts detected changes into spoken announcements.
-- Uses ARIA live regions only - not using `speechSynthesis`.
-- De-duplicates messages and filters noise.
+- Uses ARIA live regions only (does not use `speechSynthesis`).
+- De-duplicates messages and filters out noise.
 
 ---
 
