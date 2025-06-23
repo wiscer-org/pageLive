@@ -13,17 +13,17 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["../src/content-scripts/general.js"],
+      "js": ["dist/content-scripts/general.js"],
       "run_at": "document_idle"
     },
     {
       "matches": ["https://gemini.google.com/*"],
-      "js": ["../src/content-scripts/gemini.js"],
+      "js": ["dist/content-scripts/gemini.js"],
       "run_at": "document_idle"
     },
     {
       "matches": ["https://x.ai/*"],
-      "js": ["../src/content-scripts/xai.js"],
+      "js": ["dist/content-scripts/xai.js"],
       "run_at": "document_idle"
     }
   ],
