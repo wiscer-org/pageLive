@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "PageLive",
+  "version": "0.1.0",
+  "description": "Proactively announces important web page updates for accessibility.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["../src/content-scripts/general.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["../src/content-scripts/gemini.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://x.ai/*"],
+      "js": ["../src/content-scripts/xai.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  }
+}
