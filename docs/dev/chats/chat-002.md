@@ -28,3 +28,7 @@
 
 - Write a content script (e.g., `xai.js`) for `x.ai`. ✅
 - Add a console log to verify it runs only on the xAI site. ✅
+
+## Step 6: Update manifest.json to Register Both Scripts
+
+- Ensure the manifest correctly matches and loads the right script(s) for each URL pattern. ✅

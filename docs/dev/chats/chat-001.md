@@ -41,7 +41,7 @@ Create a script that will be loaded as a content script for all URLs and specifi
 7. **Test Content Script Loading**
 
    - Load the unpacked extension in a browser.
-   - Visit various sites (including gemini.google.com) to confirm the correct script(s) are injected.
+   - Visit various sites (including gemini.google.com, x.ai) to confirm the correct script(s) are injected.
 
 8. **Set Up Basic ARIA Live Region in General Script**
 
