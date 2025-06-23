@@ -1,12 +1,12 @@
 # PageLive: Adapter Features
 
-This document lists the current features and responsibilities for each adapter type in PageLive: `GeneralAdapter`, `PageTypeAdapter`, and `PageAdapter`.
+This document describes the current features and responsibilities for each adapter type in PageLive. In the context of PageLive, an `adapter` is a content script module that is loaded for web pages matching specific URL patterns defined in the extension's `manifest.json`. Adapters allow PageLive to customize and extend accessibility features for different sites and page types.
 
 ---
 
 ## GeneralAdapter
 
-The `GeneralAdapter` applies to all pages and provides global features:
+The `GeneralAdapter` is a content script that applies to all pages (matches all URLs) and provides global features:
 
 - Sets up ARIA live regions for announcements.
 - Monitors the DOM for content changes using MutationObserver.
@@ -17,7 +17,7 @@ The `GeneralAdapter` applies to all pages and provides global features:
 
 ## PageTypeAdapters
 
-A `PageTypeAdapter` provides features for a group of pages sharing a common type (e.g., chat, email, group):
+A `PageTypeAdapter` is a content script module that provides features for a group of pages sharing a common type (e.g., chat, email, group), based on URL patterns in the manifest:
 
 - Adds listeners and handlers specific to the page type (e.g., chat message detection).
 - Customizes announcement logic for the type (e.g., new message alerts for chat pages).
@@ -33,7 +33,7 @@ A `PageTypeAdapter` provides features for a group of pages sharing a common type
 
 ## PageAdapters
 
-A `PageAdapter` provides features for a specific site or page:
+A `PageAdapter` is a content script module that provides features for a specific site or page, matched by its URL pattern in the manifest:
 
 - Adds site-specific selectors, rules, and handlers.
 - Fine-tunes announcements for unique page structures.
@@ -50,4 +50,4 @@ A `PageAdapter` provides features for a specific site or page:
 ---
 
 This document will be updated as new features and adapters are added to PageLive.
-For details on the current implementation of adapters, see [ADAPTER_IMPLEMENTED.md](./ADAPTERS_IMPLEMENTED.md).
+For details on the current implementation of adapters, see [ADAPTERS_IMPLEMENTED.md](./ADAPTERS_IMPLEMENTED.md).
