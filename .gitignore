@@ -1,0 +1,16 @@
+# Node/Vite/TypeScript
+node_modules/
+dist/
+*.log
+*.tsbuildinfo
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
