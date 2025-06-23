@@ -13,3 +13,18 @@
 - Define the extension metadata. ✅
 - Specify content scripts to be loaded for all URLs (`<all_urls>`) and for `gemini.google.com`. ✅
 - Set permissions as needed (e.g., access to activeTab, storage). ✅
+
+## Step 3: Implement General Content Script
+
+- Write a basic content script (e.g., `general.js`) that will be injected into all pages. ✅
+- Add a simple console log to verify injection. ✅
+
+## Step 4: Implement Gemini-Specific Content Script
+
+- Write a content script (e.g., `gemini.js`) for `gemini.google.com`. ✅
+- Add a console log to verify it runs only on the Gemini site. ✅
+
+## Step 5: Implement xAI-Specific Content Script
+
+- Write a content script (e.g., `xai.js`) for `x.ai`. ✅
+- Add a console log to verify it runs only on the xAI site. ✅
