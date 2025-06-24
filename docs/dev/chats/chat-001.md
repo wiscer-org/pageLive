@@ -40,8 +40,8 @@ Create a script that will be loaded as a content script for all URLs and specifi
 
 7. **Test Content Script Loading**
 
-   - Load the unpacked extension in a browser.
-   - Visit various sites (including gemini.google.com, x.ai) to confirm the correct script(s) are injected.
+   - ✅ Load the unpacked extension in a browser.
+   - ✅ Visit various sites (including gemini.google.com, x.ai) to confirm the correct script(s) are injected.
 
    Note: Extension icons have been created and added to the `public` directory:
 
