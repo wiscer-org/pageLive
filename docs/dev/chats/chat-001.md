@@ -51,7 +51,7 @@ Create a script that will be loaded as a content script for all URLs and specifi
 
 8. **Set Up Basic ARIA Live Region in General Script**
 
-    - Add code to inject an ARIA live region into the DOM for all pages.
+   - ✅ Added code to inject a hidden `div#pagelive234` containing `div#announce` into the DOM for all pages. Provided a `pageLiveAnnounce` function for PageAdapters to announce messages using ARIA live regions.
 
 9. **Set Up MutationObserver in General Script**
 
