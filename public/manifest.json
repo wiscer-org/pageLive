@@ -12,18 +12,30 @@
   ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["dist/content-scripts/general.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content-scripts/general.js"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://gemini.google.com/*"],
-      "js": ["dist/content-scripts/gemini.js"],
+      "matches": [
+        "https://gemini.google.com/*"
+      ],
+      "js": [
+        "content-scripts/gemini.js"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://x.ai/*"],
-      "js": ["dist/content-scripts/xai.js"],
+      "matches": [
+        "https://x.ai/*"
+      ],
+      "js": [
+        "content-scripts/xai.js"
+      ],
       "run_at": "document_idle"
     }
   ],
