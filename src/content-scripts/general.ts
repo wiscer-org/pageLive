@@ -6,6 +6,10 @@ console.log('PageLive general.ts loaded on', window.location.hostname);
     const pageLive2a2b = {
         PAGE_LIVE_CONTAINER_ID: 'pagelive2a2b',
         ANNOUNCE_CONTAINER_ID: 'announce2a2b',
+        // Timeout before element containing the each announcement is removed.
+        ANNOUNCE_ITEM_TIMEOUT: 22e3,
+
+
         ensurePageLiveContainer() {
             let container = document.getElementById(this.PAGE_LIVE_CONTAINER_ID);
             if (!container) {
@@ -53,7 +57,7 @@ console.log('PageLive general.ts loaded on', window.location.hostname);
                 announceDiv.appendChild(msgDiv);
                 setTimeout(() => {
                     announceDiv.removeChild(msgDiv);
-                }, 5000);
+                }, this.ANNOUNCE_ITEM_TIMEOUT);
             }
         },
         init() {
