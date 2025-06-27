@@ -3,7 +3,6 @@
 export { }; // Make this file a module to allow global augmentation.Used to declare global types, like `window.pageLiveAnnounce`;
 
 console.log('PageLive gemini.ts loaded on gemini.google.com');
-// alert('+ gemini this is 234');
 
 // Observe the chat-history container for new Gemini responses
 // FIXME: Ensure the chat-history container exists before observing
@@ -31,10 +30,10 @@ function observeGeminiChatHistory() {
                         const responseText = node.textContent || '';
                         console.log('[PageLive][Gemini] New Gemini response:', responseText);
                         // Announce the new Gemini response using the global pageLiveAnnounce function
-                        if (typeof window.pageLiveAnnounce === 'function') {
-                            window.pageLiveAnnounce({ msg: responseText });
+                        if (window.pageLive2a2b && typeof window.pageLive2a2b.announce === 'function') {
+                            window.pageLive2a2b.announce({ msg: responseText });
                         } else {
-                            console.warn('[PageLive][Gemini] pageLiveAnnounce function not found on window.');
+                            console.warn('[PageLive][Gemini] pageLive2a2b.announce function not found on window.');
                         }
                     }
                 });
@@ -50,15 +49,9 @@ function observeGeminiChatHistory() {
         setTimeout(observeGeminiChatHistory, 200);
     } else {
         console.warn('[PageLive][Gemini] #chat-history container not found after 20 attempts. Stopping observer setup.');
-        // alert('[PageLive]: #chat-history container not found after 20 attempts. Please check if the page structure has changed.');
     }
 }
 
 observeGeminiChatHistory();
 
-// Add a type declaration for pageLiveAnnounce on the Window interface
-declare global {
-    interface Window {
-        pageLiveAnnounce?: (opts: { msg: string }) => void;
-    }
-}
+// (global type moved to src/types/global.d.ts)
