@@ -1,5 +1,9 @@
 // gemini.ts - Injected only on gemini.google.com
+
+export { }; // Make this file a module to allow global augmentation.Used to declare global types, like `window.pageLiveAnnounce`;
+
 console.log('PageLive gemini.ts loaded on gemini.google.com');
+// alert('+ gemini this is 234');
 
 // Observe the chat-history container for new Gemini responses
 // FIXME: Ensure the chat-history container exists before observing
@@ -17,16 +21,21 @@ function observeGeminiChatHistory() {
             // Iterate through each mutation
             for (const mutation of mutations) {
                 // Log the mutation for debugging
-                console.log('[PageLive][Gemini] Mutation observed:', mutation);
+                // console.log('[PageLive][Gemini] Mutation observed:', mutation);
 
                 mutation.addedNodes.forEach((node) => {
                     // Log the added node for debugging
                     console.log('[PageLive][Gemini] Added node:', node);
 
                     if (node instanceof HTMLElement && node.nodeName === 'MODEL-RESPONSE') {
-                        console.log('[PageLive][Gemini] New Gemini response:', node.textContent);
-                        // Optionally announce:
-                        // pageLiveAnnounce({ msg: node.textContent || '' });
+                        const responseText = node.textContent || '';
+                        console.log('[PageLive][Gemini] New Gemini response:', responseText);
+                        // Announce the new Gemini response using the global pageLiveAnnounce function
+                        if (typeof window.pageLiveAnnounce === 'function') {
+                            window.pageLiveAnnounce({ msg: responseText });
+                        } else {
+                            console.warn('[PageLive][Gemini] pageLiveAnnounce function not found on window.');
+                        }
                     }
                 });
             }
@@ -46,3 +55,10 @@ function observeGeminiChatHistory() {
 }
 
 observeGeminiChatHistory();
+
+// Add a type declaration for pageLiveAnnounce on the Window interface
+declare global {
+    interface Window {
+        pageLiveAnnounce?: (opts: { msg: string }) => void;
+    }
+}
