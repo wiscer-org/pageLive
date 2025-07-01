@@ -7,7 +7,7 @@ console.log('PageLive general.ts loaded on', window.location.hostname);
         PAGE_LIVE_CONTAINER_ID: 'pagelive2a2b',
         ANNOUNCE_CONTAINER_ID: 'announce2a2b',
         // Timeout before element containing the each announcement is removed.
-        ANNOUNCE_ITEM_TIMEOUT: 22e3,
+        ANNOUNCE_ITEM_TIMEOUT: 42e3,
 
 
         ensurePageLiveContainer() {
@@ -35,7 +35,7 @@ console.log('PageLive general.ts loaded on', window.location.hostname);
                 container.style.background = 'rgba(255,255,0,0.2)';
                 container.style.border = '2px solid orange';
                 container.style.padding = '8px';
-                container.style.width = '800px';
+                container.style.width = '100vw';
                 container.style.height = 'auto';
                 container.style.color = 'black';
                 document.body.appendChild(container);
@@ -44,6 +44,8 @@ console.log('PageLive general.ts loaded on', window.location.hostname);
             if (!announce) {
                 announce = document.createElement('div');
                 announce.id = this.ANNOUNCE_CONTAINER_ID;
+                announce.setAttribute('aria-live', 'polite');
+
                 container.appendChild(announce);
             }
         },
@@ -52,8 +54,11 @@ console.log('PageLive general.ts loaded on', window.location.hostname);
             const announceDiv = document.getElementById(this.ANNOUNCE_CONTAINER_ID);
             if (announceDiv) {
                 const msgDiv = document.createElement('div');
-                msgDiv.setAttribute('aria-live', 'polite');
+                // msgDiv.setAttribute('aria-live', 'polite');
                 msgDiv.textContent = announceObj.msg;
+                msgDiv.style.border = '2px solid orange';
+                msgDiv.style.marginBottom = '4px';
+
                 announceDiv.appendChild(msgDiv);
                 setTimeout(() => {
                     announceDiv.removeChild(msgDiv);
