@@ -10,18 +10,38 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
         ANNOUNCE_ITEM_TIMEOUT: 42e3,
 
 
+        applyContainerStyle(container: HTMLElement) {
+            const isDev = process.env.NODE_ENV === 'development';
+            if (isDev) {
+                container.style.position = 'fixed';
+                container.style.top = '0';
+                container.style.left = '0';
+                container.style.zIndex = '99999';
+                container.style.background = 'rgba(255,255,0,0.2)';
+                container.style.border = '2px solid orange';
+                container.style.padding = '8px';
+                container.style.width = '100vw';
+                container.style.height = 'auto';
+                container.style.color = 'black';
+            } else {
+                container.style.position = 'absolute';
+                container.style.width = '1px';
+                container.style.height = '1px';
+                container.style.overflow = 'hidden';
+                container.style.clipPath = 'inset(50%)';
+                container.style.margin = '-1px';
+                container.style.padding = '0';
+                container.style.border = '0';
+                container.style.background = 'none';
+            }
+        },
+
         ensurePageLiveContainer() {
             let container = document.getElementById(this.PAGE_LIVE_CONTAINER_ID);
             if (!container) {
                 container = document.createElement('div');
                 container.id = this.PAGE_LIVE_CONTAINER_ID;
-
-                // Determine environment
-                const isDev = process.env.NODE_ENV === 'development';
-                if (isDev) {
-                    container.className = 'dev';
-                }
-
+                this.applyContainerStyle(container);
                 document.body.appendChild(container);
             }
             let announce = document.getElementById(this.ANNOUNCE_CONTAINER_ID);
