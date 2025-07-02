@@ -80,6 +80,9 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
         }
 
         const geminiObserver = new MutationObserver((mutations) => {
+            // If there is mutations, set timeout to announce the response after a delay
+            announceWithDelay('this text is not going to be used');
+
             // Iterate through each mutation
             for (const mutation of mutations) {
 
@@ -98,7 +101,6 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
 
                         // Set the latest Gemini response element
                         lastGeminiResponseElement = node;
-                        announceWithDelay("parulian", 1000); // Announce with a delay of 1 second
 
                         // FIXME
                         // node.setAttribute('aria-live', 'polite');
@@ -116,6 +118,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
                             console.warn('[PageLive][Gemini] pageLive2a2b.announce function not found on window.');
                         }
                     }
+
                 });
             }
         });
@@ -138,7 +141,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
      * When the timeout is reached, it will execute announce(msg).
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    function announceWithDelay(msg: string, delay = 1000) {
+    function announceWithDelay(msg: string, delay = 3000) {
         if (announceTimeoutId) {
             clearTimeout(announceTimeoutId);
         }
