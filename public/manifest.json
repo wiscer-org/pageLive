@@ -39,5 +39,13 @@
   },
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "pagelive.css"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

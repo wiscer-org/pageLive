@@ -1,0 +1,26 @@
+/* pagelive.css - Styles for PageLive containers, scoped by container ID */
+
+#pagelive2a2b {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+#pagelive2a2b.dev {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99999;
+  background: rgba(255,255,0,0.2);
+  border: 2px solid orange;
+  padding: 8px;
+  width: 100vw;
+  height: auto;
+  color: black;
+}
