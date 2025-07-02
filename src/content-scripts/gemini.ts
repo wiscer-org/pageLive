@@ -154,7 +154,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
 
                 if (lastGeminiResponseElement) {
                     window.pageLive2a2b.announce({
-                        msg: lastGeminiResponseElement.textContent || ''
+                        msg: lastGeminiResponseElement.innerHTML || ''
                     });
                 }
             } else {
