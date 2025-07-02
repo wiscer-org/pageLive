@@ -156,6 +156,9 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
                     window.pageLive2a2b.announce({
                         msg: lastGeminiResponseElement.innerHTML || ''
                     });
+
+                    // After announced, the reference to the last response element need to be removed. This will avoid to re-announce if a mutation happens in the chat container that is not another response element.
+                    lastGeminiResponseElement = null;
                 }
             } else {
                 console.warn('[PageLive][Gemini] pageLive2a2b.announce function not found on window.');
