@@ -81,7 +81,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
 
         const geminiObserver = new MutationObserver((mutations) => {
             // If there is mutations, set timeout to announce the response after a delay
-            announceWithDelay('this text is not going to be used');
+            announceWithDelay();
 
             // Iterate through each mutation
             for (const mutation of mutations) {
@@ -141,7 +141,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
      * When the timeout is reached, it will execute announce(msg).
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    function announceWithDelay(msg: string, delay = 3000) {
+    function announceWithDelay(delay = 3000) {
         if (announceTimeoutId) {
             clearTimeout(announceTimeoutId);
         }
