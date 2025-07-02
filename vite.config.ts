@@ -4,6 +4,9 @@ import hotReloadExtension from 'hot-reload-extension-vite';
 
 
 export default defineConfig({
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+  },
   plugins: [
     hotReloadExtension({
       log: true,

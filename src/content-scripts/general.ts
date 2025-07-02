@@ -1,5 +1,5 @@
 // general.ts - Injected into all pages
-console.log('PageLive general.ts loaded on', window.location.hostname);
+console.log('[PageLive] general.ts loaded on', window.location.hostname);
 
 (function () {
     // Encapsulate all logic in pageLive2a2b object
@@ -15,9 +15,13 @@ console.log('PageLive general.ts loaded on', window.location.hostname);
             if (!container) {
                 container = document.createElement('div');
                 container.id = this.PAGE_LIVE_CONTAINER_ID;
+
                 // Determine environment
-                const isDev = import.meta.env.MODE === 'development';
-                container.className = isDev ? 'dev' : '';
+                const isDev = process.env.NODE_ENV === 'development';
+                if (isDev) {
+                    container.className = 'dev';
+                }
+
                 document.body.appendChild(container);
             }
             let announce = document.getElementById(this.ANNOUNCE_CONTAINER_ID);
