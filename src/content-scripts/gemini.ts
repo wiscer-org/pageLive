@@ -1,6 +1,5 @@
 // gemini.ts - Injected only on gemini.google.com
 
-export { }; // Make this file a module to allow global augmentation.Used to declare global types, like `window.pageLiveAnnounce`;
 /**
  * Note about how the process after gemini page is loaded.
  * - Need for the chat container to be rendered 
@@ -53,11 +52,11 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
      */
     function observeIfPreviousChatBeingRendered() {
         // To know if the chat container is still being populated by the previous chat, we will use a MutationObserver.
-        // Every time a new node is added to the chat container, we reschedule the observatio (for current chat) timeout.
+        // Every time a new node is added to the chat container, we reschedule the observation (for current chat) timeout.
         previousChatObserver = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.addedNodes.length > 0) {
-                    console.log('[PageLive][Gemini] Previous chat is being rendered, rescheduling observation timeout');
+                    // console.log('[PageLive][Gemini] Previous chat is being rendered, rescheduling observation timeout');
                     // Reschedule the observation timeout
                     clearTimeout(observeNewResponsesTimeoutId);
                     observeNewResponsesTimeoutId = setTimeoutToStartObserveNewResponses();
@@ -71,9 +70,9 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
      * If the new node is the response element, it will save the reference of the element save so the response text can be announced later.
      */
     function observeNewResponses() {
-        // console.log(`[PageLive][Gemini] Starting to observe ${CHAT_CONTAINER_SELECTOR} for Gemini responses`);
+        // console.log(`[PageLive][Gemini] Starting to observe ${CHAT_CONTAINER_SELECTOR} for Gemini new responses`);
 
-        // Remove the previous chat observer if it exists
+        // Remove the chat observer for previous responses
         if (previousChatObserver) {
             previousChatObserver.disconnect();
             previousChatObserver = null;
@@ -87,14 +86,8 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
             for (const mutation of mutations) {
 
                 mutation.addedNodes.forEach((node) => {
-                    // Log the added node for debugging
                     // console.log('[PageLive][Gemini] Added node:', node);
                     // console.log('[PageLive][Gemini] Added node name:', node.nodeName);
-
-                    // FIXME currently add all textContent for testing purposes
-                    if (node instanceof HTMLElement && node.textContent !== '') {
-                        // window.pageLive2a2b.announce({ msg: node.textContent || '' });
-                    }
 
                     // if (node instanceof HTMLElement && node.nodeName === 'MODEL-RESPONSE') {
                     if (node instanceof HTMLElement && node.nodeName === 'MESSAGE-CONTENT') {
@@ -102,28 +95,13 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
                         // Set the latest Gemini response element
                         lastGeminiResponseElement = node;
 
-                        // FIXME
-                        // node.setAttribute('aria-live', 'polite');
-
-                        const responseText = node.textContent || '';
-                        console.log('[PageLive][Gemini] New Gemini response:', responseText);
-                        console.log(node);
-                        // Announce the new Gemini response using the global pageLiveAnnounce function
-                        if (window.pageLive2a2b && typeof window.pageLive2a2b.announce === 'function') {
-                            // FIXME: currently commented for testing purposes
-                            // window.pageLive2a2b.announce({ msg: responseText });
-
-                            // announceWithDelay(responseText); // Announce with a delay of 1 second
-                        } else {
-                            console.warn('[PageLive][Gemini] pageLive2a2b.announce function not found on window.');
-                        }
                     }
 
                 });
             }
         });
 
-        // Verify the chatContainer is available to satify TS 
+        // Verify the chatContainer is available to satify Typescript
         if (!chatContainer) {
             console.warn('[PageLive][Gemini] Chat container not found. Stopping observation setup.');
             return;
@@ -138,7 +116,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
 
     /**
      * This function will announce with some delay. The delay will be reset every time this function is invoked.
-     * When the timeout is reached, it will execute announce(msg).
+     * When the timeout is reached, it will execute window.pageLive2a2b.announce(msg).
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
     function announceWithDelay(delay = 3000) {
@@ -146,12 +124,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
             clearTimeout(announceTimeoutId);
         }
         announceTimeoutId = setTimeout(() => {
-            console.log("abou to announce with timeout");
             if (window.pageLive2a2b && typeof window.pageLive2a2b.announce === 'function') {
-                // window.pageLive2a2b.announce({ msg });
-
-                console.log('last gemni response element:', lastGeminiResponseElement);
-
                 if (lastGeminiResponseElement) {
                     window.pageLive2a2b.announce({
                         msg: lastGeminiResponseElement.innerHTML || ''
@@ -177,7 +150,7 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
         return;
     }
 
-    // If this page is a saved conversation, we need to wait for the chat container to be populated with the previous chat messages.
+    // If this page is a saved chat, we need to wait for the chat container to be populated with the previous chat messages.
     // To ensure the chat container is ready, wait for more 3seconds before observing the chat container. 
     // The wait time will be resettedwhenever there is update on the chat container (that means previous responses is still being updated).
     const DELAY_TO_START_OBSERVE_NEW_RESPONSES = 3000; // 3 seconds
@@ -195,8 +168,5 @@ export { }; // Make this file a module to allow global augmentation.Used to decl
     // After finish rendering, we will get the final response and announce it.
     // Below is the variable to point to the last element containing the Gemini responses:
     let lastGeminiResponseElement: HTMLElement | null = null;
-
-    // console.log('[PageLive][Gemini] end of gemini.ts script execution');
 })();
-
 
