@@ -57,8 +57,7 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
             const announceDiv = document.getElementById(this.ANNOUNCE_CONTAINER_ID);
             if (announceDiv) {
                 const msgDiv = document.createElement('div');
-                // msgDiv.setAttribute('aria-live', 'polite');
-                msgDiv.textContent = announceObj.msg;
+                msgDiv.innerHTML = announceObj.msg;
                 msgDiv.style.border = '2px solid orange';
                 msgDiv.style.marginBottom = '4px';
 
