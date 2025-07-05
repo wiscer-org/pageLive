@@ -11,7 +11,10 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
 
 
         applyContainerStyle(container: HTMLElement) {
-            const isDev = process.env.NODE_ENV === 'development';
+            // Line below is commented to keep the main container hidden even though it is in development phase. Uncomment to make the main container to be visible.
+            // const isDev = process.env.NODE_ENV === 'development';
+            const isDev = false;
+
             if (isDev) {
                 container.style.position = 'fixed';
                 container.style.top = '0';
