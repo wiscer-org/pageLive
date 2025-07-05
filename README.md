@@ -2,6 +2,8 @@
 
 **PageLive** is a Chrome browser extension designed to assist users on Gemini AI (gemini.google.com) by automatically announcing new responses for improved accessibility.
 
+**Current Version:** 1.1.0
+
 ## Desktop Screen Reader Support
 
 PageLive acts as a companion for desktop screen readers, making web navigation easier for users. It is developed and tested with NVDA, but should work with other screen readers like JAWS, as it relies on standard HTML ARIA attributes.

@@ -1,6 +1,6 @@
 {
   "name": "pagelive",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Proactively announces important web page updates for accessibility.",
   "scripts": {
     "dev": "vite",
