@@ -1,7 +1,13 @@
 // general.ts - Injected into all pages
+
+import * as dev from './general-dev';
+
 console.log('[PageLive] general.ts loaded on', window.location.hostname);
 
 (function () {
+    // Check if the environment is development
+    const isDev = process.env.NODE_ENV === 'development';
+
     // Encapsulate all logic in pageLive2a2b object
     const pageLive2a2b = {
         PAGE_LIVE_CONTAINER_ID: 'pagelive2a2b',
@@ -9,10 +15,9 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
         // Timeout before element containing the each announcement is removed.
         ANNOUNCE_ITEM_TIMEOUT: 42e3,
 
-
         applyContainerStyle(container: HTMLElement) {
-            // Line below is commented to keep the main container hidden even though it is in development phase. Uncomment to make the main container to be visible.
-            // const isDev = process.env.NODE_ENV === 'development';
+            // For now, we will use the same styles for both dev and prod environments. 
+            // If needed, we can make the pageLive2a2b visible in dev mode.
             const isDev = false;
 
             if (isDev) {
@@ -72,8 +77,18 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
         },
         init() {
             this.ensurePageLiveContainer();
+        },
+
+        // Empty function of development utils to ensure the object is not empty
+        dev: {
+            sayHi: (): void => { },
         }
     };
+
+    // If in development mode, expose dev functions
+    if (isDev) {
+        pageLive2a2b.dev = dev;
+    }
 
     // Expose pageLive2a2b globally with type
     (window as any).pageLive2a2b = pageLive2a2b;
