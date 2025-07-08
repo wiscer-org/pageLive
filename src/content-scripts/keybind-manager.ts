@@ -70,13 +70,10 @@ class KeybindManager {
         // Initialize default keybinds here
 
         // Registering the predefined keybinds with their actions
-<<<<<<< HEAD
         this.registerKeybind(Keybinds.ModalToggle, async () => {
-=======
-        this.registerKeybind(Keybinds.ModalToggle, () => {
->>>>>>> acabf2682298c7dfa11d8ae23ac4f86af8c6a9db
-            // TODO do action to toggle the modal from other file. Modal should be managed by 1 component only.
+            // FIXME do action to toggle the modal from other file. Modal should be managed by 1 component only.
             // Placeholder for modal toggle action
+            alert('Modal toggled!');
             console.log('Modal toggle action triggered');
         }, 'Toggle the modal');
     }
