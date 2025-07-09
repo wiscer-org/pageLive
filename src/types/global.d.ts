@@ -4,8 +4,9 @@
 // Global type declaration for pageLiveAnnounce on the Window interface
 declare global {
     interface Window {
-        // Note: The `2a2b` suffix is used to avoid conflicts with external apps or libraries
-        pageLive2a2b: {
+        // Note: The `pageLive` object is used as shared global object for PageLive functionality. 
+        // This will be ran under separate JS context in content scripts, so do not need to worry about conflicts with scripts of the page.
+        pageLive: {
             PAGE_LIVE_CONTAINER_ID: string;
             ANNOUNCE_CONTAINER_ID: string;
             ensurePageLiveContainer: () => void;

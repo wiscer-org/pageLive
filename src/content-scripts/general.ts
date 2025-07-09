@@ -9,7 +9,7 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
     const isDev = process.env.NODE_ENV === 'development';
 
     // Encapsulate all logic in pageLive2a2b object
-    const pageLive2a2b = {
+    const pageLive = {
         PAGE_LIVE_CONTAINER_ID: 'pagelive2a2b',
         ANNOUNCE_CONTAINER_ID: 'announce2a2b',
         // Timeout before element containing the each announcement is removed.
@@ -87,12 +87,12 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
 
     // If in development mode, expose dev functions
     if (isDev) {
-        pageLive2a2b.dev = dev;
+        pageLive.dev = dev;
     }
 
-    // Expose pageLive2a2b globally with type
-    (window as any).pageLive2a2b = pageLive2a2b;
+    // Expose pageLive globally with type
+    (window as any).pageLive = pageLive;
 
     // Initialize on script load
-    pageLive2a2b.init();
+    pageLive.init();
 })();

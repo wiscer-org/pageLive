@@ -116,7 +116,7 @@
 
     /**
      * This function will announce with some delay. The delay will be reset every time this function is invoked.
-     * When the timeout is reached, it will execute window.pageLive2a2b.announce(msg).
+     * When the timeout is reached, it will execute window.pageLive.announce(msg).
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
     function announceWithDelay(delay = 3000) {
@@ -124,9 +124,9 @@
             clearTimeout(announceTimeoutId);
         }
         announceTimeoutId = setTimeout(() => {
-            if (window.pageLive2a2b && typeof window.pageLive2a2b.announce === 'function') {
+            if (window.pageLive && typeof window.pageLive.announce === 'function') {
                 if (lastGeminiResponseElement) {
-                    window.pageLive2a2b.announce({
+                    window.pageLive.announce({
                         msg: lastGeminiResponseElement.innerHTML || ''
                     });
 
@@ -134,7 +134,7 @@
                     lastGeminiResponseElement = null;
                 }
             } else {
-                console.warn('[PageLive][Gemini] pageLive2a2b.announce function not found on window.');
+                console.warn('[PageLive][Gemini] pageLive.announce function not found on window.');
             }
         }, delay);
     }
