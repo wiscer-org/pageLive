@@ -1,6 +1,7 @@
 // general.ts - Injected into all pages
 
 import * as dev from './general-dev';
+import { KeybindManager } from "./keybind-manager"
 
 console.log('[PageLive] general.ts loaded on', window.location.hostname);
 
@@ -82,7 +83,10 @@ console.log('[PageLive] general.ts loaded on', window.location.hostname);
         // Empty function of development utils to ensure the object is not empty
         dev: {
             sayHi: (): void => { },
-        }
+        },
+
+        // Keybind manager instance
+        keybindManager: new KeybindManager(),
     };
 
     // If in development mode, expose dev functions
