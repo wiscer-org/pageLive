@@ -134,6 +134,8 @@
                     lastGeminiResponseElement = null;
                 }
             } else {
+                console.log(window.pageLive);
+                console.log(window.pageLive.announce);
                 console.warn('[PageLive][Gemini] pageLive.announce function not found on window.');
             }
         }, delay);

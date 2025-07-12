@@ -91,7 +91,7 @@ const createKeybindDetail = (
  * KeybindManager manage all actions related to keybinds in the browser., except the keybind handlers.
  * The keybind handlers will be provided by each page content script (PageAdapter) respectively.
  */
-export class KeybindManager {
+export default class KeybindManager {
     private keybinds: Map<Keybinds, KeybindDetail> = new Map();
 
     constructor() {
