@@ -9,7 +9,7 @@ import * as devMock from './general-dev-mock';
  * This class will be initialized and used in the `PageAdapter` content scripts, e.g.: gemini.ts, grok.ts, reddit.ts, etc.
  * To avoid name conflicts with the PageAdapters, PageAdapters need to be inside IIEF.
  */
-class PageLive {
+export default class PageLive {
     pageLiveContainerId: string = 'pagelive';
     announceContainerId: string = 'announce';
     // Timeout before element containing the each announcement is removed.
@@ -21,8 +21,8 @@ class PageLive {
     announceContainer: HTMLDivElement = document.createElement('div');
 
     // Other libraries
-    keybindManager: KeybindManager = new KeybindManager();
-    // dialogManager: DialogManager = new DialogManager();
+    keybindManager: KeybindManager = new KeybindManager(this);
+    dialogManager: DialogManager = new DialogManager(this);
 
     // Check if the environment is development
     isDev = process.env.NODE_ENV === 'development';
@@ -54,11 +54,6 @@ class PageLive {
 
         // Initialize keybind manager
 
-        // !Important: Attach this instance to the window object
-        // (window as any).pageLiveClass = this;
-
-        // // Expose pageLive globally with type
-        // (window as any).pageLive = pageLive;
     }
 
     /**

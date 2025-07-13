@@ -1,4 +1,4 @@
-import KeybindManager from "./keybind-manager";
+import PageLive from "./pagelive"
 
 /**
  * This class is a manager for everything related to the dialog in the PageLive extension.
@@ -9,19 +9,17 @@ import KeybindManager from "./keybind-manager";
  */
 export class DialogManager {
     private pageLive: PageLive;
-    private keybindManager: KeybindManager;
     private dialogId: string = 'dialog2a2b';
     private dialog: HTMLDialogElement;
     /**
      * Constructor 
      * @param {PageLive} pageLive - The instance of the PageLive class to access the main functionality.
-     * @param {KeybindManager} keybindManager - The instance of the KeybindManager to handle keybinds.
      * @param {string} dialogId - Optional, the ID of the dialog element.
      */
-    constructor(pageLive: PageLive, keybindManager: KeybindManager, dialogId: string = 'pagelive-dialog') {
+    constructor(pageLive: PageLive, dialogId?: string) {
         this.pageLive = pageLive;
-        this.keybindManager = keybindManager;
-        this.dialogId = dialogId;
+
+        if (dialogId) this.dialogId = dialogId;
 
         this.dialog = this.initDialogElement();
 
@@ -58,6 +56,10 @@ export class DialogManager {
         } else {
             console.warn(`[PageLive][DialogManager] Dialog with ID ${this.dialogId} already exists. This should not happen.`);
         }
+
+        // Create content for the dialog
+
+        this.renderKeybindsInfo();
     }
     /**
     * Creates and prepare a dialog element
@@ -80,7 +82,37 @@ export class DialogManager {
      * It will include the keybinds and their descriptions.
      */
     private renderKeybindsInfo(): void {
-        // TODO 
 
+        const keybindContent = document.createElement('div');
+
+        const header = document.createElement('h2');
+        header.textContent = 'Available Keybinds / Shortcuts';
+        keybindContent.appendChild(header);
+
+        const keybindsList = document.createElement('ul');
+        // keybindsList.id = 'keybinds-list';
+
+        // Iterate over the keybinds and create list items
+        this.pageLive.keybindManager.keybinds.forEach((keybindDetail, key) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${keybindDetail.description} : ${key}`;
+            keybindsList.appendChild(listItem);
+        });
+        keybindContent.appendChild(keybindsList);
+
+        // Append the keybinds list to the dialog
+        this.dialog.appendChild(keybindContent);
+
+    }
+    /**
+     * This function will toggle the dialog visibility.
+     * If the dialog is open, it will close it. If it is closed, it will open it.
+     */
+    async toggleModal() {
+        if (this.dialog.open) {
+            this.close();
+        } else {
+            this.showModal();
+        }
     }
 }

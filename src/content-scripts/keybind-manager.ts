@@ -1,5 +1,6 @@
 // This file manage all processes related to keybind, except the keybind handlers.
 import isequal from "lodash.isequal";
+import PageLive from "./pagelive";
 
 // Type to list which keys are used in certain keybind
 type KeybindDetailKeys = {
@@ -92,9 +93,11 @@ const createKeybindDetail = (
  * The keybind handlers will be provided by each page content script (PageAdapter) respectively.
  */
 export default class KeybindManager {
-    private keybinds: Map<Keybinds, KeybindDetail> = new Map();
+    private pageLive: PageLive;
+    public keybinds: Map<Keybinds, KeybindDetail> = new Map();
 
-    constructor() {
+    constructor(pageLive: PageLive) {
+        this.pageLive = pageLive;
         this.initializeKeybinds();
     }
     /**
@@ -105,9 +108,8 @@ export default class KeybindManager {
 
         // Registering the predefined keybinds with their actions
         this.registerKeybind(Keybinds.ModalToggle, async () => {
-            // FIXME do action to toggle the modal from other file. Modal should be managed by 1 component only.
-            // Placeholder for modal toggle action
-            alert('PageLive modal toggled!');
+            // Toggle the modal dialog
+            this.pageLive.dialogManager.toggleModal();
         }, 'Toogle PageLive modal');
     }
 
