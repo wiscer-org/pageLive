@@ -49,8 +49,12 @@ export class DialogManager {
     /**
      * Same functionality as the native HTMLDialogElement.close() method.
      */
-    public close() {
+    async close() {
         this.dialog.close();
+
+        // Wait a bit, to avoid screen reader read 'assertive' aria-live from other elements in the page.
+        await new Promise(resolve => setTimeout(resolve, 800));
+
         // Announce that the dialog is closed
         this.pageLive.announce({
             msg: "PageLive dialog is closed.",
@@ -148,9 +152,9 @@ export class DialogManager {
         const infoContent = document.createElement('div');
         infoContent.innerHTML = `
             <h2>PageLive Extension</h2>
-            <p>PageLive chrome extension helps screen reader users to interact with specified web apps.</p>
-            <p>PageLive is a free chrome extension that provides a live snapshot of the current page, allowing users to quickly access important information and interact with the page in a more accessible way.</p>
+            <p>PageLive is a free chrome extension to help screen reader users to interact with specified web apps.</p>
             <p>Visit PageLive chrome web store to get more info about PageLive and the supported web pages.</p>
+            <p>To close this modal, use Esc key or the shortcut Ctrl + /</p>
         `;
         this.dialog.appendChild(infoContent);
     }
@@ -160,7 +164,8 @@ export class DialogManager {
      */
     async toggleModal() {
         if (this.dialog.open) {
-            this.close();
+            await this.close();
+
         } else {
             this.showModal();
         }
