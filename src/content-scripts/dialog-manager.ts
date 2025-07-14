@@ -1,5 +1,6 @@
 import PageLive from "./pagelive"
 
+
 /**
  * This class is a manager for everything related to the dialog in the PageLive extension.
  * This class could be considered as a wrapper for <Dialog> HTML element.
@@ -11,6 +12,7 @@ export class DialogManager {
     private pageLive: PageLive;
     private dialogId: string = 'dialog2a2b';
     private dialog: HTMLDialogElement;
+    private snapshotInfo: string = "";
     /**
      * Constructor 
      * @param {PageLive} pageLive - The instance of the PageLive class to access the main functionality.
@@ -32,17 +34,31 @@ export class DialogManager {
     public showModal() {
         this.dialog.showModal();
         // Announce that the dialog is shown
+        this.pageLive.announce({
+            msg: "PageLive dialog is opened.",
+        });
 
-        // Announce the snapshot info
+        // Announce the snapshot info, if 5-
+
+        if (this.snapshotInfo) {
+            this.pageLive.announce({
+                msg: this.snapshotInfo,
+            });
+        }
     }
     /**
      * Same functionality as the native HTMLDialogElement.close() method.
      */
     public close() {
+        this.dialog.close();
+        // Announce that the dialog is closed
+        this.pageLive.announce({
+            msg: "PageLive dialog is closed.",
+        });
     }
 
     /**
-     * Initializes the dialog manager by ensuring the dialog container is present in the DOM.
+     * Initiali45es the dialog manager by ensuring the dialog container is present in the DOM.
      */
     private init(): void {
         this.initDialogElement();
@@ -60,6 +76,7 @@ export class DialogManager {
         // Create content for the dialog
 
         this.renderKeybindsInfo();
+        this.renderPageLiveInfo();
     }
     /**
     * Creates and prepare a dialog element
@@ -103,6 +120,19 @@ export class DialogManager {
         // Append the keybinds list to the dialog
         this.dialog.appendChild(keybindContent);
 
+    }
+    /**
+     * This function will render a general info about the PageLive extension and the modal dialog.
+     */
+    private renderPageLiveInfo(): void {
+        const infoContent = document.createElement('div');
+        infoContent.innerHTML = `
+            <h2>PageLive Extension</h2>
+            <p>PageLive chrome extension helps screen reader users to interact with specified web apps.</p>
+            <p>PageLive is a free chrome extension that provides a live snapshot of the current page, allowing users to quickly access important information and interact with the page in a more accessible way.</p>
+            <p>Visit PageLive chrome web store to get more info about PageLive and the supported web pages.</p>
+        `;
+        this.dialog.appendChild(infoContent);
     }
     /**
      * This function will toggle the dialog visibility.

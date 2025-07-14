@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.0.0 (planned)
+
+- PageLive announces short info & page's snapshot info after initialized.
+- Modal implementation. Modal will contains almost all info needed related to the active page and PageLive
+- New Shortcut to toogle modal : Ctrl + /
+- When modal is opened, it will anounce page's snapshot info, continued about how to close the modal
+- When modal is closed, announce to user.
+- Detect if this is new chat. If not, get the title of current chat.
+- New shortcut to delete current chat / conversation.
+- New shortcut to focus on the chat input box.
+- Various bugs fix.
+
 ## v1.1.0
 
 - Enhanced environment detection for development/production modes, for programmatic PageLive container style.
