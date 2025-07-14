@@ -12,7 +12,8 @@ export class DialogManager {
     private pageLive: PageLive;
     private dialogId: string = 'dialog2a2b';
     private dialog: HTMLDialogElement;
-    private snapshotInfo: string = "";
+    private snapshotInfos: string[] = [];
+    private snapshotInfosElement: HTMLDivElement = document.createElement('div');
     /**
      * Constructor 
      * @param {PageLive} pageLive - The instance of the PageLive class to access the main functionality.
@@ -38,11 +39,10 @@ export class DialogManager {
             msg: "PageLive dialog is opened.",
         });
 
-        // Announce the snapshot info, if 5-
-
-        if (this.snapshotInfo) {
+        // Announce the snapshot info as a single message
+        if (this.snapshotInfos) {
             this.pageLive.announce({
-                msg: this.snapshotInfo,
+                msg: this.snapshotInfos.join(' '),
             });
         }
     }
@@ -58,7 +58,7 @@ export class DialogManager {
     }
 
     /**
-     * Initiali45es the dialog manager by ensuring the dialog container is present in the DOM.
+     * Initializes the dialog manager by ensuring the dialog container is present in the DOM.
      */
     private init(): void {
         this.initDialogElement();
@@ -74,7 +74,7 @@ export class DialogManager {
         }
 
         // Create content for the dialog
-
+        this.renderSnapshotInfo();
         this.renderKeybindsInfo();
         this.renderPageLiveInfo();
     }
@@ -87,12 +87,32 @@ export class DialogManager {
         dialog.id = this.dialogId;
         return dialog;
     }
+    /**
+     * Set the snapshot infos and re-render to the dialog.
+     * @param {string[]} snapshotInfos - The snapshot infos to be set.
+     */
+    public setSnapshotInfos(snapshotInfos: string[]): void {
+        this.snapshotInfos = snapshotInfos;
+        this.renderSnapshotInfo();
+    }
 
     /**
      * This function will render a snapshot info about the current page to this dialog.
      */
-    public renderSnapshotInfo(snapshotInfo: string): void {
+    public renderSnapshotInfo(): void {
+        // Clear the snapshot info element
+        this.snapshotInfosElement.innerHTML = '';
 
+        for (let i = 0; i < this.snapshotInfos.length; i++) {
+            const info = document.createElement('p');
+            info.textContent = this.snapshotInfos[i];
+            this.snapshotInfosElement.appendChild(info);
+        }
+
+        // If the snapshot info element is not already in the dialog, append it
+        if (!this.dialog.contains(this.snapshotInfosElement)) {
+            this.dialog.appendChild(this.snapshotInfosElement);
+        }
     }
     /**
      * This function will render a dialog with a list of available keybinds / shortcuts.

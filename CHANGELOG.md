@@ -2,7 +2,7 @@
 
 ## v2.0.0 (planned)
 
-- PageLive announces short info & page's snapshot info after initialized.
+- PageLive announces initial info, could be short info & page's snapshot info, after initialized.
 - Modal implementation. Modal will contains almost all info needed related to the active page and PageLive
 - New Shortcut to toogle modal : Ctrl + /
 - When modal is opened, it will anounce page's snapshot info, continued about how to close the modal

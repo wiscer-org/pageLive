@@ -175,5 +175,12 @@
     window.pageLive.page.name = 'Gemini';
     // TODO Should feed info abut whether  the page is a saved chat or not.. If  it is a saved chat, mention the title
     window.pageLive.initialAnnounceInfo.push("Gemini page");
+
+    // FIXME Snapshot info below is temporary, need to be replaced with the actual snapshot info
+    window.pageLive.dialogManager.setSnapshotInfos([
+        "This is a Gemini page.",
+        "The feature to read number of previous chat is still on progress.",
+    ]);
+
 })();
 
