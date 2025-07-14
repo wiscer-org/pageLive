@@ -34,17 +34,8 @@ export class DialogManager {
      */
     public showModal() {
         this.dialog.showModal();
-        // Announce that the dialog is shown
-        this.pageLive.announce({
-            msg: "PageLive dialog is opened.",
-        });
 
-        // Announce the snapshot info as a single message
-        if (this.snapshotInfos) {
-            this.pageLive.announce({
-                msg: this.snapshotInfos.join(' '),
-            });
-        }
+        // Note: Do not announce anything when the modal is opened, because the screen reader will read the dialog content automatically.
     }
     /**
      * Same functionality as the native HTMLDialogElement.close() method.
@@ -57,7 +48,7 @@ export class DialogManager {
 
         // Announce that the dialog is closed
         this.pageLive.announce({
-            msg: "PageLive dialog is closed.",
+            msg: "PageLive modal is closed.",
         });
     }
 
@@ -77,10 +68,20 @@ export class DialogManager {
             console.warn(`[PageLive][DialogManager] Dialog with ID ${this.dialogId} already exists. This should not happen.`);
         }
 
+        // Attach listeners specific to the dialog
+        this.attachDialogListeners();
+
         // Create content for the dialog
         this.renderSnapshotInfo();
         this.renderKeybindsInfo();
         this.renderPageLiveInfo();
+    }
+    attachDialogListeners() {
+        // Add keylistener for `Esc` key to close the dialog
+        this.dialog.addEventListener('cancel', (event) => {
+            event.preventDefault(); // Prevent the default behavior of closing the dialog
+            this.close(); // Call the close method to handle the dialog closing
+        });
     }
     /**
     * Creates and prepare a dialog element
