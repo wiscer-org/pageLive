@@ -51,9 +51,12 @@ export default class PageLive {
         // Prepare and ensure the announce container
         this.prepareAnnounceContainer();
 
+        // Wait a bit before announcing the initial message
+        await new Promise(r => setTimeout(r, 1000)); // Wait for 1
+
         // Announce to user about snapshot info & how to open the dialog
         this.announce({
-            msg: "PageLive. Press Ctrl + / to open the dialog.",
+            msg: "PageLive extension is ready. Press Ctrl + / for more info and shortcuts.",
         });
 
     }
