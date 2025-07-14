@@ -20,9 +20,14 @@ export default class PageLive {
     // Announce container element
     ANNOUNCE_CONTAINER_ID: string = 'announce-list';
     announceContainer: HTMLDivElement = document.createElement('div');
+    // Infos to be announced after the PageLive is initialized
+    initialAnnounceInfo: string[] = [
+        "PageLive extension is ready.",
+        "Ctrl + / for more info.",
+    ];
 
     // Other libraries
-    page: Page = new Page();
+    page: Page = new Page(this);
     keybindManager: KeybindManager = new KeybindManager(this);
     dialogManager: DialogManager = new DialogManager(this);
 
@@ -51,14 +56,19 @@ export default class PageLive {
         // Prepare and ensure the announce container
         this.prepareAnnounceContainer();
 
-        // Wait a bit before announcing the initial message
-        await new Promise(r => setTimeout(r, 1000)); // Wait for 1
-
-        // Announce to user about snapshot info & how to open the dialog
+        // Announce initial info sequentially with delay
+        await this.announceInitialInfo();
+    }
+    /**
+     * This function will announce initial info (info only after the page is loaded) with some delay. 
+     */
+    private async announceInitialInfo() {
+        // Wait for a short time to ensure the page is fully loaded before announcing
+        await new Promise(r => setTimeout(r, 1500));
+        // Announce all initial info as a single message, to avoid screen reader read non-PageLive messages in between these initial infos.
         this.announce({
-            msg: "PageLive extension is ready. Press Ctrl + / for more info and shortcuts.",
+            msg: this.initialAnnounceInfo.join(' '),
         });
-
     }
 
     /**

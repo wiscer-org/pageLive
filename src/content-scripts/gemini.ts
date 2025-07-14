@@ -170,5 +170,10 @@
     // After finish rendering, we will get the final response and announce it.
     // Below is the variable to point to the last element containing the Gemini responses:
     let lastGeminiResponseElement: HTMLElement | null = null;
+
+    // Feed info to pageLive & pageLive.page
+    window.pageLive.page.name = 'Gemini';
+    // TODO Should feed info abut whether  the page is a saved chat or not.. If  it is a saved chat, mention the title
+    window.pageLive.initialAnnounceInfo.push("Gemini page");
 })();
 
