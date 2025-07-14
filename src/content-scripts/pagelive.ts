@@ -1,6 +1,7 @@
 
 import KeybindManager from "./keybind-manager";
 import { DialogManager } from "./dialog-manager";
+import Page from "./page-adapter";
 import * as dev from './general-dev';
 import * as devMock from './general-dev-mock';
 
@@ -21,6 +22,7 @@ export default class PageLive {
     announceContainer: HTMLDivElement = document.createElement('div');
 
     // Other libraries
+    page: Page = new Page();
     keybindManager: KeybindManager = new KeybindManager(this);
     dialogManager: DialogManager = new DialogManager(this);
 
@@ -49,10 +51,10 @@ export default class PageLive {
         // Prepare and ensure the announce container
         this.prepareAnnounceContainer();
 
-        // Initialize dialog manager
-        // this.dialogManager = new DialogManager(this, this.keybindManager);
-
-        // Initialize keybind manager
+        // Announce to user about snapshot info & how to open the dialog
+        this.announce({
+            msg: "PageLive. Press Ctrl + / to open the dialog.",
+        });
 
     }
 
