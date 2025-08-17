@@ -7,9 +7,12 @@
 - New Shortcut to toogle modal : Ctrl + /
 - When modal is opened, it will anounce page's snapshot info, continued about how to close the modal
 - When modal is closed, announce to user.
+- TODO: New shortcut to focus on the chat input box.
+- TODO: New shortcut to copy the last response (Ctrl + Shift + C)
+- TODO: New shortcut to announce the last response.
+- TODO: Play sound as sign that a response is being received.
 - TODO: Detect if this is new chat. If not, get the title of current chat.
 - TODO: New shortcut to delete current chat / conversation.
-- TODO: New shortcut to focus on the chat input box.
 - Various bugs fix.
 
 ## v1.1.0
