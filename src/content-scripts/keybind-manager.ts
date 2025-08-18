@@ -116,6 +116,9 @@ export default class KeybindManager {
     constructor(pageLive: PageLive) {
         this.pageLive = pageLive;
         this.initializeKeybinds();
+
+        // Create a keybind listener to match with the registered keybinds
+        this.createKeybindListener();
     }
     /**
      * Initializes the default keybinds by registering them with their corresponding actions.
@@ -137,10 +140,12 @@ export default class KeybindManager {
      */
     public registerKeybind(keybind: Keybinds, action: () => Promise<void>, description?: string) {
         this.keybinds.set(keybind, createKeybindDetail(keybind, action, description));
+    }
 
-        console.log('adding event listener for keydown');
-        console.log(`Adding keybind: ${keybind}`);
-
+    /**
+     * Creates a keybind listener that listens for keydown events and triggers the corresponding action based on the pressed keys.
+     */
+    private createKeybindListener() {
         document.addEventListener('keydown', (event) => {
 
             // Collect the keys pressed in the event
@@ -151,9 +156,6 @@ export default class KeybindManager {
                 metaKey: event.metaKey || false, // For MacOS, this is the Command key
                 key: event.key // The actual key pressed (e.g., 'a', 'Enter
             };
-
-            console.log(`Pressed keys: ${JSON.stringify(pressedKeys)}`);
-            console.log(`Registered keybinds: ${JSON.stringify(Array.from(this.keybinds.keys()))}`);
 
             // Iterate through the registered keybinds and check if the pressed keys match any keybind
             for (const [keybind, keybindDetail] of this.keybinds.entries()) {
