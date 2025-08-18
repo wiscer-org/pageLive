@@ -144,11 +144,24 @@ import { Keybinds } from "./keybind-manager";
     }
 
     /**
+     * Get reference to the chat input element.
+    */
+    function getChatInputElement(): HTMLInputElement | null {
+        return document.querySelector('.new-input-ui[role="textbox"]');
+    }
+    /**
      * This function will focus the chat input element.
      */
     async function focusChatInput() {
-        alert('[PageLive][Gemini] Focusing chat input');
+        if (!chatInputElement) {
+            chatInputElement = getChatInputElement();
+        }
+        if (chatInputElement) {
+            chatInputElement.focus();
+            // No need to announce, since screen reader will read the focused element automatically.
+        }
     }
+
 
     // Start the process 
 
@@ -160,6 +173,9 @@ import { Keybinds } from "./keybind-manager";
         console.warn('[PageLive][Gemini] Chat container not found after waiting. Stopping observation setup.');
         return;
     }
+
+    // References to HTML elements
+    let chatInputElement: HTMLInputElement | null;
 
     // If this page is a saved chat, we need to wait for the chat container to be populated with the previous chat messages.
     // To ensure the chat container is ready, wait for more 3seconds before observing the chat container. 
@@ -191,15 +207,12 @@ import { Keybinds } from "./keybind-manager";
         "The feature to read number of previous chat is still on progress.",
     ]);
 
-    // Add keybinds for Gemini page
-    // console.log('[PageLive][Gemini] Registering keybinds for Gemini page');
-    // console.log(window.pageLive.keybindManager.keybinds);
 
+
+    // Add keybinds for Gemini page
     window.pageLive.keybindManager.registerKeybind(
         window.PageLiveStatics.KeybindManager.Keybinds.FocusChatInput,
-        async () => {
-            console.log("Focusing chat input 2")
-        }
+        focusChatInput
     );
 })();
 
