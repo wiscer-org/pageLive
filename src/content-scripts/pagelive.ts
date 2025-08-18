@@ -11,6 +11,9 @@ import * as devMock from './general-dev-mock';
  * To avoid name conflicts with the PageAdapters, PageAdapters need to be inside IIEF.
  */
 export default class PageLive {
+    // Provide types to be used in the PageAdapters.
+    static KeybindManager = KeybindManager;
+
     pageLiveContainerId: string = 'pagelive';
     announceContainerId: string = 'announce';
     // Timeout before element containing the each announcement is removed.
@@ -179,3 +182,5 @@ export default class PageLive {
 
 // Initialize the PageLiveClass and attach it to the window object
 (window as any).pageLive = new PageLive();
+// Initialize the PageLive class as a static property on the window object
+(window as any).PageLiveStatics = PageLive;

@@ -11,6 +11,8 @@ declare global {
     interface Window {
         // This will be ran under separate JS context in content scripts, so do not need to worry about conflicts with scripts of the page.
         pageLive: PageLive
+        // Reference to statics
+        PageLiveStatics: typeof PageLive = PageLive
     }
 }
 

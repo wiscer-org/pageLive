@@ -3,7 +3,7 @@ import isequal from "lodash.isequal";
 import PageLive from "./pagelive";
 
 // Type to list which keys are used in certain keybind
-type KeybindDetailKeys = {
+export type KeybindDetailKeys = {
     ctrlKey: boolean,
     shiftKey: boolean,
     altKey: boolean,
@@ -23,6 +23,7 @@ type KeybindDetail = {
 export enum Keybinds {
     ModalToggle = ' Ctrl + /', // Toggle the modal
     ChatCurrentDelete = 'Ctrl + Shift + Backspace', // Delete current chat
+    FocusChatInput = 'Shift + Esc', // Focus the chat input
 }
 
 /**
@@ -67,6 +68,19 @@ const createKeybindDetail = (
                 }
             };
             break;
+        case Keybinds.FocusChatInput:
+            keybindDetail = {
+                description: description || 'Focus the chat input',
+                action: action,
+                keys: {
+                    ctrlKey: false,
+                    shiftKey: true,
+                    key: 'Escape',
+                    altKey: false,
+                    metaKey: false,
+                }
+            };
+            break;
         default:
             // Raise system error if the keybind is not recognized
             alert(`[PageLive] Keybind ${keybind} is not recognized.`);
@@ -93,6 +107,9 @@ const createKeybindDetail = (
  * The keybind handlers will be provided by each page content script (PageAdapter) respectively.
  */
 export default class KeybindManager {
+    // References to types
+    static Keybinds = Keybinds;
+
     private pageLive: PageLive;
     public keybinds: Map<Keybinds, KeybindDetail> = new Map();
 
@@ -121,6 +138,9 @@ export default class KeybindManager {
     public registerKeybind(keybind: Keybinds, action: () => Promise<void>, description?: string) {
         this.keybinds.set(keybind, createKeybindDetail(keybind, action, description));
 
+        console.log('adding event listener for keydown');
+        console.log(`Adding keybind: ${keybind}`);
+
         document.addEventListener('keydown', (event) => {
 
             // Collect the keys pressed in the event
@@ -131,6 +151,9 @@ export default class KeybindManager {
                 metaKey: event.metaKey || false, // For MacOS, this is the Command key
                 key: event.key // The actual key pressed (e.g., 'a', 'Enter
             };
+
+            console.log(`Pressed keys: ${JSON.stringify(pressedKeys)}`);
+            console.log(`Registered keybinds: ${JSON.stringify(Array.from(this.keybinds.keys()))}`);
 
             // Iterate through the registered keybinds and check if the pressed keys match any keybind
             for (const [keybind, keybindDetail] of this.keybinds.entries()) {

@@ -1,5 +1,7 @@
 // gemini.ts - Injected only on gemini.google.com
 
+import { Keybinds } from "./keybind-manager";
+
 /**
  * Note about how the process after gemini page is loaded.
  * - Need for the chat container to be rendered 
@@ -141,6 +143,13 @@
         }, delay);
     }
 
+    /**
+     * This function will focus the chat input element.
+     */
+    async function focusChatInput() {
+        alert('[PageLive][Gemini] Focusing chat input');
+    }
+
     // Start the process 
 
     // Wait for the page to be ready
@@ -182,5 +191,17 @@
         "The feature to read number of previous chat is still on progress.",
     ]);
 
+    // Add keybinds for Gemini page
+    // console.log('[PageLive][Gemini] Registering keybinds for Gemini page');
+    // console.log(window.pageLive.keybindManager.keybinds);
+
+    window.pageLive.keybindManager.registerKeybind(
+        window.PageLiveStatics.KeybindManager.Keybinds.FocusChatInput,
+        async () => {
+            console.log("Focusing chat input 2")
+        }
+    );
 })();
+
+
 
