@@ -24,6 +24,7 @@ export enum Keybinds {
     ModalToggle = ' Ctrl + /', // Toggle the modal
     ChatCurrentDelete = 'Ctrl + Shift + Backspace', // Delete current chat
     FocusChatInput = 'Shift + Esc', // Focus the chat input
+    AnnounceLastResponse = 'Ctrl + Alt + r', // Announce the last response
 }
 
 /**
@@ -76,6 +77,19 @@ const createKeybindDetail = (
                     ctrlKey: false,
                     shiftKey: true,
                     key: 'Escape',
+                    altKey: false,
+                    metaKey: false,
+                }
+            };
+            break;
+        case Keybinds.AnnounceLastResponse:
+            keybindDetail = {
+                description: description || 'Announce the last response',
+                action: action,
+                keys: {
+                    ctrlKey: true,
+                    shiftKey: true,
+                    key: 'Enter',
                     altKey: false,
                     metaKey: false,
                 }
@@ -139,6 +153,7 @@ export default class KeybindManager {
      * @param action The function to execute when the keybind is triggered.
      */
     public registerKeybind(keybind: Keybinds, action: () => Promise<void>, description?: string) {
+        console.log(`[PageLive] Registering keybind: ${keybind}`);
         this.keybinds.set(keybind, createKeybindDetail(keybind, action, description));
     }
 
@@ -156,6 +171,8 @@ export default class KeybindManager {
                 metaKey: event.metaKey || false, // For MacOS, this is the Command key
                 key: event.key // The actual key pressed (e.g., 'a', 'Enter
             };
+
+            // console.log(`[PageLive] Key pressed: ${JSON.stringify(pressedKeys)}`);
 
             // Iterate through the registered keybinds and check if the pressed keys match any keybind
             for (const [keybind, keybindDetail] of this.keybinds.entries()) {

@@ -13,6 +13,10 @@ import { Keybinds } from "./keybind-manager";
  */
 (async () => {
     const CHAT_CONTAINER_SELECTOR = "#chat-history";
+
+    // Element name for Gemini response
+    const RESPONSE_ELEMENT_NAME = 'MESSAGE-CONTENT';
+
     let chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
 
     /**
@@ -92,7 +96,8 @@ import { Keybinds } from "./keybind-manager";
                     // console.log('[PageLive][Gemini] Added node name:', node.nodeName);
 
                     // if (node instanceof HTMLElement && node.nodeName === 'MODEL-RESPONSE') {
-                    if (node instanceof HTMLElement && node.nodeName === 'MESSAGE-CONTENT') {
+                    // if (node instanceof HTMLElement && node.nodeName === 'MESSAGE-CONTENT') {
+                    if (node instanceof HTMLElement && node.nodeName === RESPONSE_ELEMENT_NAME) {
 
                         // Set the latest Gemini response element
                         lastGeminiResponseElement = node;
@@ -161,7 +166,47 @@ import { Keybinds } from "./keybind-manager";
             // No need to announce, since screen reader will read the focused element automatically.
         }
     }
+    /**
+     * Get the last response element from the HTML document.
+     */
+    function getLastResponseElement(): HTMLElement | null {
+        // Get the last response element from the chat container
+        const responseElements = document.querySelectorAll(CHAT_CONTAINER_SELECTOR + ' ' + RESPONSE_ELEMENT_NAME);
+        if (responseElements.length > 0) {
+            return responseElements[responseElements.length - 1] as HTMLElement;
+        }
+        return null;
+    }
 
+    /**
+     * This function will announce the last response.
+     * It will check if the lastGeminiResponseElement is available, and if so, it will announce its content.
+     */
+    async function announceLastResponse() {
+        console.log('[PageLive][Gemini] Announcing last response');
+
+        // A bit of notification that the last response is goig to be announced. 
+        // This seems to be useful while waiting to find the last response element (if needed).
+        window.pageLive.announce({
+            msg: "Reading last response."
+        });
+
+        // If there is no ref to the last response element, try to get it again
+        if (!lastGeminiResponseElement) {
+            lastGeminiResponseElement = getLastResponseElement()
+        }
+
+        // Prepare the message to be announced.
+        let tobeAnnounced = "No response element is found.";
+        if (lastGeminiResponseElement) {
+            tobeAnnounced = lastGeminiResponseElement.innerHTML || '';
+        }
+
+        // Announce
+        window.pageLive.announce({
+            msg: tobeAnnounced
+        });
+    }
 
     // Start the process 
 
@@ -209,12 +254,20 @@ import { Keybinds } from "./keybind-manager";
 
 
 
-    // Add keybinds for Gemini page
+    // Add keybind 'focus chat input'
     window.pageLive.keybindManager.registerKeybind(
         window.PageLiveStatics.KeybindManager.Keybinds.FocusChatInput,
         focusChatInput
     );
+    // Add keybind 'announce last response'
+    window.pageLive.keybindManager.registerKeybind(
+        window.PageLiveStatics.KeybindManager.Keybinds.AnnounceLastResponse,
+        announceLastResponse
+    );
+
 })();
+
+
 
 
 
