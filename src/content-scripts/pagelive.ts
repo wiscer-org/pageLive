@@ -163,8 +163,8 @@ export default class PageLive {
     announce(announceObj: {
         // Message to be announced
         msg: string
-        // Optional: If true, will prepend with 'PageLive' to help users identify messages from PageLive
-        , isPrependMsg?: boolean,
+        // Optional: If true, will not pre-announce the message. The pre-announce message is 'PageLive', which will help users to identify messages from PageLive.
+        , omitPreannounce?: boolean,
     }) {
         this.ensurePageLiveContainer();
 
@@ -172,9 +172,8 @@ export default class PageLive {
         if (announceDiv) {
 
             // If `isPrependMsg` is true, announce 'PageLive' first
-            if (announceObj.isPrependMsg) {
-                console.log('announce preprend text')
-                this.announce({ msg: 'PageLive', isPrependMsg: false });
+            if (!announceObj.omitPreannounce) {
+                this.announce({ msg: 'PageLive', omitPreannounce: true });
             }
 
             // Announce the message
