@@ -129,7 +129,7 @@ import { Keybinds } from "./keybind-manager";
      * When the timeout is reached, it will execute window.pageLive.announce(msg).
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    function announceWithDelay(delay = 3000) {
+    function announceWithDelay(delay = 1000) {
         if (announceTimeoutId) {
             clearTimeout(announceTimeoutId);
         }
