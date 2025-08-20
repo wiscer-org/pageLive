@@ -111,6 +111,9 @@ import { Keybinds } from "./keybind-manager";
         // Verify the chatContainer is available to satify Typescript
         if (!chatContainer) {
             console.warn('[PageLive][Gemini] Chat container not found. Stopping observation setup.');
+            window.pageLive.announce({
+                msg: "Chat container not found. Please reload the page.",
+            });
             return;
         }
         // Start observing the chat history container for new Gemini responses
