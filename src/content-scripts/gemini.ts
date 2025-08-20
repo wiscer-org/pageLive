@@ -191,7 +191,9 @@ import { Keybinds } from "./keybind-manager";
         // A bit of notification that the last response is goig to be announced. 
         // This seems to be useful while waiting to find the last response element (if needed).
         window.pageLive.announce({
-            msg: "Reading last response."
+            msg: "Reading last response.",
+            // No need to preannounce, since this is a user triggered action.
+            omitPreannounce: true
         });
 
         // If there is no ref to the last response element, try to get it again
@@ -200,14 +202,16 @@ import { Keybinds } from "./keybind-manager";
         }
 
         // Prepare the message to be announced.
-        let tobeAnnounced = "No response element is found.";
+        let toBeAnnounced = "No response element is found.";
         if (lastGeminiResponseElement) {
-            tobeAnnounced = lastGeminiResponseElement.innerHTML || '';
+            toBeAnnounced = lastGeminiResponseElement.innerHTML || '';
         }
 
         // Announce
         window.pageLive.announce({
-            msg: tobeAnnounced
+            msg: toBeAnnounced
+            // User triggered action, no need to preannounce
+            , omitPreannounce: true,
         });
     }
 
