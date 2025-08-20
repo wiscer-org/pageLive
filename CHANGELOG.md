@@ -9,6 +9,7 @@
 - When modal is closed, announce to user.
 - New shortcut to focus on the chat input box : `Shift + Esc`.
 - New shortcut to announce the last response : `Ctrl + Shift + Enter`.
+- Prepend every announce with 'PageLive' by default. This help users to identify messages from PageLive extension.
 - TODO: New shortcut to copy the last response
 - TODO: Play sound as sign that a response is being received.
 - TODO: Detect if this is new chat. If not, get the title of current chat.

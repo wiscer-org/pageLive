@@ -160,13 +160,27 @@ export default class PageLive {
         this.container.appendChild(this.announceContainer);
     }
 
-    announce(announceObj: { msg: string }) {
+    announce(announceObj: {
+        // Message to be announced
+        msg: string
+        // Optional: If true, will prepend with 'PageLive' to help users identify messages from PageLive
+        , isPrependMsg?: boolean,
+    }) {
         this.ensurePageLiveContainer();
 
         const announceDiv = document.getElementById(this.ANNOUNCE_CONTAINER_ID);
         if (announceDiv) {
+
+            // If `isPrependMsg` is true, announce 'PageLive' first
+            if (announceObj.isPrependMsg) {
+                console.log('announce preprend text')
+                this.announce({ msg: 'PageLive', isPrependMsg: false });
+            }
+
+            // Announce the message
             const msgDiv = document.createElement('div');
             msgDiv.innerHTML = announceObj.msg;
+
             // msgDiv.style.border = '2px solid orange';
             // msgDiv.style.marginBottom = '4px';
 
