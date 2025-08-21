@@ -123,7 +123,7 @@ export class DialogManager {
      * This function will render a dialog with a list of available keybinds / shortcuts.
      * It will include the keybinds and their descriptions.
      */
-    private renderKeybindsInfo(): void {
+    public renderKeybindsInfo(): void {
 
         const keybindContent = document.createElement('div');
 

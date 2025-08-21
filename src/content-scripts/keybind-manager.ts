@@ -155,6 +155,22 @@ export default class KeybindManager {
     public registerKeybind(keybind: Keybinds, action: () => Promise<void>, description?: string) {
         console.log(`[PageLive] Registering keybind: ${keybind}`);
         this.keybinds.set(keybind, createKeybindDetail(keybind, action, description));
+
+        // Update the keybinds list in the dialog manager
+        console.log('dialogManager');
+        console.log(this.pageLive.dialogManager);
+        console.log(this.pageLive.dialogManager.renderKeybindsInfo);
+
+        // Re-render the keybinds info in the dialog
+        if (this.pageLive.dialogManager) {
+            // Dialog manager might not be initialized yet, so check if it exists. 
+            this.pageLive.dialogManager.renderKeybindsInfo();
+            this.pageLive.dialogManager.renderKeybindsInfo();
+        } else {
+            // Dialog manager not yet initialized is not a error. It happens when the keybind registration during this class initialization.
+            console.log("[PageLive] Dialog manager is not initialized yet, skipping re-rendering keybinds info.");
+        }
+
     }
 
     /**
