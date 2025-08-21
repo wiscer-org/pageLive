@@ -127,9 +127,10 @@ import { Keybinds } from "./keybind-manager";
     /**
      * This function will announce with some delay. The delay will be reset every time this function is invoked.
      * When the timeout is reached, it will execute window.pageLive.announce(msg).
+     * @param {number} delay - The delay in milliseconds before announcing the response. Default is 2000ms (2 seconds). 1 second is too short, causing the screen reader will read the previous response. 
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    function announceWithDelay(delay = 1000) {
+    function announceWithDelay(delay = 2000) {
         if (announceTimeoutId) {
             clearTimeout(announceTimeoutId);
         }
