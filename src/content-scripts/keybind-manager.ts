@@ -192,6 +192,21 @@ export default class KeybindManager {
     public triggerKeybind(keybind: Keybinds) {
         const action = this.keybinds.get(keybind)?.action;
         if (action) {
+
+            // Modify the action based on the `Keybinds` type
+            switch (keybind) {
+                case Keybinds.FocusChatInput:
+                    this.pageLive.announce({
+                        msg: "Chat input",
+                        omitPreannounce: true, // User triggered, no need to preannounce
+                    });
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
+
+            // Do the action
             action();
         } else {
             console.warn(`No action registered for key: ${keybind}`);
