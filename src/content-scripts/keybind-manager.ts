@@ -157,11 +157,6 @@ export default class KeybindManager {
         this.keybinds.set(keybind, createKeybindDetail(keybind, action, description));
 
         // Update the keybinds list in the dialog manager
-        console.log('dialogManager');
-        console.log(this.pageLive.dialogManager);
-        console.log(this.pageLive.dialogManager.renderKeybindsInfo);
-
-        // Re-render the keybinds info in the dialog
         if (this.pageLive.dialogManager) {
             // Dialog manager might not be initialized yet, so check if it exists. 
             this.pageLive.dialogManager.renderKeybindsInfo();
