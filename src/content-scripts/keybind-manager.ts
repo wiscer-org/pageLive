@@ -24,7 +24,7 @@ export enum Keybinds {
     ModalToggle = ' Ctrl + /', // Toggle the modal
     ChatCurrentDelete = 'Ctrl + Shift + Backspace', // Delete current chat
     FocusChatInput = 'Shift + Esc', // Focus the chat input
-    AnnounceLastResponse = 'Ctrl + Alt + r', // Announce the last response
+    AnnounceLastResponse = 'Ctrl + Shift + Enter', // Announce the last response
 }
 
 /**
