@@ -160,7 +160,6 @@ export default class KeybindManager {
         if (this.pageLive.dialogManager) {
             // Dialog manager might not be initialized yet, so check if it exists. 
             this.pageLive.dialogManager.renderKeybindsInfo();
-            this.pageLive.dialogManager.renderKeybindsInfo();
         } else {
             // Dialog manager not yet initialized is not a error. It happens when the keybind registration during this class initialization.
             console.log("[PageLive] Dialog manager is not initialized yet, skipping re-rendering keybinds info.");
