@@ -1,6 +1,6 @@
 // gemini.ts - Injected only on gemini.google.com
 
-import { Keybinds } from "./keybind-manager";
+import { Keybinds } from "../keybind-manager";
 
 /**
  * Note about how the process after gemini page is loaded.
@@ -216,6 +216,69 @@ import { Keybinds } from "./keybind-manager";
         });
     }
 
+    /** Delete the current chat, if possible */
+    async function currentChatDelete() {
+        console.log('[PageLive][Gemini] Deleting current chat');
+
+        // Find the button that will show the chat-context menu
+        const menuButton: HTMLElement | null = getChatMenuButton();
+
+        // If chat menu button not found, announce so the user knows
+        if (!menuButton) {
+            console.warn('[PageLive][Gemini] Chat menu button not found. Unable to delete current chat.');
+            window.pageLive.announce({
+                msg: "Chat menu button not found. Unable to delete current chat.",
+                // User triggered action, no need to preannounce
+                omitPreannounce: true
+            });
+        }
+
+        // Activate the button, wait for the menu to be shown
+
+        // Find the delete button in the menu
+
+        // Activate the delete button
+
+        // Done. Delete confirmation and action will be handled by the page itself.
+
+        console.log('[PageLive][Gemini] DONE Deleting current chat');
+
+    };
+    /**
+     * Note: Chat menu button is the button to show the chat context menu, which contains rename and delete chat buttons.
+     * In the small/medium screen, there is only one chat menu button: at the top right which show menu for the current active chat.
+     * In the large screen, there are multiple chat menu buttons: on the right side of each chat in the chat list on the right side navigation. 
+     * 
+     * This function will return the chat menu button for the current active chat. 
+     * Steps to find the button:
+     * 1. Assume the browser is currently in small/medium screen, get the single chat menu button.
+     * 2. If not found, assume the browser is in large screen. We need to find the active chat from the chat list, then locate the chat menu button in the active chat element.
+     * 
+     * Since the browser size might change any time, we will not save the reference to the button. Instead, we will find it every time this function is called. 
+     */
+    function getChatMenuButton(): HTMLElement | null {
+        // Try to find the chat menu button for small/medium screen
+        let menuButton = document.querySelector('[data-test-id="conversation-actions-button"]') as HTMLElement | null;
+
+        // If not found, try to find the chat menu button for large screen
+        if (!menuButton) {
+            // Click the side nav button to show the chat list
+
+            // Note: The chat list is not fully populated until the chat list is scrolled to the bottom.
+            // So, there is a chance that the active chat is not in the DOM yet.
+            // To handle this, we will scroll the chat list to the bottom to ensure all chats are loaded.
+            const chatListContainer = document.querySelector('chat-list') as HTMLElement | null;
+            if (chatListContainer) {
+                chatListContainer.scrollTop = chatListContainer.scrollHeight;
+            }
+
+            // Find the active chat element in the chat list
+
+            // Locate the chat menu button in the active chat element
+        }
+        return menuButton;
+    }
+
     // Start the process 
 
     // Wait for the page to be ready
@@ -272,8 +335,13 @@ import { Keybinds } from "./keybind-manager";
         window.PageLiveStatics.KeybindManager.Keybinds.AnnounceLastResponse,
         announceLastResponse
     );
-
+    // Add keybind 'delete current chat'
+    window.pageLive.keybindManager.registerKeybind(
+        window.PageLiveStatics.KeybindManager.Keybinds.ChatCurrentDelete,
+        currentChatDelete
+    );
 })();
+
 
 
 
