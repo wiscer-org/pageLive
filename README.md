@@ -16,6 +16,13 @@ PageLive acts as a companion for desktop screen readers, making web navigation e
 
 Screen reader users often need to manually navigate to read new responses from Gemini, and return to the prompt input, making each interaction cumbersome. PageLive streamlines this process by announcing every new Gemini response, inspired by accessibility features in ChatGPT.
 
+## Target Users
+
+PageLive is targetted for dekstop based screen reader users.
+
+Some features might not available for smaller width browser due to web layout changes.
+In gemini, the menu for each conversation not available for width < 960.
+
 ## License
 
 PageLive is free and open source.
