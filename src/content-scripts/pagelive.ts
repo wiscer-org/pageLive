@@ -1,7 +1,7 @@
 
 import KeybindManager from "./keybind-manager";
 import { DialogManager } from "./dialog-manager";
-import Page from "./page-adapter";
+import Page from "./page";
 import * as dev from './general-dev';
 import * as devMock from './general-dev-mock';
 

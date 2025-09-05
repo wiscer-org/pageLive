@@ -19,8 +19,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         pagelive: resolve(__dirname, 'src/content-scripts/pagelive.ts'),
-        gemini: resolve(__dirname, 'src/content-scripts/gemini.ts'),
-        xai: resolve(__dirname, 'src/content-scripts/xai.ts'),
+        gemini: resolve(__dirname, 'src/content-scripts/page-adapters/gemini.ts'),
+        xai: resolve(__dirname, 'src/content-scripts/page-adapters/xai.ts'),
         background: resolve(__dirname, 'src/background.ts'),
       },
       output: {
