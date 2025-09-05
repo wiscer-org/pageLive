@@ -17,7 +17,7 @@
       ],
       "js": [
         "content-scripts/pagelive.js",
-        "content-scripts/page-adapters/gemini.js"
+        "content-scripts/gemini.js"
       ],
       "run_at": "document_idle"
     },
@@ -27,7 +27,7 @@
       ],
       "js": [
         "content-scripts/pagelive.js",
-        "content-scripts/page-adapters/xai.js"
+        "content-scripts/xai.js"
       ],
       "run_at": "document_idle"
     }
