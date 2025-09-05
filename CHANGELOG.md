@@ -19,6 +19,10 @@
 - TODO: New shortcut to copy the last response
 - Various bugs fix.
 
+### Future
+
+- Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
+
 ## v1.1.0
 
 - Enhanced environment detection for development/production modes, for programmatic PageLive container style.
