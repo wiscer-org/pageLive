@@ -90,15 +90,22 @@ import { Keybinds } from "../keybind-manager";
         }
         return true;
     }
-
     /**
-     * Init references to key HTML elements that will be used later.
+     * Get the HTML element that if clicked will toggle the side nav
+     * @return {Promise<HTMLElement|null>} The element if found
      */
-    async function queryKeyElements() {
+    async function getSideNavToggleButton(): Promise<HTMLElement | null> {
+        // Query the document
+        // 'button.[data-test-id="side-nav-menu-button"]
+        const sideNavToogleButton = document.querySelector('[data-test-id="side-nav-menu-button"]') as HTMLElement | null;
 
-
+        // If still not exist, notify
+        if (!sideNavToogleButton) {
+            window.pageLive.announce({ msg: "Failed to find side nav toggle button" });
+            console.warn("[PageLive][Gemini] Failed to find side nav toggle button");
+        }
+        return sideNavToogleButton;
     }
-
 
     /**
      * This function will set a timeout to start observing the chat container for new response after a delay.
@@ -343,6 +350,27 @@ import { Keybinds } from "../keybind-manager";
         if (!menuButton) {
             // Make sure the side nav is opened. If not click the button to open it.
             const isSideNavOpened = await checkIsSideNavOpened();
+
+            // If the side nav is closed , we need to open it temporarily
+            if (!isSideNavOpened) {
+                // Click the side nav toogle button
+                const sideNavToggleButton = await getSideNavToggleButton();
+
+                let msg = "side nav toggle button is found";
+                if (!sideNavToggleButton) msg = "Nav toggle button is not found";
+                window.pageLive.announce({ msg });
+
+                // If the toogle button not exist, we can't continue
+                if (!sideNavToggleButton) return null;
+
+                await sideNavToggleButton.click();
+
+                // wait a little
+                await new Promise(r => setTimeout(r, 400));
+
+                // Click the side nav toogle button, to close it back.
+                await sideNavToggleButton.click();
+            }
 
             // Trigger the chat list to be full populated, or until the active chat is in the DOM.
             await triggerPopulateChatListOrActiveChatPresent();
