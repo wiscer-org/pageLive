@@ -1,5 +1,6 @@
 // gemini.ts - Injected only on gemini.google.com
 
+import { parseElementsId } from "../general-dev";
 import { Keybinds } from "../keybind-manager";
 
 /**
@@ -11,13 +12,44 @@ import { Keybinds } from "../keybind-manager";
  * - Everytime a chunk of response is added to the response element, it will be announced, but with a delay, and cancel the previous announce timeout. 
  * - After reaching the timeout, the content of the response element will be announced.
  */
+
+/**
+ * Hierarchy subset on the side nav:
+ * 
+ * infinite-scroller
+ *      .loading-content-spinner-container
+ *      .explore-gems-container
+ *      .chat-history
+ *          .chat-history-list
+ *              conversations-list [data-test-id="all-conversations"]'
+ *                  .title-container
+ *                  .conversations-container
+ *                      .conversation-items-container
+ *                      .conversation-items-container
+ *              .loading-history-spinner-container
+ */
+
+
 (async () => {
     const CHAT_CONTAINER_SELECTOR = "#chat-history";
 
     // Element name for Gemini response
     const RESPONSE_ELEMENT_NAME = 'MESSAGE-CONTENT';
 
+    // Current chat container
     let chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
+    // Chat list container on the right side navigation
+    let chatListContainer: HTMLElement | null = null;
+
+    // Selector for chat item container, per chat item, on the right side navigation
+    const CHAT_ITEM_CONTAINER_SELECTOR = '.conversation-items-container';
+    const CHAT_TITLE_CONTAINER_SELECTOR = '.conversation';     // If selected, it will have .selected class
+    // Selector for chat item title, per chat item, on the right side navigation
+    const CHAT_TITLE_SELECTOR = ' .conversation-title';
+    // Selector of container of chat item action buttons, per chat item.
+    const CHAT_ACTIONS_CONTAINER_SELECTOR = '.conversation-actions-container';
+    // Selector that mark a chat item is active. Will be used in 2 elements: .conversation & .conversation-actions-container
+    const CHAT_SELECTED_TAG_CLASS = 'selected';
 
     /**
      * Wait for the chat container to be available
@@ -38,6 +70,36 @@ import { Keybinds } from "../keybind-manager";
         }
         return !!chatContainer
     }
+
+    /**
+     * Return the `chatListContainer` element. If null, try to query from the document.
+     * If failed query the element, announce the result and return false.
+     * @returns {Promise<boolean>} if the `chatListContainer` exist.
+     */
+    async function ensureChatListContainerElement(): Promise<boolean> {
+        if (!chatListContainer) {
+            // Get the chat list container
+            // chatListContainer = document.querySelector('[data-test-id="all-conversations"]') as HTMLElement | null;
+            chatListContainer = document.querySelector('.chat-history');
+        }
+
+        if (!chatListContainer) {
+            console.warn('[PageLive][Gemini] Chat list container not found. Unable to check if side nav is opened.');
+            window.pageLive.announce({ msg: "Chat list container not found" });
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Init references to key HTML elements that will be used later.
+     */
+    async function queryKeyElements() {
+
+
+    }
+
+
     /**
      * This function will set a timeout to start observing the chat container for new response after a delay.
      * It will return the timeout ID so that it can be cleared if needed.
@@ -220,15 +282,27 @@ import { Keybinds } from "../keybind-manager";
     async function currentChatDelete() {
         console.log('[PageLive][Gemini] Deleting current chat');
 
-        // Find the button that will show the chat-context menu
-        const menuButton: HTMLElement | null = getChatMenuButton();
+        // FIXME: delete below after testing
+        window.pageLive.announce({
+            msg: "Delete chat",
+        });
 
-        // If chat menu button not found, announce so the user knows
+        // Find the button that will show the chat-context menu
+        const menuButton: HTMLElement | null = await getChatMenuButton();
+
+        // If still can not find chat menu button, cannot continue. Announce so the user knows
         if (!menuButton) {
             console.warn('[PageLive][Gemini] Chat menu button not found. Unable to delete current chat.');
             window.pageLive.announce({
-                msg: "Chat menu button not found. Unable to delete current chat.",
+                msg: "Chat menu button not found",
                 // User triggered action, no need to preannounce
+                omitPreannounce: true
+            });
+        }
+        // FIXME delete below
+        else {
+            window.pageLive.announce({
+                msg: "Chat menu button found.",
                 omitPreannounce: true
             });
         }
@@ -243,6 +317,11 @@ import { Keybinds } from "../keybind-manager";
 
         console.log('[PageLive][Gemini] DONE Deleting current chat');
 
+        // FIXME: delete below after testing
+        window.pageLive.announce({
+            msg: "Finish delete current chat function.",
+            omitPreannounce: true
+        });
     };
     /**
      * Note: Chat menu button is the button to show the chat context menu, which contains rename and delete chat buttons.
@@ -256,13 +335,17 @@ import { Keybinds } from "../keybind-manager";
      * 
      * Since the browser size might change any time, we will not save the reference to the button. Instead, we will find it every time this function is called. 
      */
-    function getChatMenuButton(): HTMLElement | null {
+    async function getChatMenuButton(): Promise<HTMLElement | null> {
         // Try to find the chat menu button for small/medium screen
         let menuButton = document.querySelector('[data-test-id="conversation-actions-button"]') as HTMLElement | null;
 
         // If not found, try to find the chat menu button for large screen
         if (!menuButton) {
-            // Click the side nav button to show the chat list
+            // Make sure the side nav is opened. If not click the button to open it.
+            const isSideNavOpened = await checkIsSideNavOpened();
+
+            // Trigger the chat list to be full populated, or until the active chat is in the DOM.
+            await triggerPopulateChatListOrActiveChatPresent();
 
             // Note: The chat list is not fully populated until the chat list is scrolled to the bottom.
             // So, there is a chance that the active chat is not in the DOM yet.
@@ -278,6 +361,95 @@ import { Keybinds } from "../keybind-manager";
         }
         return menuButton;
     }
+
+    /**
+     * Check if the side navigation (chat list) is opened.
+     */
+    async function checkIsSideNavOpened(): Promise<boolean> {
+        // When the side nav is opened, 
+        // the elements '.conversation-items-container' and '.conversation-actions-container' will have 'side-nav-opened' class.
+        // Side nav considered opened if there is element '.side-nav-opened' in the chat list container
+
+        // Ensure the `chatListContainer` exist
+        await ensureChatListContainerElement();
+        if (!chatListContainer) return false;
+
+        const isOpened = chatListContainer.querySelector('.side-nav-opened') !== null;
+
+        window.pageLive.announce({ msg: `is side nav opened ? ${isOpened ? 'Yes' : 'No'}`, });
+
+        return isOpened;
+    }
+    /**
+     * Chat list is not fully populated until the chat list is scrolled to the bottom.
+     * So, there is a chance that the active chat is not in the DOM yet.
+     * To handle this, This function will scroll the chat list to the bottom until the active chat or all chats are loaded.
+     */
+    async function triggerPopulateChatListOrActiveChatPresent() {
+        // Make sure the chat list container is available
+        if (!chatListContainer) {
+            console.warn('[PageLive][Gemini] Chat list container not found. Unable to populate chat list or find active chat.');
+            return;
+        }
+
+        // FIXME
+        let CHAT_ITEM_CONTAINER_SELECTOR = ".conversation-items-container"
+
+        // DEBUG: check how many chat items
+        let chatItems = chatListContainer.querySelectorAll(CHAT_ITEM_CONTAINER_SELECTOR);
+        console.log(`[PageLive][Gemini] There are ${chatItems.length} chat items in the chat list.`);
+
+        // Scroll the chat list to the bottom until the active chat or all chats are loaded.
+        let previousChatItemCount = -1;
+        while (true) {
+            // Scroll to the bottom
+            chatListContainer.scrollTop = chatListContainer.scrollHeight;
+
+            // Wait for a short time to allow new chat items to load
+            await new Promise(res => setTimeout(res, 1000));
+
+            // Check how many chat items now
+            chatItems = chatListContainer.querySelectorAll(CHAT_ITEM_CONTAINER_SELECTOR);
+            console.log(`[PageLive][Gemini] Scrolled chat list. prev chat items count: ${previousChatItemCount}`);
+            console.log(`[PageLive][Gemini] There are ${chatItems.length} chat items in the chat list.`);
+            // If the number of chat items has not changed, we have reached the end of the list
+            if (chatItems.length === previousChatItemCount) {
+                break;
+            }
+            previousChatItemCount = chatItems.length;
+        }
+
+
+        // Console out the active chat item
+
+        // Announce if there is no chat item
+
+        // DEBUG: check how many chat items now
+        chatItems = chatListContainer.querySelectorAll(CHAT_ITEM_CONTAINER_SELECTOR);
+        console.log(`[PageLive][Gemini] There are ${chatItems.length} chat items in the chat list.`);
+    }
+
+    /**
+     * Get the active chat item element in the chat list.
+     */
+    async function getSelectedChatActionsContainerElement(): Promise<HTMLElement | null> {
+        // Make sure the chat list container is available
+        if (!chatListContainer) {
+            console.warn('[PageLive][Gemini] Chat list container not found. Unable to find active chat.');
+            return null;
+        }
+
+        // Find the active chat item element in the chat list
+        const activeChatActionsContainer = chatListContainer.querySelector(CHAT_SELECTED_TAG_CLASS) as HTMLElement | null;
+
+        return activeChatActionsContainer;
+    }
+
+
+
+
+
+
 
     // Start the process 
 
