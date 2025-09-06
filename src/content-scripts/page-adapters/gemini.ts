@@ -52,6 +52,9 @@ import { Keybinds } from "../keybind-manager";
     // Selector that mark a chat item is active. Will be used in 2 elements: .conversation & .conversation-actions-container
     const CHAT_SELECTED_TAG_SELECTOR = '.selected';
 
+    // Class of chat actions container. This should be class name, not selector, because it will be used in `classList.contains` to check if the class name exist
+    const CHAT_ACTIONS_CONTAINER_CLASS = "conversation-actions-container";
+
     /**
      * Wait for the chat container to be available
      * This is necessary because the chat container may not be immediately available on page load.
@@ -306,6 +309,7 @@ import { Keybinds } from "../keybind-manager";
                 // User triggered action, no need to preannounce
                 omitPreannounce: true
             });
+            return;
         }
         // FIXME delete below
         else {
@@ -316,6 +320,7 @@ import { Keybinds } from "../keybind-manager";
         }
 
         // Activate the button, wait for the menu to be shown
+        menuButton.click();
 
         // Find the delete button in the menu
 
@@ -372,17 +377,11 @@ import { Keybinds } from "../keybind-manager";
         // Trigger the chat list until the active / selected chat is in the list
         await populateChatList(true);
 
-        // Note: The chat list is not fully populated until the chat list is scrolled to the bottom.
-        // So, there is a chance that the active chat is not in the DOM yet.
-        // To handle this, we will scroll the chat list to the bottom to ensure all chats are loaded.
-        const chatListContainer = document.querySelector('chat-list') as HTMLElement | null;
-        if (chatListContainer) {
-            chatListContainer.scrollTop = chatListContainer.scrollHeight;
-        }
-
         // Find the active chat element in the chat list
+        const selectedChatActionsElement = await getSelectedChatActionsContainerElement();
 
         // Locate the chat menu button in the active chat element
+        chatMenuButton = await getChatActionsMenuButton(selectedChatActionsElement);
 
         // Click the side nav toogle button, to close it back.
         await sideNavToggleButton.click();
@@ -422,21 +421,115 @@ import { Keybinds } from "../keybind-manager";
         // DELETE below
         window.pageLive.announce({ msg: "populating chat list: started" });
 
+        // Required: Loading image to be observed
+        const isLoadingElement = chatListContainer.querySelector('.loading-history-spinner-container');
+        if (!isLoadingElement) {
+            window.pageLive.announce({ msg: "Failed to find 'is loading' image" });
+            return;
+        }
+        // Required: Scroller element that need to be scrolled down
+        const scrollerElement = chatListContainer.closest('infinite-scroller');
+        if (!scrollerElement) {
+            window.pageLive.announce({ msg: "Failed to find scroller element" });
+            return;
+        }
+
+        // The class used to show the loading spinner element
+        const IS_LOADING_CLASS = 'is-loading';
+
         // Loop until any of 2 conditions found: chat active or fully loaded (no more 'is-loading' image)
         let failSafe = 0;
         while (true) {
 
+            // FIXME delete below
+            findActiveChat = true;
+
             // Break if we want to find active chat and it is already loaded
-            if (findActiveChat && await getSelectedChatElement) {
-                window.pageLive.announce({ msg: "Active chat is found. Number of scroll : " + failSafe });
-                return true;
+            if (findActiveChat && await getSelectedChatElement()) {
+                // Is active chat element available
+                const activeSelectedChat = await getSelectedChatElement();
+                if (activeSelectedChat !== null) {
+                    window.pageLive.announce({ msg: "Active chat is found. Number of scroll : " + failSafe });
+                    console.log("Active chat element");
+                    console.log(activeSelectedChat);
+                    return true;
+                }
+            } else {
+                window.pageLive.announce({ msg: "Active chat is not found. Repeat is not found" });
             }
 
+            // Note: After scroll down, one of 2 things might happen:
+            // 1. If there are more chats can be loaded, loading image will appear and will be hidden after some chats are loaded.
+            // 2. If there are no more chats can be loaded, the loading image will not appear at all.
+            // So we need to wait very shorlty until the loading image appears. If not appears, that means all chats are already loaded.
+            // If the loading image appears, mark with `loadingStarted`. When the image hidden, mark with `loadingFinished`.
+
+            // Use Promise until 1 of the conditions met
+            await new Promise(async (resolve) => {
+                // Check chat list container again
+                await ensureChatListContainerElement();
+                if (!chatListContainer) return;
+
+                // Flags for 'is loading' state
+                let loadingStarted = false;
+                let loadingFinished = false;
+
+                // Timeout to resolve if the 'is-loading' image not shown. That means all chats has been loaded
+                setTimeout(() => {
+                    !loadingStarted && resolve(null);
+                    window.pageLive.announce({ msg: "No 'is-loading' sign. End of list" });
+                }, 400);
 
 
-            // Scroll to the bottom
-            chatListContainer.scrollTop = chatListContainer.scrollHeight;
+                // Prepare observer to observe the loading image.
+                const isLoadingObserver = new MutationObserver((mutationsList) => {
+                    // Flag whether loading class is added or removed
+                    let isLoadingClassAdded = false;
+                    let isLoadingClassRemoved = false;
 
+                    for (const mutation of mutationsList) {
+
+                        // Check if the mutation is an attribute change on the 'class' attribute
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            // Cast target to HTMLElement
+                            const target = mutation.target as HTMLElement;
+
+                            // Does prev class has 'isLoading' class ?
+                            const prevHasLoadingClass = mutation.oldValue?.includes(IS_LOADING_CLASS);
+                            // Does the current class has 'isLoading' class ? 
+                            // Get the class attribute's value AT THE MOMENT OF THE MUTATION
+                            const currentHasLoadingClass = target.classList.contains(IS_LOADING_CLASS);
+
+                            if (!prevHasLoadingClass && currentHasLoadingClass) {
+                                // Flagging the loading has started is useful to cancel timeout above (the case when all chats has been loaded)
+                                loadingStarted = true;
+                                window.pageLive.announce({ msg: "Loading sign is shown" });
+                            } else if (prevHasLoadingClass && !currentHasLoadingClass) {
+                                window.pageLive.announce({ msg: "Loading sign is hidden" });
+                                loadingFinished = true;
+                                resolve(null);
+                            }
+
+                        }
+                    }
+
+                });
+                isLoadingObserver.observe(isLoadingElement, {
+                    attributes: true,             // Watch for attribute changes
+                    attributeFilter: ['class'],   // Only watch the 'class' attribute for efficiency
+                    attributeOldValue: true,       // Not strictly needed here, but useful for debugging
+                    subtree: true,
+                    // attributes: true,
+                    // characterData: true,
+                    // attributeOldValue: true,
+                    // characterDataOldValue: true // Also get the old value for text changes
+                });
+
+                // Scroll to the bottom
+                scrollerElement.scrollTop = scrollerElement.scrollHeight;
+                // Wait a little for the UI to be updated
+                await new Promise(r => setTimeout(r, 400 * 13));
+            });
 
 
             // Fail safe
@@ -462,7 +555,7 @@ import { Keybinds } from "../keybind-manager";
         // Make sure the chat list container exist
         await ensureChatListContainerElement();
 
-        return chatListContainer?.querySelector(`.conversation${CHAT_SELECTED_TAG_SELECTOR}}`) as HTMLElement | null;
+        return chatListContainer?.querySelector(`.conversation${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
     }
 
     /**
@@ -474,8 +567,30 @@ import { Keybinds } from "../keybind-manager";
 
         // Find the active chat item element in the chat list
         return chatListContainer?.
-            querySelector(`.conversation-actions-container${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
+            querySelector(`.${CHAT_ACTIONS_CONTAINER_CLASS}${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
 
+    }
+    /**
+     * Get the button that will open chat context menu, which contains: rename button, delete button, etc.
+     * @param {HTMLElement | null} chatActionsContainer The container element of the button. This element must have class 'conversation-actions-container'
+     * @return {Promise<HTMLElement |null>} The chat actions menu button
+     */
+    async function getChatActionsMenuButton(chatActionsContainer: HTMLElement | null): Promise<HTMLElement | null> {
+        // The parent element must not null
+        if (chatActionsContainer === null) {
+            console.warn("[PageLive][Gemini] Chat actions container is null.");
+            window.pageLive.announce({ msg: "Chat actions container is null. Exitting." });
+            return null;
+        }
+
+        // The parent element must have the required class
+        if (!chatActionsContainer.classList.contains(CHAT_ACTIONS_CONTAINER_CLASS)) {
+            console.warn("[PageLive][Gemini] Chat actions container does not have the required class.");
+            window.pageLive.announce({ msg: "Chat actions container does not have the required class. Exitting." });
+            return null;
+        }
+
+        return chatActionsContainer.querySelector('.conversation-actions-menu-button') as HTMLElement | null;
     }
 
 
@@ -552,3 +667,5 @@ import { Keybinds } from "../keybind-manager";
 
 
 
+NEXT:
+- When to click the chat menu button, should keep the  side nav open  ? should the active chat visible ?
