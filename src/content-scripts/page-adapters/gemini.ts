@@ -56,6 +56,36 @@ import { Keybinds } from "../keybind-manager";
     const CHAT_ACTIONS_CONTAINER_CLASS = "conversation-actions-container";
 
     /**
+     * This function to requery the 'persisted' elements, such as `chatListContainer`.
+     * Note: On window resize, references to 'persisted' elements seems invalid, thus the feature is not working.
+     * For instance, after resized, the function `getActiveChatMenuButton` can not find the button. However it does not raise any error message.
+     * That's why the references need to be updated.
+     * The event handler set below will be debounced.
+     */
+    async function addWindowResizeListener() {
+        // The timer id. We will debounce the event handler to avoid rapid execution during window resizing.
+        let resizeTimer: ReturnType<typeof setTimeout>;
+        const DEBOUNCE_DELAY = 300;
+
+        window.addEventListener('resize', () => {
+            // Clear the previous timer (if it exists)
+            clearTimeout(resizeTimer);
+
+            // Set a new timer
+            resizeTimer = setTimeout(() => {
+                // Requery the key / persisted HTMLElements
+                chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
+                ensureChatListContainerElement(true);
+                chatInputElement = getChatInputElement();
+
+                // TODO find some other persisted elements like : chat container, chat input, etc.
+
+            }, DEBOUNCE_DELAY);
+        });
+    }
+
+
+    /**
      * Wait for the chat container to be available
      * This is necessary because the chat container may not be immediately available on page load.
      * It will wait for up to 10 seconds before giving up.
@@ -76,12 +106,14 @@ import { Keybinds } from "../keybind-manager";
     }
 
     /**
-     * Return the `chatListContainer` element. If null, try to query from the document.
+     * Return the `Container` element. If null, try to query from the document.
      * If failed query the element, announce the result and return false.
+     * @param {boolean} reQuery If set true, will re-parse / re-query the element.
      * @returns {Promise<boolean>} if the `chatListContainer` exist.
      */
-    async function ensureChatListContainerElement(): Promise<boolean> {
-        if (!chatListContainer) {
+    async function ensureChatListContainerElement(reQuery = false): Promise<boolean> {
+        // If null or need to re-query again
+        if (chatListContainer === null || reQuery) {
             // Get the chat list container
             // chatListContainer = document.querySelector('[data-test-id="all-conversations"]') as HTMLElement | null;
             chatListContainer = document.querySelector('.chat-history');
@@ -299,7 +331,7 @@ import { Keybinds } from "../keybind-manager";
         });
 
         // Find the button that will show the chat-context menu
-        const menuButton: HTMLElement | null = await getChatMenuButton();
+        const menuButton: HTMLElement | null = await getActiveChatMenuButton();
 
         // If still can not find chat menu button, cannot continue. Announce so the user knows
         if (!menuButton) {
@@ -348,7 +380,7 @@ import { Keybinds } from "../keybind-manager";
      * 
      * Since the browser size might change any time, we will not save the reference to the button. Instead, we will find it every time this function is called. 
      */
-    async function getChatMenuButton(): Promise<HTMLElement | null> {
+    async function getActiveChatMenuButton(): Promise<HTMLElement | null> {
         // Try to find the chat menu button for small/medium screen
         let chatMenuButton = document.querySelector('[data-test-id="conversation-actions-button"]') as HTMLElement | null;
 
@@ -356,20 +388,23 @@ import { Keybinds } from "../keybind-manager";
         if (chatMenuButton) return chatMenuButton;
 
         // If not found, try to find the chat menu button for large screen
+        // On large screens, the active chat menu button will be on side nav.
 
-        // Make sure the side nav is opened. If not click the button to open it.
+        // Is side nav open ?
         const isSideNavOpened = await checkIsSideNavOpened();
 
-        // If the side nav is closed, we need to open it temporarily
-        // Click the side nav toogle button
-        const sideNavToggleButton = await getSideNavToggleButton();
+        // If the side nav is closed, we need to open it by clicking the side nav toogle button
+        if (!isSideNavOpened) {
+            const sideNavToggleButton = await getSideNavToggleButton();
+            // If the toogle button not exist, we can't continue
+            if (!sideNavToggleButton) return null;
 
-        // If the toogle button not exist, we can't continue
-        if (!sideNavToggleButton) return null;
+            // Click to open the side nav. No need to be closed back.
+            await sideNavToggleButton.click();
+        }
 
         // Announce about the current activity
         window.pageLive.announce({ msg: "Reading from side navigation" });
-        await sideNavToggleButton.click();
 
         // wait a little for animation to finish
         await new Promise(r => setTimeout(r, 400));
@@ -383,8 +418,6 @@ import { Keybinds } from "../keybind-manager";
         // Locate the chat menu button in the active chat element
         chatMenuButton = await getChatActionsMenuButton(selectedChatActionsElement);
 
-        // Click the side nav toogle button, to close it back.
-        await sideNavToggleButton.click();
         return chatMenuButton;
     }
 
@@ -402,7 +435,12 @@ import { Keybinds } from "../keybind-manager";
 
         const isOpened = chatListContainer.querySelector('.side-nav-opened') !== null;
 
-        window.pageLive.announce({ msg: `is side nav opened ? ${isOpened ? 'Yes' : 'No'}`, });
+        console.log("Element that has side nav opened")
+        console.log(chatListContainer.querySelectorAll('.side-nav-opened'));
+        console.log("chat list container")
+        console.log(chatListContainer);
+
+        window.pageLive.announce({ msg: `Side navigation is opened ? ${isOpened ? 'Yes' : 'No'}`, });
 
         return isOpened;
     }
@@ -411,9 +449,10 @@ import { Keybinds } from "../keybind-manager";
      * So, there is a chance that the active chat is not in the DOM yet.
      * To handle this, this function will scroll the chat list to the bottom to meet 2 criterias : Until the active chat is visible or all chats are loaded.
      * @param {boolean} findActiveChat If active chat is found, this function no longer scroll down on the chat list container / scroller
+     * @param {boolean} shouldCloseBackNavBar Set to false if the side nav need to be closed back in the case this function automatically open the side nav.
      * @return {Promise<void>}
      */
-    async function populateChatList(findActiveChat = false) {
+    async function populateChatList(findActiveChat = false, shouldCloseBackNavBar = true) {
         // Chat list is required to continue
         await ensureChatListContainerElement();
         if (!chatListContainer) return;
@@ -590,7 +629,8 @@ import { Keybinds } from "../keybind-manager";
             return null;
         }
 
-        return chatActionsContainer.querySelector('.conversation-actions-menu-button') as HTMLElement | null;
+        // return chatActionsContainer.querySelector('.conversation-actions-menu-button') as HTMLElement | null;
+        return chatActionsContainer.querySelector('[data-test-id="actions-menu-button"]') as HTMLElement | null;
     }
 
 
@@ -643,7 +683,8 @@ import { Keybinds } from "../keybind-manager";
         "The feature to read number of previous chat is still on progress.",
     ]);
 
-
+    // Add resize event handler, to refresh references to key elements
+    addWindowResizeListener();
 
     // Add keybind 'focus chat input'
     window.pageLive.keybindManager.registerKeybind(
@@ -660,12 +701,7 @@ import { Keybinds } from "../keybind-manager";
         window.PageLiveStatics.KeybindManager.Keybinds.ChatCurrentDelete,
         currentChatDelete
     );
+
+
 })();
 
-
-
-
-
-
-NEXT:
-- When to click the chat menu button, should keep the  side nav open  ? should the active chat visible ?
