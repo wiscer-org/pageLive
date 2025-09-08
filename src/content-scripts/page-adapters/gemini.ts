@@ -270,8 +270,19 @@ import { Keybinds } from "../keybind-manager";
         if (!chatInputElement) {
             chatInputElement = getChatInputElement();
         }
+
         if (chatInputElement) {
+            // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
+            // By change focus to other element first, before change focus to the input, will force the SR change to Form/Input mode. Thus, user can type right away without having to change SR mode.
+
+            const toggleButton = await getSideNavToggleButton();
+            toggleButton?.focus();
+
+            // Wait very very quick
+            await new Promise(r => setTimeout(r, 50));
+
             chatInputElement.focus();
+
             // No need to announce, since screen reader will read the focused element automatically.
         }
     }
