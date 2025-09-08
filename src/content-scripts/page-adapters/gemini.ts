@@ -338,7 +338,15 @@ import { Keybinds } from "../keybind-manager";
      * The chat actions menu needs to be opened first, like the effect of `openChatActionsMenu` function
      */
     async function getChatActionsMenuElement(): Promise<HTMLElement | null> {
-        const chatActionsMenu = document.querySelector('.conversation-actions-menu') as HTMLElement | null;
+        // This is for the large width screen.
+        let chatActionsMenu = document.querySelector('.conversation-actions-menu') as HTMLElement | null;
+
+        // If not found, maybe currently is small width screen.
+        if (chatActionsMenu === null) {
+            // For the small screen, no rational suitable selector can be found.
+            // Below is the closest one
+            chatActionsMenu = document.querySelector('mat-bottom-sheet-container[role="dialog"]');
+        }
 
         if (chatActionsMenu === null) {
             const msg = "Failed to find chat actions menu element";
