@@ -25,6 +25,7 @@ export enum Keybinds {
     ChatCurrentDelete = 'Ctrl + Shift + Backspace', // Delete current chat
     FocusChatInput = 'Shift + Esc', // Focus the chat input
     AnnounceLastResponse = 'Ctrl + Shift + Enter', // Announce the last response
+    NewChat = 'Ctrl + Shift + O', // Start new chat
 }
 
 /**
@@ -91,6 +92,19 @@ const createKeybindDetail = (
                     shiftKey: true,
                     key: 'Enter',
                     altKey: false,
+                    metaKey: false,
+                }
+            };
+            break;
+        case Keybinds.NewChat:
+            keybindDetail = {
+                description: description || 'Start new chat',
+                action: action,
+                keys: {
+                    ctrlKey: true,
+                    shiftKey: false,
+                    key: 'o',
+                    altKey: true,
                     metaKey: false,
                 }
             };

@@ -136,8 +136,9 @@ import { Keybinds } from "../keybind-manager";
 
         // If still not exist, notify
         if (!sideNavToogleButton) {
-            window.pageLive.announce({ msg: "Failed to find side nav toggle button" });
-            console.warn("[PageLive][Gemini] Failed to find side nav toggle button");
+            const msg = "Failed to find side nav toggle button";
+            console.warn(`[PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
         }
         return sideNavToogleButton;
     }
@@ -636,6 +637,38 @@ import { Keybinds } from "../keybind-manager";
         return chatActionsContainer.querySelector('[data-test-id="actions-menu-button"]') as HTMLElement | null;
     }
 
+    /**
+     * Start new chat, by clicking a button on side nav.
+     */
+    async function startNewChat() {
+        window.pageLive.announce({ msg: "Start a new chat" });
+
+        // Make sure side nav is opened
+        const isSideNavOpened = await checkIsSideNavOpened();
+        if (!isSideNavOpened) {
+            const sideNavToggleButton = await getSideNavToggleButton();
+            // Click the toogle button and wait a little
+            sideNavToggleButton?.click();
+            await new Promise(r => setTimeout(r, 250));
+        }
+
+        // Find the start-new-chat button. Selector below
+        // const newChatButton = document.querySelector('[data-test-id="new-chat-button"]') as HTMLElement | null;
+        const newChatButton = document.querySelector('[data-test-id="expanded-button"]') as HTMLElement | null;
+
+        if (newChatButton === null) {
+            const msg = "Failed to find the new chat button";
+            console.error(`[PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
+            return;
+        } else {
+            // Click the button
+            newChatButton.click();
+        }
+
+
+    }
+
 
 
 
@@ -701,6 +734,11 @@ import { Keybinds } from "../keybind-manager";
         window.PageLiveStatics.KeybindManager.Keybinds.ChatCurrentDelete,
         currentChatDelete
     );
+    // Add keybind 'start new chat'
+    window.pageLive.keybindManager.registerKeybind(
+        window.PageLiveStatics.KeybindManager.Keybinds.NewChat,
+        startNewChat
+    )
 
 
 })();

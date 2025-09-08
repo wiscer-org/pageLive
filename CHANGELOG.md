@@ -10,7 +10,8 @@
 - New shortcut to focus on the chat input box : `Shift + Esc`.
 - New shortcut to announce the last response : `Ctrl + Shift + Enter`.
 - Prepend every announce with 'PageLive' by default. This help users to identify messages from PageLive extension.
-- New shortcut to delete current chat / conversation.
+- New shortcut to delete current chat / conversation : `Ctrl + Shift + Backspace`.
+- New shortcut to start a new chat : `Ctrl + Alt + o`. Not using `Ctrl + Shift + O`, as planned, because Chrome has use it to open bookmark.
 
 ### On Progress
 
