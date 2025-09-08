@@ -368,34 +368,19 @@ import { Keybinds } from "../keybind-manager";
 
     /** Delete the current chat, if possible */
     async function currentChatDelete() {
-        console.log('[PageLive][Gemini] Deleting current chat');
-
-        // FIXME: delete below after testing
-        window.pageLive.announce({
-            msg: "Delete chat",
-        });
+        // console.log('[PageLive][Gemini] Deleting current chat');
 
         // Find the button that will show the chat-context menu
         const menuButton: HTMLElement | null = await getActiveChatMenuButton();
 
         // If still can not find chat menu button, cannot continue. Announce so the user knows
         if (!menuButton) {
-            console.warn('[PageLive][Gemini] Chat menu button not found. Unable to delete current chat.');
-            window.pageLive.announce({
-                msg: "Chat menu button not found",
-            });
+            // console.warn('[PageLive][Gemini] Chat menu button not found. Unable to delete current chat.');
             return;
         }
-        // FIXME delete below
-        else {
-            window.pageLive.announce({
-                msg: "Chat menu button found.",
-            });
-        }
 
-        // Activate the button, wait for the menu to be shown
+        // Activate the button, then wait for the animation to complete
         menuButton.click();
-        // Wait a little for animation to finish
         await new Promise(resolve => setTimeout(resolve, 200));
 
         // Find the delete button in the menu
@@ -406,14 +391,9 @@ import { Keybinds } from "../keybind-manager";
 
         // Done. Delete confirmation and action will be handled by the page itself.
 
-        console.log('[PageLive][Gemini] DONE Deleting current chat');
-
-        // FIXME: delete below after testing
-        window.pageLive.announce({
-            msg: "Finish delete current chat function.",
-            omitPreannounce: true
-        });
+        // console.log('[PageLive][Gemini] DONE Deleting current chat');
     };
+
     /**
      * Note: Chat menu button is the button to show the chat context menu, which contains rename and delete chat buttons.
      * In the small/medium screen, there is only one chat menu button: at the top right which show menu for the current active chat.
@@ -450,10 +430,10 @@ import { Keybinds } from "../keybind-manager";
         }
 
         // Announce about the current activity
-        window.pageLive.announce({ msg: "Reading from side navigation" });
+        window.pageLive.announce({ msg: "Opening side navigation" });
 
         // wait a little for animation to finish
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, 250));
 
         // Trigger the chat list until the active / selected chat is in the list
         await populateChatList(true);
@@ -479,17 +459,9 @@ import { Keybinds } from "../keybind-manager";
         await ensureChatListContainerElement();
         if (!chatListContainer) return false;
 
-        const isOpened = chatListContainer.querySelector('.side-nav-opened') !== null;
-
-        console.log("Element that has side nav opened")
-        console.log(chatListContainer.querySelectorAll('.side-nav-opened'));
-        console.log("chat list container")
-        console.log(chatListContainer);
-
-        window.pageLive.announce({ msg: `Side navigation is opened ? ${isOpened ? 'Yes' : 'No'}`, });
-
-        return isOpened;
+        return chatListContainer.querySelector('.side-nav-opened') !== null;
     }
+
     /**
      * Chat list is not fully populated until the chat list is scrolled to the bottom.
      * So, there is a chance that the active chat is not in the DOM yet.
@@ -503,19 +475,20 @@ import { Keybinds } from "../keybind-manager";
         await ensureChatListContainerElement();
         if (!chatListContainer) return;
 
-        // DELETE below
-        window.pageLive.announce({ msg: "populating chat list: started" });
-
         // Required: Loading image to be observed
         const isLoadingElement = chatListContainer.querySelector('.loading-history-spinner-container');
         if (!isLoadingElement) {
-            window.pageLive.announce({ msg: "Failed to find 'is loading' image" });
+            const msg = "Unable to find loading-history-spinner-container element";
+            console.error(`[PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
             return;
         }
         // Required: Scroller element that need to be scrolled down
         const scrollerElement = chatListContainer.closest('infinite-scroller');
         if (!scrollerElement) {
-            window.pageLive.announce({ msg: "Failed to find scroller element" });
+            const msg = "Failed to find the closest infinite-scroller element";
+            console.error(`[PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
             return;
         }
 
@@ -525,22 +498,11 @@ import { Keybinds } from "../keybind-manager";
         // Loop until any of 2 conditions found: chat active or fully loaded (no more 'is-loading' image)
         let failSafe = 0;
         while (true) {
-
-            // FIXME delete below
-            findActiveChat = true;
-
             // Break if we want to find active chat and it is already loaded
-            if (findActiveChat && await getSelectedChatElement()) {
-                // Is active chat element available
-                const activeSelectedChat = await getSelectedChatElement();
-                if (activeSelectedChat !== null) {
-                    window.pageLive.announce({ msg: "Active chat is found. Number of scroll : " + failSafe });
-                    console.log("Active chat element");
-                    console.log(activeSelectedChat);
-                    return true;
-                }
-            } else {
-                window.pageLive.announce({ msg: "Active chat is not found. Repeat is not found" });
+            const activeSelectedChat = await getSelectedChatElement();
+            if (findActiveChat && activeSelectedChat !== null) {
+                // window.pageLive.announce({ msg: "Active chat is found. Number of scroll : " + failSafe });
+                return true;
             }
 
             // Note: After scroll down, one of 2 things might happen:
@@ -557,7 +519,6 @@ import { Keybinds } from "../keybind-manager";
 
                 // Flags for 'is loading' state
                 let loadingStarted = false;
-                let loadingFinished = false;
 
                 // Timeout to resolve if the 'is-loading' image not shown. That means all chats has been loaded
                 setTimeout(() => {
@@ -567,7 +528,7 @@ import { Keybinds } from "../keybind-manager";
 
 
                 // Prepare observer to observe the loading image.
-                const isLoadingObserver = new MutationObserver((mutationsList) => {
+                const isLoadingObserver = new MutationObserver((mutationsList, observer) => {
                     // Flag whether loading class is added or removed
                     let isLoadingClassAdded = false;
                     let isLoadingClassRemoved = false;
@@ -588,51 +549,37 @@ import { Keybinds } from "../keybind-manager";
                             if (!prevHasLoadingClass && currentHasLoadingClass) {
                                 // Flagging the loading has started is useful to cancel timeout above (the case when all chats has been loaded)
                                 loadingStarted = true;
-                                window.pageLive.announce({ msg: "Loading sign is shown" });
+                                window.pageLive.announce({ msg: "Loading previous chats" });
                             } else if (prevHasLoadingClass && !currentHasLoadingClass) {
-                                window.pageLive.announce({ msg: "Loading sign is hidden" });
-                                loadingFinished = true;
+                                // Loading has finished. Disconnect `isLoadingObserver` and resolve.
+                                observer.disconnect();
                                 resolve(null);
+                                // window.pageLive.announce({ msg: "Loading sign is hidden" });
                             }
-
                         }
                     }
-
                 });
                 isLoadingObserver.observe(isLoadingElement, {
                     attributes: true,             // Watch for attribute changes
                     attributeFilter: ['class'],   // Only watch the 'class' attribute for efficiency
                     attributeOldValue: true,       // Not strictly needed here, but useful for debugging
                     subtree: true,
-                    // attributes: true,
-                    // characterData: true,
-                    // attributeOldValue: true,
-                    // characterDataOldValue: true // Also get the old value for text changes
                 });
 
                 // Scroll to the bottom
                 scrollerElement.scrollTop = scrollerElement.scrollHeight;
                 // Wait a little for the UI to be updated
-                await new Promise(r => setTimeout(r, 400 * 13));
+                await new Promise(r => setTimeout(r, 400));
             });
-
 
             // Fail safe
             failSafe++;
             if (failSafe > 10) break;
         }
-
-        // Console out the active chat item
-
-        // Announce if there is no chat item
-
-        // DELETE below
-        window.pageLive.announce({ msg: "populating chat list finished" });
-
     }
 
     /**
-     * Get the active chat from one of the parent elements.
+     * Get the active chat element from one of the parent elements.
      * Note: The chat element basicly contains the chat title. For the actions menu, used the `getSelectedChatActionsContainerElement`.
      * @returns {HTMLElement|null} Get the active chat items container
      */
@@ -644,7 +591,7 @@ import { Keybinds } from "../keybind-manager";
     }
 
     /**
-     * Get the active chat item element in the chat list.
+     * Get the active chat actions element in the chat list.
      */
     async function getSelectedChatActionsContainerElement(): Promise<HTMLElement | null> {
         // The chat list container is required
@@ -653,8 +600,8 @@ import { Keybinds } from "../keybind-manager";
         // Find the active chat item element in the chat list
         return chatListContainer?.
             querySelector(`.${CHAT_ACTIONS_CONTAINER_CLASS}${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
-
     }
+
     /**
      * Get the button that will open chat context menu, which contains: rename button, delete button, etc.
      * @param {HTMLElement | null} chatActionsContainer The container element of the button. This element must have class 'conversation-actions-container'
@@ -663,24 +610,23 @@ import { Keybinds } from "../keybind-manager";
     async function getChatActionsMenuButton(chatActionsContainer: HTMLElement | null): Promise<HTMLElement | null> {
         // The parent element must not null
         if (chatActionsContainer === null) {
-            console.warn("[PageLive][Gemini] Chat actions container is null.");
-            window.pageLive.announce({ msg: "Chat actions container is null. Exitting." });
+            const msg = "Chat actions container is null";
+            console.warn(`[PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
             return null;
         }
 
         // The parent element must have the required class
         if (!chatActionsContainer.classList.contains(CHAT_ACTIONS_CONTAINER_CLASS)) {
-            console.warn("[PageLive][Gemini] Chat actions container does not have the required class.");
-            window.pageLive.announce({ msg: "Chat actions container does not have the required class. Exitting." });
+            const msg = "Chat actions container does not have the required class";
+            console.warn(`PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
             return null;
         }
 
-        // return chatActionsContainer.querySelector('.conversation-actions-menu-button') as HTMLElement | null;
+        // The more complete selector: `.conversation-actions-menu-button.[data-test-id="actions-menu-button]`
         return chatActionsContainer.querySelector('[data-test-id="actions-menu-button"]') as HTMLElement | null;
     }
-
-
-
 
 
 
