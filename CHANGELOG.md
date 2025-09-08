@@ -10,10 +10,10 @@
 - New shortcut to focus on the chat input box : `Shift + Esc`.
 - New shortcut to announce the last response : `Ctrl + Shift + Enter`.
 - Prepend every announce with 'PageLive' by default. This help users to identify messages from PageLive extension.
+- New shortcut to delete current chat / conversation.
 
 ### On Progress
 
-- TODO: New shortcut to delete current chat / conversation.
 - TODO: Get the title of current chat, if not yet have title use default like 'no title'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response

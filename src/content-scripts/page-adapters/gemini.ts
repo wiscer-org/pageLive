@@ -30,7 +30,6 @@ import { Keybinds } from "../keybind-manager";
  *              .loading-history-spinner-container
  */
 
-
 (async () => {
     const CHAT_CONTAINER_SELECTOR = "#chat-history";
 
@@ -320,6 +319,45 @@ import { Keybinds } from "../keybind-manager";
             , omitPreannounce: true,
         });
     }
+    /**
+     * Open Gemini's chat menu on the side nav.
+     * @param {string } chatId The id of the chat. If is an empty string will open the current active chat.
+     * @return {Promise<void>} 
+     */
+    async function openChatActionsMenu(chatId: string): Promise<void> { // FIXME currently left empty. In the future, delete of refactor other functions that uses this function.
+    }
+    /**
+     * Get the chat actions menu element. It is the chat context pop up menu.
+     * The chat actions menu needs to be opened first, like the effect of `openChatActionsMenu` function
+     */
+    async function getChatActionsMenuElement(): Promise<HTMLElement | null> {
+        const chatActionsMenu = document.querySelector('.conversation-actions-menu') as HTMLElement | null;
+
+        if (chatActionsMenu === null) {
+            const msg = "Failed to find chat actions menu element";
+            console.warn(`[PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
+        }
+
+        return chatActionsMenu;
+    }
+    /**
+     * Get the delete button from the opened chat actions menu
+     */
+    async function getDeleteButton(): Promise<HTMLElement | null> {
+        const chatActionsMenu = await getChatActionsMenuElement();
+        if (chatActionsMenu === null) return null;
+
+
+        const deleteButton = chatActionsMenu?.querySelector('[data-test-id="delete-button"]') as HTMLElement | null;
+        if (deleteButton === null) {
+            const msg = "Failed to find delete button";
+            console.warn(`[PageLive][Gemini] ${msg}`);
+            window.pageLive.announce({ msg });
+        }
+
+        return deleteButton;
+    }
 
     /** Delete the current chat, if possible */
     async function currentChatDelete() {
@@ -338,8 +376,6 @@ import { Keybinds } from "../keybind-manager";
             console.warn('[PageLive][Gemini] Chat menu button not found. Unable to delete current chat.');
             window.pageLive.announce({
                 msg: "Chat menu button not found",
-                // User triggered action, no need to preannounce
-                omitPreannounce: true
             });
             return;
         }
@@ -347,16 +383,19 @@ import { Keybinds } from "../keybind-manager";
         else {
             window.pageLive.announce({
                 msg: "Chat menu button found.",
-                omitPreannounce: true
             });
         }
 
         // Activate the button, wait for the menu to be shown
         menuButton.click();
+        // Wait a little for animation to finish
+        await new Promise(resolve => setTimeout(resolve, 200));
 
         // Find the delete button in the menu
+        const deleteButton = await getDeleteButton();
 
         // Activate the delete button
+        deleteButton?.click();
 
         // Done. Delete confirmation and action will be handled by the page itself.
 
@@ -704,4 +743,3 @@ import { Keybinds } from "../keybind-manager";
 
 
 })();
-
