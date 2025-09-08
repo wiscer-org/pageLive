@@ -301,10 +301,17 @@ import { Keybinds } from "../keybind-manager";
             omitPreannounce: true
         });
 
+        /*
+        * This is a trial, by commenting if-lines below :
+        * We are going to requery last response element, due to the possibility PageLive not catching the last returning response.
+        * Note: On gemini returning current response, PageLive (this file) persist the 'last response'. This 'last response' was used to be read again. 
+        * However there is a possibility PageLive not able to persist the last response, probably because of too sort delay time.
+        */
+
         // If there is no ref to the last response element, try to get it again
-        if (!lastGeminiResponseElement) {
-            lastGeminiResponseElement = getLastResponseElement()
-        }
+        // if (!lastGeminiResponseElement) {
+        lastGeminiResponseElement = getLastResponseElement();
+        // }
 
         // Prepare the message to be announced.
         let toBeAnnounced = "No response element is found.";
