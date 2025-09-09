@@ -1,15 +1,15 @@
 # Changelog
 
-## v2.1.0
+## v2.0.1 (on progress)
 
-- empty
+- Remove unnecessary announcements.
+- Various bug fixes
 
-### On Progress
+### Planned
 
 - TODO: Get the title of current chat, if not yet have title use default like 'no title'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
-- Various bugs fix.
 
 ### Future
 

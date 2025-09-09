@@ -390,6 +390,8 @@ import { Keybinds } from "../keybind-manager";
     async function currentChatDelete() {
         // console.log('[PageLive][Gemini] Deleting current chat');
 
+        // TODO: Detect if this is a new chat. If yes, cannot find the chat menu button, thus cannot continue. Announce so the user knows.
+
         // Find the button that will show the chat-context menu
         const menuButton: HTMLElement | null = await getActiveChatMenuButton();
 
@@ -447,10 +449,9 @@ import { Keybinds } from "../keybind-manager";
 
             // Click to open the side nav. No need to be closed back.
             await sideNavToggleButton.click();
+            // Announce about the current activity
+            window.pageLive.announce({ msg: "Opening side navigation" });
         }
-
-        // Announce about the current activity
-        window.pageLive.announce({ msg: "Opening side navigation" });
 
         // wait a little for animation to finish
         await new Promise(r => setTimeout(r, 250));
@@ -540,10 +541,16 @@ import { Keybinds } from "../keybind-manager";
                 // Flags for 'is loading' state
                 let loadingStarted = false;
 
-                // Timeout to resolve if the 'is-loading' image not shown. That means all chats has been loaded
+                // Timeout to resolve and exit the process of populating the chat list, if the 'is-loading' image not shown. That means all chats has been loaded
                 setTimeout(() => {
-                    !loadingStarted && resolve(null);
-                    window.pageLive.announce({ msg: "No 'is-loading' sign. End of list" });
+                    // If loading has not started, that means all chats has been loaded
+                    if (!loadingStarted) {
+                        resolve(null);
+                        window.pageLive.announce({ msg: "Not loading anymore. All chats has been loaded" });
+                        // We can not return here, since this is inside setTimeout.
+                        // Instead, we will set the `failSafe` to a large number to break the while loop below
+                        failSafe = 999;
+                    }
                 }, 400);
 
 
