@@ -728,10 +728,10 @@ import { Keybinds } from "../keybind-manager";
     // TODO Should feed info abut whether  the page is a saved chat or not.. If  it is a saved chat, mention the title
     window.pageLive.initialAnnounceInfo.push("Gemini page");
 
-    // FIXME Snapshot info below is temporary, need to be replaced with the actual snapshot info
+    // TODO Set snapshot info below to give user some clue about the page.
     window.pageLive.dialogManager.setSnapshotInfos([
         "This is a Gemini page.",
-        "The feature to read number of previous chat is still on progress.",
+        // "TODO: Add more snapshot info here.",
     ]);
 
     // Add resize event handler, to refresh references to key elements
