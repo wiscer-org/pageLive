@@ -25,7 +25,7 @@ export enum Keybinds {
     ChatCurrentDelete = 'Ctrl + Shift + Backspace', // Delete current chat
     FocusChatInput = 'Shift + Esc', // Focus the chat input
     AnnounceLastResponse = 'Ctrl + Shift + Enter', // Announce the last response
-    NewChat = 'Ctrl + Shift + O', // Start new chat
+    NewChat = 'Ctrl + Alt + O', // Start new chat
 }
 
 /**
@@ -167,7 +167,7 @@ export default class KeybindManager {
      * @param action The function to execute when the keybind is triggered.
      */
     public registerKeybind(keybind: Keybinds, action: () => Promise<void>, description?: string) {
-        console.log(`[PageLive] Registering keybind: ${keybind}`);
+        // console.log(`[PageLive] Registering keybind: ${keybind}`);
         this.keybinds.set(keybind, createKeybindDetail(keybind, action, description));
 
         // Update the keybinds list in the dialog manager

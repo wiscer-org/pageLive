@@ -145,14 +145,10 @@ export class DialogManager {
 
         const keybindsList = document.createElement('ul');
 
-        console.log("[PageLive] Rendering keybinds info in the dialog.");
-        console.log(`keybinds length: ${this.pageLive.keybindManager.keybinds.size}`);
-
         // Iterate over the keybinds and create list items
         this.pageLive.keybindManager.keybinds.forEach((keybindDetail, key) => {
             const listItem = document.createElement('li');
             listItem.textContent = `${keybindDetail.description} : ${key}`;
-            console.log(`adding list item: ${keybindDetail.description} : ${key}`);
             keybindsList.appendChild(listItem);
         });
 

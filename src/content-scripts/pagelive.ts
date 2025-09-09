@@ -41,7 +41,6 @@ export default class PageLive {
     dev = this.isDev ? devMock : dev;
 
     constructor() {
-        console.log('[PageLive] pagelive.ts loaded on ', window.location.hostname);
         this.init();
     }
     /**
