@@ -4,20 +4,22 @@ import { fail } from "assert";
 import { parseElementsId } from "../general-dev";
 import { Keybinds } from "../keybind-manager";
 import { Chat } from "../page";
+import { isRandomString } from "../util";
+import { parse } from "path";
 
 /**
  * Note about how the process after gemini page is loaded.
- * - Need for the chat container to be rendered 
- * - If any, the page will rendered the previous prompts and responses. Funtion below will set observer to wait for the whole previous chat being rendered in the chat container. 
+ * - Need for the chat container to be rendered
+ * - If any, the page will rendered the previous prompts and responses. Funtion below will set observer to wait for the whole previous chat being rendered in the chat container.
  * - After observing for the previous chat, function below will start new observer for new Gemini responses.
  * - The new incoming response will not be a whole complete text. It will streamlined in part of the text. Function below will set new observer to wait for the whole response being rendered..
- * - Everytime a chunk of response is added to the response element, it will be announced, but with a delay, and cancel the previous announce timeout. 
+ * - Everytime a chunk of response is added to the response element, it will be announced, but with a delay, and cancel the previous announce timeout.
  * - After reaching the timeout, the content of the response element will be announced.
  */
 
 /**
  * Hierarchy subset on the side nav:
- * 
+ *
  * infinite-scroller
  *      .loading-content-spinner-container
  *      .explore-gems-container
@@ -178,7 +180,7 @@ import { Chat } from "../page";
     }
     /**
      * @description This function will observe the chat history container for new Gemini responses.
-     * This function Will match for every new mutation. 
+     * This function Will match for every new mutation.
      * If the new node is the response element, it will save the reference of the element save so the response text can be announced later.
      */
     function observeNewResponses() {
@@ -233,7 +235,7 @@ import { Chat } from "../page";
     /**
      * This function will announce with some delay. The delay will be reset every time this function is invoked.
      * When the timeout is reached, it will execute window.pageLive.announce(msg).
-     * @param {number} delay - The delay in milliseconds before announcing the response. Default is 2000ms (2 seconds). 1 second is too short, causing the screen reader will read the previous response. 
+     * @param {number} delay - The delay in milliseconds before announcing the response. Default is 2000ms (2 seconds). 1 second is too short, causing the screen reader will read the previous response.
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
     function announceWithDelay(delay = 2000) {
@@ -306,7 +308,7 @@ import { Chat } from "../page";
     async function announceLastResponse() {
         console.log('[PageLive][Gemini] Announcing last response');
 
-        // A bit of notification that the last response is goig to be announced. 
+        // A bit of notification that the last response is goig to be announced.
         // This seems to be useful while waiting to find the last response element (if needed).
         window.pageLive.announce({
             msg: "Reading last response.",
@@ -317,7 +319,7 @@ import { Chat } from "../page";
         /*
         * This is a trial, by commenting if-lines below :
         * We are going to requery last response element, due to the possibility PageLive not catching the last returning response.
-        * Note: On gemini returning current response, PageLive (this file) persist the 'last response'. This 'last response' was used to be read again. 
+        * Note: On gemini returning current response, PageLive (this file) persist the 'last response'. This 'last response' was used to be read again.
         * However there is a possibility PageLive not able to persist the last response, probably because of too sort delay time.
         */
 
@@ -342,7 +344,7 @@ import { Chat } from "../page";
     /**
      * Open Gemini's chat menu on the side nav.
      * @param {string } chatId The id of the chat. If is an empty string will open the current active chat.
-     * @return {Promise<void>} 
+     * @return {Promise<void>}
      */
     async function openChatActionsMenu(chatId: string): Promise<void> { // FIXME currently left empty. In the future, delete of refactor other functions that uses this function.
     }
@@ -436,14 +438,14 @@ import { Chat } from "../page";
     /**
      * Note: Chat menu button is the button to show the chat context menu, which contains rename and delete chat buttons.
      * In the small/medium screen, there is only one chat menu button: at the top right which show menu for the current active chat.
-     * In the large screen, there are multiple chat menu buttons: on the right side of each chat in the chat list on the right side navigation. 
-     * 
-     * This function will return the chat menu button for the current active chat. 
+     * In the large screen, there are multiple chat menu buttons: on the right side of each chat in the chat list on the right side navigation.
+     *
+     * This function will return the chat menu button for the current active chat.
      * Steps to find the button:
      * 1. Assume the browser is currently in small/medium screen, get the single chat menu button.
      * 2. If not found, assume the browser is in large screen. We need to find the active chat from the chat list, then locate the chat menu button in the active chat element.
-     * 
-     * Since the browser size might change any time, we will not save the reference to the button. Instead, we will find it every time this function is called. 
+     *
+     * Since the browser size might change any time, we will not save the reference to the button. Instead, we will find it every time this function is called.
      */
     async function getActiveChatMenuButton(): Promise<HTMLElement | null> {
         // Try to find the chat menu button for small/medium screen
@@ -455,23 +457,8 @@ import { Chat } from "../page";
         // If not found, try to find the chat menu button for large screen
         // On large screens, the active chat menu button will be on side nav.
 
-        // Is side nav open ?
-        const isSideNavOpened = await checkIsSideNavOpened();
-
-        // If the side nav is closed, we need to open it by clicking the side nav toogle button
-        if (!isSideNavOpened) {
-            const sideNavToggleButton = await getSideNavToggleButton();
-            // If the toogle button not exist, we can't continue
-            if (!sideNavToggleButton) return null;
-
-            // Click to open the side nav. No need to be closed back.
-            await sideNavToggleButton.click();
-            // Announce about the current activity
-            window.pageLive.announce({ msg: "Opening side navigation" });
-        }
-
-        // wait a little for animation to finish
-        await new Promise(r => setTimeout(r, 250));
+        // Ensure the side nav is opened
+        await ensureSideNavOpened();
 
         // Trigger the chat list until the active / selected chat is in the list
         await populateChatList(true);
@@ -484,12 +471,37 @@ import { Chat } from "../page";
 
         return chatMenuButton;
     }
+    /**
+     * Ensure the side navigation, containing chat list, is opened.
+     * If the side nav is closed, it will be opened by clicking the side nav toggle button.
+     * @returns 
+     */
+    async function ensureSideNavOpened(): Promise<boolean> {
+        // Is side nav open ?
+        const isSideNavOpened = await checkIsSideNavOpened();
+
+        // If the side nav is closed, we need to open it by clicking the side nav toogle button
+        if (!isSideNavOpened) {
+            const sideNavToggleButton = await getSideNavToggleButton();
+            // If the toogle button not exist, we can't continue
+            if (!sideNavToggleButton) return false;
+
+            // Click to open the side nav. No need to be closed back.
+            await sideNavToggleButton.click();
+            // Announce about the current activity
+            window.pageLive.announce({ msg: "Opening side navigation" });
+        }
+
+        // wait a little for animation to finish
+        await new Promise(r => setTimeout(r, 250));
+        return true;
+    }
 
     /**
      * Check if the side navigation (chat list) is opened.
      */
     async function checkIsSideNavOpened(): Promise<boolean> {
-        // When the side nav is opened, 
+        // When the side nav is opened,
         // the elements '.conversation-items-container' and '.conversation-actions-container' will have 'side-nav-opened' class.
         // Side nav considered opened if there is element '.side-nav-opened' in the chat list container
 
@@ -586,7 +598,7 @@ import { Chat } from "../page";
 
                             // Does prev class has 'isLoading' class ?
                             const prevHasLoadingClass = mutation.oldValue?.includes(IS_LOADING_CLASS);
-                            // Does the current class has 'isLoading' class ? 
+                            // Does the current class has 'isLoading' class ?
                             // Get the class attribute's value AT THE MOMENT OF THE MUTATION
                             const currentHasLoadingClass = target.classList.contains(IS_LOADING_CLASS);
 
@@ -632,6 +644,21 @@ import { Chat } from "../page";
         await ensureChatListContainerElement();
 
         return chatListContainer?.querySelector(`.conversation${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
+    }
+    /**
+     * Get the title of the active chat from the chat list. If not found, return empty string.
+     * @returns
+     */
+    async function parseSelectedChatTitle(): Promise<string> {
+        // Get the active chat element
+        const selectedChatElement = await getSelectedChatElement();
+        if (selectedChatElement === null) return "";
+
+        // Get the title element inside the active chat element
+        const titleElement = selectedChatElement.querySelector(CHAT_TITLE_SELECTOR);
+        if (titleElement === null) return "";
+
+        return titleElement.textContent?.trim() || "";
     }
 
     /**
@@ -702,14 +729,6 @@ import { Chat } from "../page";
         }
     }
     /**
-     * Get the current active chat info, if possible.
-     * @returns {Promise<Chat|null>} The current active chat info if found, otherwise null.
-     */
-    async function getOrParseActiveChatInfo(): Promise<Chat | null> {
-
-        return null;
-    }
-    /**
      * Parse the current active chat info from the document, if possible.
      * If successfull parsed, save the result to `activeChat` and will attach to `window.pageLive.page.activeChat`.
      * @returns {Promise<boolean>} Return true is successfully parsed, false otherwise.
@@ -719,20 +738,40 @@ import { Chat } from "../page";
         if (isThisUnsavedChat() === true) return false;
 
         // Parse the id
-        const path = window.location.pathname;
-        const pathMatch = path.match(/^\/app\/([a-zA-Z0-9-]+)$/);
+        activeChat.id = await parseChatId();
 
-        // Parse the title
+        // Parse the title from the chat list
+        await ensureSideNavOpened();
+        activeChat.title = await parseSelectedChatTitle();
 
-        // Attach to global variable: window.pageLive.page.activeChat if successfully parsed
-
+        // Attach to global var if `activeChat.id` is found and not yet attached to `window.pageLive.page.activeChat`:
+        if (activeChat.id && window.pageLive.page.activeChat === null) {
+            window.pageLive.page.activeChat = activeChat;
+        }
         return true;
+    }
+    /**
+     * Parse chat id from the URL path or document. Retunr empty string if not found.
+     * @returns {Promise<string>} The chat id if found, otherwise empty string.
+     */
+    async function parseChatId() {
+        let chatId = "";
+
+        // Parse from URL path
+        const path = window.location.pathname;
+        // Match the path after '/app/' and capture the next segment (the chat id)
+        const pathMatch = path.match(/^\/app\/([^\/]+)/);
+        if (pathMatch) {
+            chatId = pathMatch[1];
+        }
+
+        return chatId;
     }
 
 
     // =============== Execution ===============
 
-    // Start the process 
+    // Start the process
 
     // Wait for the page to be ready
     const isChatContainerExist = await waitForChatContainer();
@@ -747,7 +786,7 @@ import { Chat } from "../page";
     let chatInputElement: HTMLInputElement | null;
 
     // If this page is a saved chat, we need to wait for the chat container to be populated with the previous chat messages.
-    // To ensure the chat container is ready, wait for more 3seconds before observing the chat container. 
+    // To ensure the chat container is ready, wait for more 3seconds before observing the chat container.
     // The wait time will be resettedwhenever there is update on the chat container (that means previous responses is still being updated).
     const DELAY_TO_START_OBSERVE_NEW_RESPONSES = 3000; // 3 seconds
     // Observer to observe if the previous chat being rendered
@@ -806,5 +845,13 @@ import { Chat } from "../page";
         startNewChat
     )
 
+
+    // FIXME remove code block below after testing
+    console.log("testing parseActiveChatInfo");
+    await new Promise(r => setTimeout(r, 3e3));
+    await parseActiveChatInfo();
+    window.pageLive.announce({ msg: "parsing active chat info" });
+    window.pageLive.announce({ msg: `Active chat id: ${activeChat.id}, title: ${activeChat.title}` });
+    console.log(`[PageLive][Gemini] Active chat id: ${activeChat.id}, title: ${activeChat.title}`);
 
 })();
