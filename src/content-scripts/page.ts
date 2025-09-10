@@ -1,6 +1,17 @@
 import PageLive from "./pagelive";
 
+
+// Type to represent specific chat, e.g. current active chat, or the last chat, etc.
+export type Chat = {
+    // The id, usually a hash depends on the page implementation
+    id: string;
+    // The title of the chat, usually the first few words of the chat
+    title: string;
+}
+
 /**
+ * This class is used to represent the information about the page, as a result of the page adapter.
+ * Information includes the snapshot info about the page, e.g. 'chat title', '12 chats exist', '4 new notifications', etc.
  * This class will be instantiated by the PageLive instance, to hold the data from the page adapter (the file specific for certain page, e.g. 'gemini.ts', 'grok.ts', etc.).
  * The reason this class will not be instantiated directly is to avoid conflicts with the PageLive and related scripts.
  * For the same reason, this page adapter will be wrapped in IIEF. Page also will not import other scripts directly, but will use the PageLive instance to access them.
@@ -12,6 +23,8 @@ export default class Page {
     name: string = "";
     // The list of snapshot info about the page, e.g. '2 previous chats', 'starting a new chat', '4 new notifications', etc.
     private snapshotInfo: string[] = [];
+    // The current active chat, if applicable
+    activeChat: Chat | null = null
 
     /**
      * Constructor

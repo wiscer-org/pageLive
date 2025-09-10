@@ -3,6 +3,7 @@
 import { fail } from "assert";
 import { parseElementsId } from "../general-dev";
 import { Keybinds } from "../keybind-manager";
+import { Chat } from "../page";
 
 /**
  * Note about how the process after gemini page is loaded.
@@ -699,12 +700,37 @@ import { Keybinds } from "../keybind-manager";
             // Click the button
             newChatButton.click();
         }
+    }
+    /**
+     * Get the current active chat info, if possible.
+     * @returns {Promise<Chat|null>} The current active chat info if found, otherwise null.
+     */
+    async function getOrParseActiveChatInfo(): Promise<Chat | null> {
 
+        return null;
+    }
+    /**
+     * Parse the current active chat info from the document, if possible.
+     * If successfull parsed, save the result to `activeChat` and will attach to `window.pageLive.page.activeChat`.
+     * @returns {Promise<boolean>} Return true is successfully parsed, false otherwise.
+     */
+    async function parseActiveChatInfo(): Promise<boolean> {
+        // If this is a new chat, there is no active chat info
+        if (isThisUnsavedChat() === true) return false;
 
+        // Parse the id
+        const path = window.location.pathname;
+        const pathMatch = path.match(/^\/app\/([a-zA-Z0-9-]+)$/);
+
+        // Parse the title
+
+        // Attach to global variable: window.pageLive.page.activeChat if successfully parsed
+
+        return true;
     }
 
 
-
+    // =============== Execution ===============
 
     // Start the process 
 
@@ -738,6 +764,12 @@ import { Keybinds } from "../keybind-manager";
     // After finish rendering, we will get the final response and announce it.
     // Below is the variable to point to the last element containing the Gemini responses:
     let lastGeminiResponseElement: HTMLElement | null = null;
+
+    // Information about the current chat. This will be lazy loaded on one of several events, e.g. when side nav is opened, pageLive dialog is opened, etc.
+    // Only attach to `window.pageLive.page` when have tried to parse the info.
+    const activeChat = {
+        id: '', title: '',
+    }
 
     // Feed info to pageLive & pageLive.page
     window.pageLive.page.name = 'Gemini';
