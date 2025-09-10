@@ -2,6 +2,7 @@
 
 ## v2.0.1 (on progress)
 
+- Identify new chat VS saved chat. This will effect of some features like delete current chat.
 - Remove unnecessary announcements.
 - Various bug fixes
 

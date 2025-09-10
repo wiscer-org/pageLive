@@ -386,11 +386,27 @@ import { Keybinds } from "../keybind-manager";
         return deleteButton;
     }
 
+    /**
+     * Checks if the current page is an unsaved chat.
+     * Unsaved chat is identified by the path being exactly '/app' or '/app/'.
+     * @returns {boolean} True if the path matches, otherwise false.
+     */
+    function isThisUnsavedChat(): boolean {
+        const path = window.location.pathname;
+        return path === '/app' || path === '/app/';
+    }
+
     /** Delete the current chat, if possible */
     async function currentChatDelete() {
         // console.log('[PageLive][Gemini] Deleting current chat');
 
-        // TODO: Detect if this is a new chat. If yes, cannot find the chat menu button, thus cannot continue. Announce so the user knows.
+        // Detect if this is a new chat. If yes, cannot find the chat menu button, thus cannot continue. Announce so the user knows.
+        const isUnsavedChat = isThisUnsavedChat();
+        if (isUnsavedChat) {
+            window.pageLive.announce({ msg: "This is a new chat. Nothing to delete." })
+            return;
+        }
+
 
         // Find the button that will show the chat-context menu
         const menuButton: HTMLElement | null = await getActiveChatMenuButton();
