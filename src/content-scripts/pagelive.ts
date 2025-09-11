@@ -146,7 +146,7 @@ export default class PageLive {
 
         // If container not found, attach to the body
         if (!container) {
-            document.body.appendChild
+            document.body.appendChild(this.container);
         }
     }
     /**
@@ -192,7 +192,12 @@ export default class PageLive {
     }
 }
 
-// Initialize the PageLiveClass and attach it to the window object
-(window as any).pageLive = new PageLive();
-// Initialize the PageLive class as a static property on the window object
-(window as any).PageLiveStatics = PageLive;
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Initialize the PageLiveClass and attach it to the window object
+    (window as any).pageLive = new PageLive();
+    // Initialize the PageLive class as a static property on the window object
+    (window as any).PageLiveStatics = PageLive;
+
+});
