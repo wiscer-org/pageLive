@@ -12,10 +12,15 @@ export class DialogManager {
     private pageLive: PageLive;
     private dialogId: string = 'dialog2a2b';
     private dialog: HTMLDialogElement;
+    // Element of the title of this dialog
+    private titleElement: HTMLHeadingElement = document.createElement('h1');
     private snapshotInfos: string[] = [];
     private snapshotInfosElement: HTMLDivElement = document.createElement('div');
     // The container of keybind list 
     private keybindsContainer: HTMLDivElement = document.createElement('div');
+
+    // Callback function on the next time the dialog is opened. Only ran once after the dialog is opened.
+    onNextOpenCallback: (() => Promise<void>) | null = null;
 
     /**
      * Constructor 
@@ -75,6 +80,7 @@ export class DialogManager {
         this.attachDialogListeners();
 
         // Create content for the dialog
+        this.renderTitle();
         this.renderSnapshotInfo();
         this.initKeybindsContainer();
         this.renderKeybindsInfo();
@@ -96,6 +102,15 @@ export class DialogManager {
         dialog.id = this.dialogId;
         return dialog;
     }
+
+    /**
+     * Set the title of the dialog.
+     * @param {string} title - The title to be set.
+     */
+    public setTitle(title: string): void {
+        this.titleElement.textContent = title;
+    }
+
     /**
      * Set the snapshot infos and re-render to the dialog.
      * @param {string[]} snapshotInfos - The snapshot infos to be set.
@@ -103,6 +118,13 @@ export class DialogManager {
     public setSnapshotInfos(snapshotInfos: string[]): void {
         this.snapshotInfos = snapshotInfos;
         this.renderSnapshotInfo();
+    }
+
+    /**
+     * Appends the title element to the dialog.
+     */
+    private renderTitle(): void {
+        this.dialog.appendChild(this.titleElement);
     }
 
     /**
@@ -175,8 +197,14 @@ export class DialogManager {
     async toggleModal() {
         if (this.dialog.open) {
             await this.close();
-
         } else {
+            // If there is a callback function to be run on the next open, run it and clear the callback
+            // Need to be awaited, in case the callback function has async operations, e.g. update the dialog content
+            if (this.onNextOpenCallback !== null) {
+                await this.onNextOpenCallback();
+                this.onNextOpenCallback = null;
+            }
+
             this.showModal();
         }
     }

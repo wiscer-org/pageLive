@@ -1,11 +1,11 @@
 // gemini.ts - Injected only on gemini.google.com
 
-import { fail } from "assert";
+// import { fail } from "assert";
 import { parseElementsId } from "../general-dev";
 import { Keybinds } from "../keybind-manager";
 import { Chat } from "../page";
 import { isRandomString } from "../util";
-import { parse } from "path";
+// import { parse } from "path";
 
 /**
  * Note about how the process after gemini page is loaded.
@@ -731,9 +731,10 @@ import { parse } from "path";
     /**
      * Parse the current active chat info from the document, if possible.
      * If successfull parsed, save the result to `activeChat` and will attach to `window.pageLive.page.activeChat`.
+     * @param {boolean} shouldUpdateDialog If set true, will update the dialog with everything related to the parsed chat info.
      * @returns {Promise<boolean>} Return true is successfully parsed, false otherwise.
      */
-    async function parseActiveChatInfo(): Promise<boolean> {
+    async function parseActiveChatInfo(shouldUpdateDialog = true): Promise<boolean> {
         // If this is a new chat, there is no active chat info
         if (isThisUnsavedChat() === true) return false;
 
@@ -743,6 +744,9 @@ import { parse } from "path";
         // Parse the title from the chat list
         await ensureSideNavOpened();
         activeChat.title = await parseSelectedChatTitle();
+
+        // Update dialog if shouldUpdateDialog is set true
+        if (shouldUpdateDialog) updateDialogWithChatInfo();
 
         // Attach to global var if `activeChat.id` is found and not yet attached to `window.pageLive.page.activeChat`:
         if (activeChat.id && window.pageLive.page.activeChat === null) {
@@ -766,6 +770,30 @@ import { parse } from "path";
         }
 
         return chatId;
+    }
+    /**
+     * Update the dialog with everything related to the current active chat info.
+     */
+    function updateDialogWithChatInfo() {
+        let title = "Gemini";
+
+        const isUnsavedChat = isThisUnsavedChat();
+        if (isUnsavedChat) {
+            title += " new chat.";
+        }
+        // If active chat title exist, add to the dialog snapshot info
+        else if (activeChat.title) {
+            title += ` chat titled  "${activeChat.title}."`;
+        }
+        // Either chat info yet not parsed, or no title found
+        else {
+            // No title, maybe a new chat
+            title += " chat, title not available.";
+        }
+
+        // Update the dialog
+        window.pageLive.dialogManager.setTitle(title);
+        // Note: For now we will not set the page snapshot info, since we do not have much info to show
     }
 
 
@@ -812,14 +840,10 @@ import { parse } from "path";
 
     // Feed info to pageLive & pageLive.page
     window.pageLive.page.name = 'Gemini';
-    // TODO Should feed info abut whether  the page is a saved chat or not.. If  it is a saved chat, mention the title
+    // Update chat info to dialog title, even if the chat info is not yet parsed
+    updateDialogWithChatInfo();
+    // Initial announce info
     window.pageLive.initialAnnounceInfo.push("Gemini page");
-
-    // TODO Set snapshot info below to give user some clue about the page.
-    window.pageLive.dialogManager.setSnapshotInfos([
-        "This is a Gemini page.",
-        // "TODO: Add more snapshot info here.",
-    ]);
 
     // Add resize event handler, to refresh references to key elements
     addWindowResizeListener();
@@ -845,13 +869,10 @@ import { parse } from "path";
         startNewChat
     )
 
-
-    // FIXME remove code block below after testing
-    console.log("testing parseActiveChatInfo");
-    await new Promise(r => setTimeout(r, 3e3));
-    await parseActiveChatInfo();
-    window.pageLive.announce({ msg: "parsing active chat info" });
-    window.pageLive.announce({ msg: `Active chat id: ${activeChat.id}, title: ${activeChat.title}` });
-    console.log(`[PageLive][Gemini] Active chat id: ${activeChat.id}, title: ${activeChat.title}`);
+    // Add callbacks, only ran once, to update the active chat info when side nav is opened
+    window.pageLive.dialogManager.onNextOpenCallback = async () => {
+        // Try to parse the active chat info, if not yet parsed, and update the dialog.
+        await parseActiveChatInfo();
+    }
 
 })();
