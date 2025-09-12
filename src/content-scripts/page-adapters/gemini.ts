@@ -834,8 +834,9 @@ import { isRandomString } from "../util";
 
     // Information about the current chat. This will be lazy loaded on one of several events, e.g. when side nav is opened, pageLive dialog is opened, etc.
     // Only attach to `window.pageLive.page` when have tried to parse the info.
-    const activeChat = {
-        id: '', title: '',
+    const activeChat: Chat = {
+        id: null, // null means not yet parsed
+        title: ''
     }
 
     // Feed info to pageLive & pageLive.page

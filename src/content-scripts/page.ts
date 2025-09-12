@@ -3,8 +3,9 @@ import PageLive from "./pagelive";
 
 // Type to represent specific chat, e.g. current active chat, or the last chat, etc.
 export type Chat = {
-    // The id, usually a hash depends on the page implementation
-    id: string;
+    // The id, usually a random alphanumerics depends on the page implementation, e.g. 'gemini', 'grok', etc.
+    // null if no yet parsed / initialized, empty string if no id available 
+    id: string | null;
     // The title of the chat, usually the first few words of the chat
     title: string;
 }
