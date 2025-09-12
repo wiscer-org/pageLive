@@ -1,6 +1,7 @@
 // gemini.ts - Injected only on gemini.google.com
 
 // import { fail } from "assert";
+import { parse } from "path";
 import { parseElementsId } from "../general-dev";
 import { Keybinds } from "../keybind-manager";
 import { Chat } from "../page";
@@ -758,7 +759,7 @@ import { isRandomString } from "../util";
      * Parse chat id from the URL path or document. Retunr empty string if not found.
      * @returns {Promise<string>} The chat id if found, otherwise empty string.
      */
-    async function parseChatId() {
+    async function parseChatId(): Promise<string> {
         let chatId = "";
 
         // Parse from URL path
@@ -794,6 +795,24 @@ import { isRandomString } from "../util";
         // Update the dialog
         window.pageLive.dialogManager.setTitle(title);
         // Note: For now we will not set the page snapshot info, since we do not have much info to show
+    }
+
+    async function onDialogNextOpen(): Promise<void> {
+        // If not yet parsed, try to parse active chat
+        if (activeChat.id === null) {
+            await parseActiveChatInfo();
+        } else {
+            // Already parsed, check if the id in the URL is different than the parsed one
+            const currentChatId = await parseChatId();
+
+            if (currentChatId !== activeChat.id) {
+                window.pageLive.announce({ msg: "updating active chat info" });
+
+                // The chat id is different, parse again
+                await parseActiveChatInfo()
+                updateDialogWithChatInfo();
+            }
+        }
     }
 
 
@@ -870,10 +889,7 @@ import { isRandomString } from "../util";
         startNewChat
     )
 
-    // Add callbacks, only ran once, to update the active chat info when side nav is opened
-    window.pageLive.dialogManager.onNextOpenCallback = async () => {
-        // Try to parse the active chat info, if not yet parsed, and update the dialog.
-        await parseActiveChatInfo();
-    }
+    // Add callback to be executed the next time dialog is shown
+    window.pageLive.dialogManager.onNextOpenCallback = onDialogNextOpen
 
 })();
