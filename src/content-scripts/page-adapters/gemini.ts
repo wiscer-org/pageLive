@@ -255,8 +255,6 @@ const geminiAdapter = async () => {
                     lastGeminiResponseElement = null;
                 }
             } else {
-                console.log(window.pageLive);
-                console.log(window.pageLive.announce);
                 console.warn('[PageLive][Gemini] pageLive.announce function not found on window.');
             }
         }, delay);
@@ -498,7 +496,7 @@ const geminiAdapter = async () => {
         await new Promise(r => setTimeout(r, 250));
         return true;
     }
-    
+
     /**
      * Check if the side navigation (chat list) is opened.
      */
@@ -799,30 +797,20 @@ const geminiAdapter = async () => {
     }
 
     async function onDialogOpen(): Promise<void> {
-        console.log("starting on dialog next open");
-
-
         // If not yet parsed, try to parse active chat
         if (activeChat.id === null) {
-            console.log("parse active chat")
             await parseActiveChatInfo();
         } else {
-            console.log("already parsed");
-
             // Already parsed, check if the id in the URL is different than the parsed one
             const currentChatId = await parseChatId();
 
             if (currentChatId !== activeChat.id) {
-                console.log("chat id is different, need to reparse");
-
                 window.pageLive.announce({ msg: "updating active chat info" });
 
                 // The chat id is different, parse again and update the dialog
                 await parseActiveChatInfo(true);
             }
         }
-        // Schedule to fire on the next dialog open
-        console.log("[PageLive][Gemini] on dialog open fired");
     }
 
 
@@ -904,12 +892,9 @@ const geminiAdapter = async () => {
 
 };
 
-
-console.log("gemini adapter script loaded");
-console.log(document);
-console.log(document.readyState);
-
-// Run the adapter
+// Run the adapter.
+// This is a bit tricky, because we need to run this after PageLive is ready. But PageReady is waiting for the some elements exist in DOM.
+// That is why when the readyState is 'loading', we need to wait for DOMContentLoaded, or run it right away if the readyState is already pass 'loading'.
 if (document.readyState === 'loading') {
     // The document is still loading, so wait for DOMContentLoaded
     document.addEventListener('DOMContentLoaded', geminiAdapter);

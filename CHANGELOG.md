@@ -2,13 +2,13 @@
 
 ## v2.0.1 (on progress)
 
+- Put current chat title to model. If not yet have title use default like 'no title'.
 - Identify new chat VS saved chat. This will effect of some features like delete current chat.
 - Remove unnecessary announcements.
 - Various bug fixes
 
 ### Planned
 
-- TODO: Get the title of current chat, if not yet have title use default like 'no title'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
 
