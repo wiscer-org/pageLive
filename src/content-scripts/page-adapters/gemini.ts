@@ -34,7 +34,8 @@ import { isRandomString } from "../util";
  *              .loading-history-spinner-container
  */
 
-(async () => {
+// Define page adapter to be executed on DOMContentLoaded
+const geminiAdapter = async () => {
     const CHAT_CONTAINER_SELECTOR = "#chat-history";
 
     // Element name for Gemini response
@@ -497,7 +498,7 @@ import { isRandomString } from "../util";
         await new Promise(r => setTimeout(r, 250));
         return true;
     }
-
+    
     /**
      * Check if the side navigation (chat list) is opened.
      */
@@ -797,22 +798,31 @@ import { isRandomString } from "../util";
         // Note: For now we will not set the page snapshot info, since we do not have much info to show
     }
 
-    async function onDialogNextOpen(): Promise<void> {
+    async function onDialogOpen(): Promise<void> {
+        console.log("starting on dialog next open");
+
+
         // If not yet parsed, try to parse active chat
         if (activeChat.id === null) {
+            console.log("parse active chat")
             await parseActiveChatInfo();
         } else {
+            console.log("already parsed");
+
             // Already parsed, check if the id in the URL is different than the parsed one
             const currentChatId = await parseChatId();
 
             if (currentChatId !== activeChat.id) {
+                console.log("chat id is different, need to reparse");
+
                 window.pageLive.announce({ msg: "updating active chat info" });
 
-                // The chat id is different, parse again
-                await parseActiveChatInfo()
-                updateDialogWithChatInfo();
+                // The chat id is different, parse again and update the dialog
+                await parseActiveChatInfo(true);
             }
         }
+        // Schedule to fire on the next dialog open
+        console.log("[PageLive][Gemini] on dialog open fired");
     }
 
 
@@ -890,6 +900,20 @@ import { isRandomString } from "../util";
     )
 
     // Add callback to be executed the next time dialog is shown
-    window.pageLive.dialogManager.onNextOpenCallback = onDialogNextOpen
+    window.pageLive.dialogManager.onEveryOpenCallback = onDialogOpen
 
-})();
+};
+
+
+console.log("gemini adapter script loaded");
+console.log(document);
+console.log(document.readyState);
+
+// Run the adapter
+if (document.readyState === 'loading') {
+    // The document is still loading, so wait for DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', geminiAdapter);
+} else {
+    // The DOM is already ready, so run the adapter directly
+    geminiAdapter();
+}
