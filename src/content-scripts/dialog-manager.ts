@@ -19,6 +19,8 @@ export class DialogManager {
     // The container of keybind list 
     private keybindsContainer: HTMLDivElement = document.createElement('div');
 
+    // Callback function everytime the dialog is opened
+    onEveryOpenCallback: (() => Promise<void>) | null = null;
     // Callback function on the next time the dialog is opened. Only ran once after the dialog is opened.
     onNextOpenCallback: (() => Promise<void>) | null = null;
 
@@ -203,6 +205,10 @@ export class DialogManager {
             if (this.onNextOpenCallback !== null) {
                 await this.onNextOpenCallback();
                 this.onNextOpenCallback = null;
+            }
+            // If there is a callback function to be run every time the dialog is opened, run it
+            if (this.onEveryOpenCallback !== null) {
+                await this.onEveryOpenCallback();
             }
 
             this.showModal();
