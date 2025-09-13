@@ -735,15 +735,19 @@ const geminiAdapter = async () => {
      * @returns {Promise<boolean>} Return true is successfully parsed, false otherwise.
      */
     async function parseActiveChatInfo(shouldUpdateDialog = true): Promise<boolean> {
-        // If this is a new chat, there is no active chat info
-        if (isThisUnsavedChat() === true) return false;
+        // If this is a new chat, there is no active chat info in the URL or document
+        if (isThisUnsavedChat() === true) {
+            activeChat = { ...EMPTY_CHAT };
+        } else {
+            // Parse the id
+            activeChat.id = await parseChatId();
 
-        // Parse the id
-        activeChat.id = await parseChatId();
-
-        // Parse the title from the chat list
-        await ensureSideNavOpened();
-        activeChat.title = await parseSelectedChatTitle();
+            // Parse the title from the chat list
+            await ensureSideNavOpened();
+            // Populte the chat list until the active chat is found
+            await populateChatList(true);
+            activeChat.title = await parseSelectedChatTitle();
+        }
 
         // Update dialog if shouldUpdateDialog is set true
         if (shouldUpdateDialog) updateDialogWithChatInfo();
@@ -795,22 +799,24 @@ const geminiAdapter = async () => {
         window.pageLive.dialogManager.setTitle(title);
         // Note: For now we will not set the page snapshot info, since we do not have much info to show
     }
+    /**
+     * Synchronize the active chat info with the URL & document, if possible.
+     */
+    async function syncActiveChatInfo(): Promise<void> {
+        // Parse the chat id from the URL
+        const chatId = await parseChatId();
+
+        // If not yet parsed, parse it
+        if (activeChat.id === null
+            || activeChat.id !== chatId
+        ) {
+            await parseActiveChatInfo();
+        }
+    }
 
     async function onDialogOpen(): Promise<void> {
-        // If not yet parsed, try to parse active chat
-        if (activeChat.id === null) {
-            await parseActiveChatInfo();
-        } else {
-            // Already parsed, check if the id in the URL is different than the parsed one
-            const currentChatId = await parseChatId();
-
-            if (currentChatId !== activeChat.id) {
-                window.pageLive.announce({ msg: "updating active chat info" });
-
-                // The chat id is different, parse again and update the dialog
-                await parseActiveChatInfo(true);
-            }
-        }
+        // Synchronize the active chat info
+        await syncActiveChatInfo();
     }
 
 
@@ -851,7 +857,11 @@ const geminiAdapter = async () => {
 
     // Information about the current chat. This will be lazy loaded on one of several events, e.g. when side nav is opened, pageLive dialog is opened, etc.
     // Only attach to `window.pageLive.page` when have tried to parse the info.
-    const activeChat: Chat = {
+    const EMPTY_CHAT: Chat = {
+        id: "", // empty string means parsed but not found
+        title: ""
+    }
+    let activeChat: Chat = {
         id: null, // null means not yet parsed
         title: ''
     }
