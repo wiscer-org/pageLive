@@ -173,7 +173,8 @@ export class DialogManager {
         this.pageLive.keybindManager.keybinds.forEach((keybindDetail, key) => {
             const listItem = document.createElement('li');
             listItem.textContent = `${keybindDetail.description} : ${key}`;
-            keybindsList.appendChild(listItem);
+            // Prepend instead of append, to have the first registered keybind (shortcut to dialog) at the bottom of the list
+            keybindsList.prepend(listItem);
         });
 
         this.keybindsContainer.appendChild(keybindsList);
