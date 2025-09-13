@@ -240,7 +240,7 @@ const geminiAdapter = async () => {
      * @param {number} delay - The delay in milliseconds before announcing the response. Default is 2000ms (2 seconds). 1 second is too short, causing the screen reader will read the previous response.
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    function announceWithDelay(delay = 2000) {
+    function announceWithDelay(delay = 4000) {
         if (announceTimeoutId) {
             clearTimeout(announceTimeoutId);
         }
