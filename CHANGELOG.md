@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.1 (on progress)
+## v2.1.0
 
 - Put current chat title to model. If not yet have title use default like 'no title'.
 - Identify new chat VS saved chat. This will effect of some features like delete current chat.
