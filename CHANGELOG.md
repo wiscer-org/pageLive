@@ -6,10 +6,17 @@
 
 ### Planned
 
+- Fix: Ensure the chat input element exists before focusing on it.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
 
 ### Future
+
+- Keyboard shorcuts to read previous / next chat item (prompts & responses).
+
+- Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+- Enhance response announcement: Announce content as it streams in, rather than waiting for the full response to be rendered.
 
 - Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
 
