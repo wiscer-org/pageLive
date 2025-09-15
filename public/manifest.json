@@ -3,33 +3,20 @@
   "name": "PageLive",
   "version": "2.1.0",
   "description": "Screen Reader companion for Gemini AI",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
+  "permissions": [],
   "host_permissions": [
-    "<all_urls>"
+    "https://gemini.google.com/app/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://gemini.google.com/*"
+        "https://gemini.google.com/app/*"
       ],
       "js": [
         "content-scripts/pagelive.js",
         "content-scripts/gemini.js"
       ],
       "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "https://x.ai/*"
-      ],
-      "js": [
-        "content-scripts/pagelive.js",
-        "content-scripts/xai.js"
-      ],
-      "run_at": "document_idle"
     }
   ],
   "icons": {
