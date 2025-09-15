@@ -1,11 +1,8 @@
 # Changelog
 
-## v2.1.0
+## v2.1.2
 
-- Put current chat title to model. If not yet have title use default like 'no title'.
-- Identify new chat VS saved chat. This will effect of some features like delete current chat.
-- Remove unnecessary announcements.
-- Various bug fixes
+-
 
 ### Planned
 
@@ -15,6 +12,18 @@
 ### Future
 
 - Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
+
+## v2.1.1
+
+- Set host permissions to `gemini.google.com/app` only.
+- Remove `activeTab` and `storage` permissions.
+
+## v2.1.0
+
+- Put current chat title to model. If not yet have title use default like 'no title'.
+- Identify new chat VS saved chat. This will effect of some features like delete current chat.
+- Remove unnecessary announcements.
+- Various bug fixes
 
 ## v2.0.0
 
