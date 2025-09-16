@@ -96,13 +96,17 @@ const geminiAdapter = async () => {
      * @returns {Promise<boolean>} - Returns true if the page is ready for PageLive to continue, false otherwise.
      */
     async function waitForChatContainer(): Promise<boolean> {
-        const MAX_WAIT_TIME = 10000; // 10 seconds
-        const INTERVAL = 200;
+        const MAX_WAIT_TIME = 60e3; // 60 seconds
+        // Incremental interval
+        let interval = 200;
         let waited = 0;
 
         while (!chatContainer && waited < MAX_WAIT_TIME) {
-            await new Promise(res => setTimeout(res, INTERVAL));
-            waited += INTERVAL;
+            await new Promise(res => setTimeout(res, interval));
+            waited += interval;
+
+            // increase interval to reduce number of loops
+            interval = Math.min(interval + 100, 3000); // Cap the interval to a maximum of 3 seconds
 
             chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
         }
@@ -831,6 +835,10 @@ const geminiAdapter = async () => {
     if (!isChatContainerExist) {
         console.warn('[PageLive][Gemini] Chat container not found after waiting. Stopping observation setup.');
         return;
+    } else {
+        // Announce that PageLive extension is ready
+        window.pageLive.announce({ msg: "PageLive is now ready", omitPreannounce: true });
+        console.log('[PageLive][Gemini] Chat container found. Continuing observation setup.');
     }
 
     // References to HTML elements
