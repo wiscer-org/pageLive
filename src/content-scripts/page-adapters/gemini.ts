@@ -835,10 +835,6 @@ const geminiAdapter = async () => {
     if (!isChatContainerExist) {
         console.warn('[PageLive][Gemini] Chat container not found after waiting. Stopping observation setup.');
         return;
-    } else {
-        // Announce that PageLive extension is ready
-        window.pageLive.announce({ msg: "PageLive is now ready", omitPreannounce: true });
-        console.log('[PageLive][Gemini] Chat container found. Continuing observation setup.');
     }
 
     // References to HTML elements
@@ -908,6 +904,8 @@ const geminiAdapter = async () => {
     // Add callback to be executed the next time dialog is shown
     window.pageLive.dialogManager.onEveryOpenCallback = onDialogOpen
 
+    // Notify PageLive that the page adapter is fully loaded
+    window.pageLive.page.ready();
 };
 
 // Run the adapter.

@@ -42,6 +42,13 @@ export default class Page {
     async setSnapshotInfo(info: string[]) {
         this.snapshotInfo = info;
     }
+    /**
+     * Mark the page as ready, and announce initial info.
+     */
+    async ready() {
+        // Trigger PageLive to announce initial info
+        await this.pageLive.announceInitialInfo();
+    }
 
     /**
      * This method will announce all the snapshot info with a little delay.

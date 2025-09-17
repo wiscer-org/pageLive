@@ -25,7 +25,7 @@ export default class PageLive {
     announceContainer: HTMLDivElement = document.createElement('div');
     // Infos to be announced after the PageLive is initialized
     initialAnnounceInfo: string[] = [
-        "PageLive extension is ready.",
+        "PageLive is ready.",
         "Ctrl + / for more info.",
     ];
 
@@ -57,19 +57,17 @@ export default class PageLive {
 
         // Prepare and ensure the announce container
         this.prepareAnnounceContainer();
-
-        // Announce initial info sequentially with delay
-        await this.announceInitialInfo();
     }
     /**
      * This function will announce initial info (info only after the page is loaded) with some delay. 
      */
-    private async announceInitialInfo() {
+    public async announceInitialInfo() {
         // Wait for a short time to ensure the page is fully loaded before announcing
         await new Promise(r => setTimeout(r, 1500));
         // Announce all initial info as a single message, to avoid screen reader read non-PageLive messages in between these initial infos.
         this.announce({
             msg: this.initialAnnounceInfo.join(' '),
+            omitPreannounce: true
         });
     }
 
