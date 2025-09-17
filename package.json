@@ -1,6 +1,6 @@
 {
   "name": "pagelive",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Screen reader companion for Gemini AI",
   "scripts": {
     "dev": "vite",

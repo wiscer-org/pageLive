@@ -1,12 +1,11 @@
 # Changelog
 
-## v2.1.2
+## v2.1.3
 
 -
 
 ### Planned
 
-- Fix: Ensure the chat input element exists before focusing on it.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
 
@@ -19,6 +18,11 @@
 - Enhance response announcement: Announce content as it streams in, rather than waiting for the full response to be rendered.
 
 - Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
+
+## v2.1.2
+
+- PageLive will notify user when PageLive is ready.
+- Fix: Ensure the chat input element exists before focusing on it.
 
 ## v2.1.1
 
