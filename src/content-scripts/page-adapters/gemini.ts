@@ -206,11 +206,8 @@ const geminiAdapter = async () => {
             for (const mutation of mutations) {
 
                 mutation.addedNodes.forEach((node) => {
-                    // console.log('[PageLive][Gemini] Added node:', node);
                     // console.log('[PageLive][Gemini] Added node name:', node.nodeName);
 
-                    // if (node instanceof HTMLElement && node.nodeName === 'MODEL-RESPONSE') {
-                    // if (node instanceof HTMLElement && node.nodeName === 'MESSAGE-CONTENT') {
                     if (node instanceof HTMLElement && node.nodeName === RESPONSE_ELEMENT_NAME) {
 
                         // Set the latest Gemini response element
@@ -245,18 +242,28 @@ const geminiAdapter = async () => {
      */
     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
     function announceWithDelay(delay = 4000) {
+        // Clear the previous timeout if it exists
         if (announceTimeoutId) {
             clearTimeout(announceTimeoutId);
         }
+
         announceTimeoutId = setTimeout(() => {
             if (window.pageLive && typeof window.pageLive.announce === 'function') {
                 if (lastGeminiResponseElement) {
+                    const lastResponseText = lastGeminiResponseElement.innerHTML || '';
+
+                    if (!lastResponseText || lastResponseText.trim() === "") {
+                        console.warn('[PageLive][Gemini] last gemini response element is empty, nothing to announce.')
+                    }
+
                     window.pageLive.announce({
                         msg: lastGeminiResponseElement.innerHTML || ''
                     });
 
                     // After announced, the reference to the last response element need to be removed. This will avoid to re-announce if a mutation happens in the chat container that is not another response element.
                     lastGeminiResponseElement = null;
+                } else {
+                    console.warn('[PageLive][Gemini] last gemini response element is null, nothing to announce.')
                 }
             } else {
                 console.warn('[PageLive][Gemini] pageLive.announce function not found on window.');
