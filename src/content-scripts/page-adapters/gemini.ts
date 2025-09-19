@@ -917,21 +917,23 @@ const geminiPageAdapter = async () => {
 };
 
 
+//IIEF to avoid symbol conflicts after bundling
+(() => {
+    // Run the adapter.
+    // This is a bit tricky, because we need to run this after PageLive is ready. But PageReady is waiting for the some elements exist in DOM.
+    // That is why when the readyState is 'loading', we need to wait for DOMContentLoaded, or run it right away if the readyState is already pass 'loading'.
+    function runGeminiAdapterWhenPageReady() {
+        geminiPageAdapter();
 
-// Run the adapter.
-// This is a bit tricky, because we need to run this after PageLive is ready. But PageReady is waiting for the some elements exist in DOM.
-// That is why when the readyState is 'loading', we need to wait for DOMContentLoaded, or run it right away if the readyState is already pass 'loading'.
-function runGeminiAdapterWhenPageReady() {
-    geminiPageAdapter();
+        // Start the class-based page adapter. In the future, the IIEF will be moved to the class itself.
+        const adapter = new GeminiAdapter();
+    }
 
-    // Start the class-based page adapter. In the future, the IIEF will be moved to the class itself.
-    const adapter = new GeminiAdapter();
-}
-
-if (document.readyState === 'loading') {
-    // The document is still loading, so wait for DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', runGeminiAdapterWhenPageReady);
-} else {
-    // The DOM is already ready, so run the adapter directly
-    runGeminiAdapterWhenPageReady();
-}
+    if (document.readyState === 'loading') {
+        // The document is still loading, so wait for DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', runGeminiAdapterWhenPageReady);
+    } else {
+        // The DOM is already ready, so run the adapter directly
+        runGeminiAdapterWhenPageReady();
+    }
+})();
