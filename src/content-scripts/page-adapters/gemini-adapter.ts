@@ -7,7 +7,7 @@ import { inherits } from "util";
  * @module page-adapters/gemini
  * @module page-adapters/gemini-adapter
  */
-class GeminiAdapter {
+export default class GeminiAdapter {
     constructor() {
 
         this.init();
