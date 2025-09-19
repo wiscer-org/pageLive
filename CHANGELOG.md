@@ -1,22 +1,21 @@
 # Changelog
 
-## v2.1.3
+## v2.2.0 (on progress)
 
--
+- Announce new response per segments instead of the whole response. This will decrease users' waiting time for the new response to be announced.
 
 ### Planned
 
+- Indentify whether response(s) rendered as new response or loading saved chat.
+- When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
 
 ### Future
 
 - Keyboard shorcuts to read previous / next chat item (prompts & responses).
-
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
-
 - Enhance response announcement: Announce content as it streams in, rather than waiting for the full response to be rendered.
-
 - Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
 
 ## v2.1.2
