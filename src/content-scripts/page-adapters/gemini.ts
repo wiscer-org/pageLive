@@ -207,9 +207,10 @@ const geminiPageAdapter = async () => {
             for (const mutation of mutations) {
 
                 mutation.addedNodes.forEach((node) => {
-                    // console.log('[PageLive][Gemini] Added node name:', node.nodeName);
+                    console.log('[PageLive][Gemini][+] Added node name:', node.nodeName);
 
                     if (node instanceof HTMLElement && node.nodeName === RESPONSE_ELEMENT_NAME) {
+                        console.log('[PageLive][Gemini][+] ^^^^^^^^^^^^^^^^^^^^^ GOT IT ^^^^^^^^^^^:');
 
                         // Set the latest Gemini response element
                         lastGeminiResponseElement = node;
