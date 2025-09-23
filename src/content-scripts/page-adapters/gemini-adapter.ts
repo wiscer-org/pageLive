@@ -203,7 +203,7 @@ export default class GeminiAdapter {
         // The index of the last announced response segment
         let lastAnnouncedSegmentIndex = -1;
         // Delay to announce the last segment after no more mutations
-        const ANNOUNCE_DELAY = 1e3; // 1 second
+        const ANNOUNCE_DELAY = 3e3; // 3 seconds. It's ok a bit longer since this is for the last segment only while SR busy reading the earlier segments. The only downside if there is only 1 response segment.
         // The timeout id to announce the rest of the response segments
         let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -239,7 +239,7 @@ export default class GeminiAdapter {
         }
 
         // Set timeout to announce the last segment after delay
-        const scheduleToAnnounceLastSegments = () => {
+        const scheduleToAnnounceRemainingSegments = () => {
             // Remove scheduled announcement if exist.
             if (announceTimeoutId) {
                 this.log("Clearing announce timeout");
@@ -254,15 +254,21 @@ export default class GeminiAdapter {
                     return;
                 }
 
-                announcePrevSegments(directParent.children.length);
-            })
+                announcePrevSegments(directParent.children.length - 1);
+                // Clear the timeout id after executing
+                if (announceTimeoutId !== null) clearTimeout(announceTimeoutId);
+
+                // Reset variables after announce the remaining response segment(s)
+                resetParams();
+            }, ANNOUNCE_DELAY);
         }
 
         // Announce prev segments, that has not been announced, until the given index
         const announcePrevSegments = (lastIndexToAnnounce: number) => {
-            this.log("announcePrevSegments");
+            this.log("---- announcePrevSegments ----");
             this.log(`lastAnnouncedSegmentIndex ${lastAnnouncedSegmentIndex} - lastIndexToAnnounce: ${lastIndexToAnnounce}`);
             this.log(`total children: ${directParent?.children.length}`);
+            this.log(`textContent : ${directParent?.textContent}`);
 
             for (let c = lastAnnouncedSegmentIndex + 1; c <= lastIndexToAnnounce; c++) {
 
@@ -276,12 +282,16 @@ export default class GeminiAdapter {
                 if (!directParent.children[c]) {
                     console.warn(`[PageLive][Gemini] Can't find child of directParent with index: ${c}. Total children: ${directParent.children.length}`)
                     return;
+                } else if (!directParent.children[c].outerHTML) {
+                    console.warn(`[PageLive][Gemini] property 'outerHTML' is ${directParent.children[c].outerHTML}`)
                 }
+
                 this.log(`announcing: ${directParent.children[c].outerHTML}`);
 
                 // Announce
                 window.pageLive.announce({
                     msg: directParent.children[c].outerHTML
+                    , omitPreannounce: true,
                 });
             }
             // Set the last announced segment index
@@ -296,11 +306,13 @@ export default class GeminiAdapter {
                     // Match each added nodes
                     if (mutation.type === 'childList') {
                         mutation.addedNodes.forEach((node: Node) => {
-                            // Is this one of the `directParentContainer` ?
+                            // Check if this is one of the `directParentContainer` ?
+                            // Elements that qualifies to be `directParentContainer` could be added on same mutations callback.
+                            // So on one 'mutations callback' the `directParentContainer` could be set more than time, which is good. Because then the element will be the closest to `directParent` element which will increase performance a little.
                             const el = node as HTMLElement;
-                            if (isDirectParentContainer(el)) {
+                            if (!directParentContainer && isDirectParentContainer(el)) {
                                 // Save the ref
-                                this.log("Found `directParentContainer");
+                                this.log("Found `directParentContainer`");
                                 directParentContainer = el;
                             }
                         });
@@ -309,7 +321,7 @@ export default class GeminiAdapter {
             }
 
             // Try to query `directParent` if `directParentContainer` has found
-            if (directParentContainer) {
+            if (!directParent && directParentContainer) {
                 this.log("Looking for `directParent` ");
                 directParent = directParentContainer.querySelector(DIRECT_PARENT_SELECTOR);
                 if (directParent) {
@@ -323,13 +335,18 @@ export default class GeminiAdapter {
 
                 // Is there any segments added ?
                 if (segmentsCount > prevSegmentsCount) {
+                    this.log(`Segments added from ${prevSegmentsCount} to ${segmentsCount}`)
                     // Announce all prev segments, that has not been announced, except the last segment 
                     announcePrevSegments(segmentsCount - 1);
-                }
-            }
 
-            // Set timeout to announce the last segment, if `directParent` has been caught
-            if (directParent) scheduleToAnnounceLastSegments();
+                    // Schedule to announce, will be canceled when another segment is attached
+                    scheduleToAnnounceRemainingSegments();
+                }
+                // Set the segments count for the next mutations callback
+                prevSegmentsCount = segmentsCount;
+            }
+            // Set timeout to announce the last segments that has not been announced
+            // if (directParent && (se)) scheduleToAnnounceRemainingSegments();
         })
 
         // Attach observer
