@@ -163,7 +163,8 @@ const geminiPageAdapter = async () => {
             // console.log(`[PageLive][Gemini] Starting to observe ${CHAT_CONTAINER_SELECTOR} after ${OBSERVE_DELAY}`);
 
             // Start observing the chat history container for new Gemini responses
-            observeNewResponses();
+            // FIXME uncomment below after testing
+            // observeNewResponses();
         }, DELAY_TO_START_OBSERVE_NEW_RESPONSES);
     }
 
@@ -857,6 +858,7 @@ const geminiPageAdapter = async () => {
     let previousChatObserver: MutationObserver | null = null;
 
     // Use timeout to start the chat container observation after delay
+    // FIXME : line below is transition to use class-based page adapter
     let observeNewResponsesTimeoutId = setTimeoutToStartObserveNewResponses();
 
     // Check if the chat container is still being populated by the previous chat. If yes, delay to start observing chat container, by replace the timeout with the new one
@@ -927,6 +929,7 @@ const geminiPageAdapter = async () => {
         geminiPageAdapter();
 
         // Start the class-based page adapter. In the future, the IIEF will be moved to the class itself.
+        // FIXME uncomment
         const adapter = new GeminiAdapter();
     }
 
