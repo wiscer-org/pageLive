@@ -70,7 +70,7 @@ export async function untilElementIdle(el: HTMLElement, delay = 300): Promise<vo
  * @param {number} maxWaitTime Maximum seconds to wait for the element to exist. Default: 60 seconds
  * @return {Promise <HTMLElement|null}  The element
  */
-async function waitForAnElement(selector: string, maxWaitTime = 60e3): Promise<HTMLElement | null> {
+export async function waitForAnElement(selector: string, maxWaitTime = 60e3): Promise<HTMLElement | null> {
     // The element 
     let element: HTMLElement | null = null;
 
@@ -95,7 +95,7 @@ async function waitForAnElement(selector: string, maxWaitTime = 60e3): Promise<H
  * @param {string} msg The log to print out
  * @return {void}
  */
-function devLog(msg: string): void {
+export function devLog(msg: string): void {
     // TODO check if this is DEV
     console.log(`[PageLive][dev] ${msg}`);
 }
