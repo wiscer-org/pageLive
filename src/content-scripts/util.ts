@@ -63,3 +63,39 @@ export async function untilElementIdle(el: HTMLElement, delay = 300): Promise<vo
         scheduleToResolve(idleObserver);
     });
 }
+
+/**
+ * Wait for an element. The wait time will be gradually increased until giving up
+ * @param {string} selector The element selector
+ * @param {number} maxWaitTime Maximum seconds to wait for the element to exist. Default: 60 seconds
+ * @return {Promise <HTMLElement|null}  The element
+ */
+async function waitForAnElement(selector: string, maxWaitTime = 60e3): Promise<HTMLElement | null> {
+    // The element 
+    let element: HTMLElement | null = null;
+
+    // Incremental interval
+    let interval = 200;
+    let waited = 0;
+
+    while (!element && waited < maxWaitTime) {
+        await new Promise(res => setTimeout(res, interval));
+        waited += interval;
+
+        // increase interval to reduce number of loops
+        interval = Math.min(interval + 100, 3000); // Cap the interval to a maximum of 3 seconds
+
+        element = document.querySelector(selector) as HTMLElement | null;
+    }
+    return element;
+}
+
+/**
+ * Used for development only to log messages
+ * @param {string} msg The log to print out
+ * @return {void}
+ */
+function devLog(msg: string): void {
+    // TODO check if this is DEV
+    console.log(`[PageLive][dev] ${msg}`);
+}
