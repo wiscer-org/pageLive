@@ -1,4 +1,6 @@
+
 import { untilElementIdle } from "../util";
+import GeminiAdapterChat from "./gemini-chat";
 
 /**
  * This file contains the Gemini page adapter.
@@ -24,6 +26,9 @@ export default class GeminiAdapter {
     // Element name for Gemini response
     // const RESPONSE_ELEMENT_NAME = 'MESSAGE-CONTENT';
 
+    // Object focused with the interaction with chat container element
+    chatContainerAdapter = new GeminiAdapterChat();
+
     constructor() {
 
         this.init();
@@ -48,6 +53,7 @@ export default class GeminiAdapter {
 
         // Observe chat container for incoming new responses
         this.observeNewResponses();
+
     }
     /**
      * This function to requery the 'persisted' elements, such as `chatListContainer`.
@@ -69,6 +75,8 @@ export default class GeminiAdapter {
             resizeTimer = setTimeout(async () => {
                 console.log("[PageLive][Gemini] Window is resized");
                 await this.waitOrUpdateKeyElementsRef();
+                // Also update the chat adapter
+                this.chatContainerAdapter.onWindowResized();
             }, DEBOUNCE_DELAY);
         });
     }
