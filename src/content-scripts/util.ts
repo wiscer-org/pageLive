@@ -99,3 +99,10 @@ export function devLog(msg: string): void {
     // TODO check if this is DEV
     console.log(`[PageLive][dev] ${msg}`);
 }
+
+/**
+ * Print warnings used in production
+ */
+export function prodWarn(msg: string) {
+    console.warn(`[PageLive] ${msg}`);
+}
