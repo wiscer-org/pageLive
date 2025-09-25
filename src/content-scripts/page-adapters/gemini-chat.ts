@@ -20,7 +20,7 @@
 
 
 
-import { untilElementIdle, waitForAnElement } from "../util";
+import { devLog, prodWarn, untilElementIdle, waitForAnElement } from "../util";
 /**
  * This class features interaction with the chat container element of gemini page.
  * Chat container is the element that wraps the series of prompts and responses of the current active chat.
@@ -70,24 +70,165 @@ export class GeminiAdapterChat {
         await this.updateElementRefs();
     }
     observeChatContainer() {
-        throw new Error("Method not implemented.");
+        // Container of response element that we are trying to catch on mutations
+        let responseContainer: HTMLElement | null = null;
+        // Response element: The direct parent of response segment elements
+        // let responseElement: HTMLElement | null = null;
+
+        // Observer to 'catch' the `responseElement` that will be added during receving new response
+        const responseContainerObserver = new MutationObserver((mutationList, observer) => {
+
+            // Not yet have responseContainer ?
+            if (!responseContainer) {
+                // Try to catch the `responseContainer`
+                for (const mutation of mutationList) {
+                    devLog("try to get responseContainer")
+                    if (mutation.type === "childList") {
+
+                        for (let c = 0; c < mutation.addedNodes.length; c++) {
+                            responseContainer = mutation.addedNodes.item(c) as HTMLElement;
+                            if (this.isResponseContainerElement(responseContainer)) {
+                                devLog("Response container is found");
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Try to query `responseElement` within the `responseContainer`
+            if (responseContainer) {
+                // Use selector, not by selecting on each of the `mutation.addedNodes` because the `responseElement` is a `div`without classes or id that can be used to identify.
+                // The selector : `message-content > div`
+                let responseElement = responseContainer.querySelector('message-content > div') as HTMLElement;
+
+                // If `responseElement` is found, start observing the incoming response segments
+                if (responseElement) {
+                    this.observeIncomingResponse(responseElement);
+                    // Disconnect the 'response container' observer
+                    observer.disconnect();
+                }
+            }
+        })
+
+        //  Type check
+        if (!this.chatContainer) {
+            prodWarn("Chat container element not exist - 3814");
+            return;
+        }
+
+        // Observe elements addition of subtree of chat container
+        responseContainerObserver.observe(this.chatContainer, {
+            childList: true,
+            subtree: true,
+        });
     }
+
+    /**
+     * @todo Decide if an element is a `responseContainer` element
+     * 
+     */
+    isResponseContainerElement(element: HTMLElement) {
+        return false;
+    }
+
+
     /**
      * Observation on a response element.
      * This function is used to detect and announce of the incoming response segments.    
      * @param {HTMLElement} responseElement The Element containing response segment elements.
      */
-    async observeResponseElement(responseElement: HTMLElement | null) {
+    async observeIncomingResponse(responseElement: HTMLElement) {
+        // The previous total of segments, before added in the mutation callback
+        let prevSegmentsCount = 0;
+        // The index of the last announced response segment
+        let lastAnnouncedSegment = -1;
+        // The timeout id to announce the last remaining response segments
+        let remainingTimeoutId: ReturnType<typeof setTimeout>;
 
+        /**
+         * Observer to handle response segment addition / update.
+         * Everytime a response segment is added, 2 things will happen:
+         * 1. Announce all segments before the last one, that has not been announced.
+         * 2. Set timeout to announce the remaining of the response segments, that has not been announced.
+         */
+        const newResponseObserver = new MutationObserver((mutationList, observer) => {
+            const segmentsCount = responseElement.children.length;
+
+            // Is total segments increased ?
+            if (prevSegmentsCount < segmentsCount) {
+
+                // TODO announce the previous not yet announced segments
+
+                // Schedule to announce the remaining not-yet-announced segments
+                remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, observer);
+
+                // Current count will be the prev count for next process
+                prevSegmentsCount = segmentsCount;
+            }
+
+        });
+    }
+
+    /**
+     * Schedule to announce the remaining not-yet-announced response segments
+     * @param {HTMLElement} responseElement The direct parent of the response segment elements
+     * @param {number} lastAnnouncedSegment The index of the last announced segment
+     * @param {MutationObserver} observer The mutation observer to disconnect at the end of receiving response
+     */
+    delayAnnounceRemainingSegments(responseElement: HTMLElement, lastAnnouncedSegment: number
+        , announceTimeout: ReturnType<typeof setTimeout>
+        , observer: MutationObserver) {
+
+        // Cancel the timeout id if exist
+        if (announceTimeout) clearTimeout(announceTimeout);
+
+        return setTimeout(() => {
+            this.announceSegments(responseElement, lastAnnouncedSegment, responseElement.children.length - 1);
+
+            // The incoming response has been completely received
+            this.onResponseComplete(observer);
+        });
+    }
+
+    /**
+     * Announce response segments
+     * @param responseElement The element that wraps the response segment elements
+     * @param lastAnnouncedSegment The index of the last segment elements that has been announced
+     * @param lastIndex The last index of the response segment elements to be announced 
+     */
+    announceSegments(responseElement: HTMLElement, lastAnnouncedSegment: number, lastIndex: number) {
+        for (let c: number = lastAnnouncedSegment + 1; c <= lastAnnouncedSegment; c++) {
+            // Type check
+            if (!responseElement.children[c]) {
+                prodWarn(`Unablet to find segment with index ${c}`);
+                prodWarn(`response element: ${responseElement}`);
+                return;
+            }
+            const segmentElement = responseElement.children[c] as HTMLElement;
+            if (!segmentElement.outerHTML) {
+                prodWarn("Segment element does not have property 'outerHTML' - 4720");
+                return;
+            }
+
+            window.pageLive.announce({
+                msg: segmentElement.outerHTML
+                , omitPreannounce: true
+            });
+        }
     }
     /**
      * Handler when a response is completely received
+     * @param {MutationObserver} newResponseObserver The observer for the incoming new response
      */
-    async onResponseComplete() {
+    async onResponseComplete(newResponseObserver: MutationObserver) {
         // TODO reset variables
 
+        // Disconnect 'new response observer'
+        newResponseObserver.disconnect();
+
         // Observe chat container again
-        await this.observeChatContainer();
+        this.observeChatContainer();
     }
 
 }
