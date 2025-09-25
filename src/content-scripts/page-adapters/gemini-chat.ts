@@ -4,7 +4,7 @@ import { devLog, prodWarn, untilElementIdle, waitForAnElement } from "../util";
  * Chat container is the element that wraps the series of prompts and responses of the current active chat.
  * Note: A new response will not be rendered all at once, but received in streams. The gemini UI will add / update the response segment elements.
  */
-export class GeminiAdapterChat {
+export default class GeminiAdapterChat {
     // Ref to the chat container: containing all prompts and responses 
     chatContainer: HTMLElement | null = null;
     // Ref to an element to currently receiving responses.
