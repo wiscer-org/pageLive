@@ -13,7 +13,7 @@ export default class GeminiAdapterChat {
     // Below is the ref to a `response` element that currently receiving a response. After finish receiving response, this ref will be set to `null`
     currentResponse: HTMLElement | null = null;
     // Wait time for a 'response segment' element to be considered as fully updated by Gemini
-    SEGMENT_WAIT_TIME = 4e3; // in seconds
+    static SEGMENT_WAIT_SECONDS: number = 4e3; // seconds
 
     constructor() { }
     /**
@@ -166,7 +166,7 @@ export default class GeminiAdapterChat {
 
             // The incoming response has been completely received
             this.onResponseComplete(observer);
-        });
+        }, GeminiAdapterChat.SEGMENT_WAIT_SECONDS);
     }
 
     /**
