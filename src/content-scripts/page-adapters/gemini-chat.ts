@@ -33,14 +33,16 @@ export default class GeminiAdapterChat {
         }
 
         // Wait until the chat history has completely rendered with the previous chat
-        await untilElementIdle(this.chatContainer);
+        await untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds idle
 
         // Attach observer to chat container to detect incoming response
         await this.observeChatContainer();
     }
+
     async updateElementRefs() {
         this.chatContainer = await waitForAnElement("#chat-history");
     }
+
     /**
      * Handler when window is resized. This function will be called by `GeminiAdapter`class.
      */
