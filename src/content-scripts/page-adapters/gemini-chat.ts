@@ -103,13 +103,31 @@ export default class GeminiAdapterChat {
     }
 
     /**
-     * @todo Decide if an element is a `responseContainer` element
-     * 
+     * Decide if an element is a `responseContainer` element
+     * @param {HTMLElement} el The element to test
+     * @param {boolean} true if the element can be a `responseContainer`, false if otherwise
      */
-    isResponseContainerElement(element: HTMLElement) {
+    isResponseContainerElement(el: HTMLElement) {
+        // Below are the hierarchy of `responseContainer` element, skipping some elements:
+        // `div.conversation-container model-response response-container div.response-container div.response-container-content div.response-content`
+        // To make PageLive more prone to Gemini's UI changes, we are going to test each of the selector to be able ref to a `responseContainer`
+
+        if (
+            // `div.conversation-container`
+            (el.nodeName === "DIV" && el.classList.contains("conversation-container"))
+            // model-response 
+            || (el.nodeName === "MODEL-RESPONSE")
+            // response-container 
+            || (el.nodeName === "RESPONSE-CONTAINER")
+            // div.response-container 
+            || (el.nodeName === "DIV" && el.classList.contains("response-container"))
+            // div.response-container-content 
+            || (el.nodeName === "DIV" && el.classList.contains("response-container-content"))
+            // div.response-content
+            || (el.nodeName === "DIV" && el.classList.contains("response-content"))
+        ) return true;
         return false;
     }
-
 
     /**
      * Observation on a response element.
