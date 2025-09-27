@@ -1,4 +1,3 @@
-
 import { untilElementIdle } from "../util";
 import GeminiAdapterChat from "./gemini-chat";
 
@@ -13,11 +12,11 @@ export default class GeminiAdapter {
     // If this page is a saved chat, we need to wait for the chat container to be populated with the previous chat messages.
     // To ensure the chat container is ready, wait for more 3seconds before observing the chat container.
     // The wait time will be reset whenever there is update on the chat container (that means previous responses is still being updated).
-    static DELAY_TO_START_OBSERVE_NEW_RESPONSES = 3000; // 3 seconds
+    // static DELAY_TO_START_OBSERVE_NEW_RESPONSES = 3000; // 3 seconds
 
     // Container for the active chat, contains prompts and responses
-    static CHAT_CONTAINER_SELECTOR = "#chat-history";
-    chatContainer: HTMLElement | null = null;
+    // static CHAT_CONTAINER_SELECTOR = "#chat-history";
+    // chatContainer: HTMLElement | null = null;
 
     // Not yet used: Container for side nav.
     static SIDE_NAV_CONTAINER_SELECTOR = "xxx";
@@ -30,9 +29,9 @@ export default class GeminiAdapter {
     chatContainerAdapter = new GeminiAdapterChat();
 
     constructor() {
-
         this.init();
     }
+
     /**
      * @todo Implement the init function to set up the adapter.
      */
@@ -44,16 +43,13 @@ export default class GeminiAdapter {
         // Add window resize listener, which will update the key element references too
         await this.addWindowResizeListener();
 
-        // Wait until idle, chat history might being updated with previous chat history
-        await this.untilChatHistoryIdle();
+        this.chatContainerAdapter.init();
 
-        // FIXME delete below
-        window.pageLive.announce({ msg: "Version 2: finish loading chat history" });
-        console.log('FINISH loading chat history');
+        // Wait until idle, chat history might being updated with previous chat history
+        // await this.untilChatHistoryIdle();
 
         // Observe chat container for incoming new responses
-        this.observeNewResponses();
-
+        // this.observeNewResponses();
     }
     /**
      * This function to requery the 'persisted' elements, such as `chatListContainer`.
@@ -75,6 +71,7 @@ export default class GeminiAdapter {
             resizeTimer = setTimeout(async () => {
                 console.log("[PageLive][Gemini] Window is resized");
                 await this.waitOrUpdateKeyElementsRef();
+
                 // Also update the chat adapter
                 this.chatContainerAdapter.onWindowResized();
             }, DEBOUNCE_DELAY);
@@ -82,44 +79,11 @@ export default class GeminiAdapter {
     }
 
     /**
-     * Used for testing during dev only
-     */
-    log(msg: string) {
-        console.log(`[PageLive][Gemini][dev] ${msg}`);
-    }
-
-    /**
      * Set or update references to the key elements
      */
     async waitOrUpdateKeyElementsRef(): Promise<void> {
-        await this.waitForChatContainer();
+        // await this.waitForChatContainer();
         await this.waitForSideNavContainer();
-    }
-
-    /**
-     * Wait for the chat container to be available
-     * This is necessary because the chat container may not be immediately available on page load.
-     * It will wait for up to 10 seconds before giving up.
-     * @returns {Promise<boolean>} - Returns true if the page is ready for PageLive to continue, false otherwise.
-     */
-    async waitForChatContainer(): Promise<boolean> {
-        const MAX_WAIT_TIME = 60e3; // 60 seconds
-        // Incremental interval
-        let interval = 200;
-        let waited = 0;
-
-        console.log("waiting for chat container");
-        while (!this.chatContainer && waited < MAX_WAIT_TIME) {
-            await new Promise(res => setTimeout(res, interval));
-            waited += interval;
-
-            // increase interval to reduce number of loops
-            interval = Math.min(interval + 100, 3000); // Cap the interval to a maximum of 3 seconds
-
-            this.chatContainer = document.querySelector(GeminiAdapter.CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
-        }
-        console.log(`chat container:`, this.chatContainer);
-        return !!this.chatContainer
     }
 
     /**
@@ -133,15 +97,15 @@ export default class GeminiAdapter {
     /**
      * Wait until chat container element is idle.
      */
-    async untilChatHistoryIdle(): Promise<void> {
-        // Make sure the element exist
-        if (!this.chatContainer) {
-            console.warn("[PageLive][Gemini]Chat container not exits");
-            return;
-        }
+    // async untilChatHistoryIdle(): Promise<void> {
+    // Make sure the element exist
+    //     if (!this.chatContainer) {
+    //         console.warn("[PageLive][Gemini]Chat container not exits");
+    //         return;
+    //     }
 
-        return untilElementIdle(this.chatContainer, GeminiAdapter.DELAY_TO_START_OBSERVE_NEW_RESPONSES);
-    }
+    //     return untilElementIdle(this.chatContainer, GeminiAdapter.DELAY_TO_START_OBSERVE_NEW_RESPONSES);
+    // }
 
     /**
      * Observe new responses in the chat container and accounce per response segment to {@link PageLive.announce}
@@ -192,183 +156,178 @@ export default class GeminiAdapter {
      * This delay is much shorter from the expected time between prompt and first response stream, due to processing in the server side.
      * 
      */
-    async observeNewResponses() {
-        console.log("log - set observe new responses");
-        // Make sure chat container exist
-        if (!this.chatContainer) {
-            // await this.waitForChatContainer();
-            console.warn('[PageLive][Gemini]Chat container element not found');
-            return;
-        }
+    // async observeNewResponses() {
+    //     console.log("log - set observe new responses");
+    //     // Make sure chat container exist
+    //     if (!this.chatContainer) {
+    //         // await this.waitForChatContainer();
+    //         console.warn('[PageLive][Gemini]Chat container element not found');
+    //         return;
+    //     }
 
-        // Ref to the last `directParentContainer`
-        let directParentContainer: HTMLElement | null = null;
-        // Ref to the `directParent` inside the `directParentContainer`
-        let directParent: HTMLElement | null = null;
-        const DIRECT_PARENT_SELECTOR = "message-content > div";
-        // The previous response segments count
-        let prevSegmentsCount = 0;
-        // The index of the last announced response segment
-        let lastAnnouncedSegmentIndex = -1;
-        // Delay to announce the last segment after no more mutations
-        const ANNOUNCE_DELAY = 3e3; // 3 seconds. It's ok a bit longer since this is for the last segment only while SR busy reading the earlier segments. The only downside if there is only 1 response segment.
-        // The timeout id to announce the rest of the response segments
-        let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    //     // Ref to the last `directParentContainer`
+    //     let directParentContainer: HTMLElement | null = null;
+    //     // Ref to the `directParent` inside the `directParentContainer`
+    //     let directParent: HTMLElement | null = null;
+    //     const DIRECT_PARENT_SELECTOR = "message-content > div";
+    //     // The previous response segments count
+    //     let prevSegmentsCount = 0;
+    //     // The index of the last announced response segment
+    //     let lastAnnouncedSegmentIndex = -1;
+    //     // Delay to announce the last segment after no more mutations
+    //     const ANNOUNCE_DELAY = 3e3; // 3 seconds. It's ok a bit longer since this is for the last segment only while SR busy reading the earlier segments. The only downside if there is only 1 response segment.
+    //     // The timeout id to announce the rest of the response segments
+    //     let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-        // To reset parameters on every completion of 'receiving a new response'
-        const resetParams = () => {
-            directParentContainer = null;
-            directParent = null;
-            prevSegmentsCount = 0;
-            lastAnnouncedSegmentIndex = -1;
-        }
+    //     // To reset parameters on every completion of 'receiving a new response'
+    //     const resetParams = () => {
+    //         directParentContainer = null;
+    //         directParent = null;
+    //         prevSegmentsCount = 0;
+    //         lastAnnouncedSegmentIndex = -1;
+    //     }
 
-        // To check if a node is a `directParentContainer`
-        const isDirectParentContainer = (el: HTMLElement) => {
-            // Below are the hierarchy of `directParent`, skipping some elements:
-            // `div.conversation-container model-response response-container div.response-container div.response-container-content div.response-content`
-            // To make PageLive more prone to Gemini's UI changes, we are going to test each of the selector to be able ref to a `directParentContianer`
+    //     // To check if a node is a `directParentContainer`
+    //     const isDirectParentContainer = (el: HTMLElement) => {
+    //         // Below are the hierarchy of `directParent`, skipping some elements:
+    //         // `div.conversation-container model-response response-container div.response-container div.response-container-content div.response-content`
+    //         // To make PageLive more prone to Gemini's UI changes, we are going to test each of the selector to be able ref to a `directParentContianer`
 
-            if (
-                // `div.conversation-container`
-                (el.nodeName === "DIV" && el.classList.contains("conversation-container"))
-                // model-response 
-                || (el.nodeName === "MODEL-RESPONSE")
-                // response-container 
-                || (el.nodeName === "RESPONSE-CONTAINER")
-                // div.response-container 
-                || (el.nodeName === "DIV" && el.classList.contains("response-container"))
-                // div.response-container-content 
-                || (el.nodeName === "DIV" && el.classList.contains("response-container-content"))
-                // div.response-content
-                || (el.nodeName === "DIV" && el.classList.contains("response-content"))
-            ) return true;
-            return false;
-        }
+    //         if (
+    //             // `div.conversation-container`
+    //             (el.nodeName === "DIV" && el.classList.contains("conversation-container"))
+    //             // model-response 
+    //             || (el.nodeName === "MODEL-RESPONSE")
+    //             // response-container 
+    //             || (el.nodeName === "RESPONSE-CONTAINER")
+    //             // div.response-container 
+    //             || (el.nodeName === "DIV" && el.classList.contains("response-container"))
+    //             // div.response-container-content 
+    //             || (el.nodeName === "DIV" && el.classList.contains("response-container-content"))
+    //             // div.response-content
+    //             || (el.nodeName === "DIV" && el.classList.contains("response-content"))
+    //         ) return true;
+    //         return false;
+    //     }
 
-        // Set timeout to announce the last segment after delay
-        const scheduleToAnnounceRemainingSegments = () => {
-            // Remove scheduled announcement if exist.
-            if (announceTimeoutId) {
-                this.log("Clearing announce timeout");
-                clearTimeout(announceTimeoutId);
-            }
+    //     // Set timeout to announce the last segment after delay
+    //     const scheduleToAnnounceRemainingSegments = () => {
+    //         // Remove scheduled announcement if exist.
+    //         if (announceTimeoutId) {
+    //             this.log("Clearing announce timeout");
+    //             clearTimeout(announceTimeoutId);
+    //         }
 
-            console.log("schedule to announce last segments");
-            announceTimeoutId = setTimeout(() => {
-                // Check the `directParent` element
-                if (!directParent) {
-                    console.warn("`directParent` not exist in `scheduleToAnnounceLastSegments` function");
-                    return;
-                }
+    //         console.log("schedule to announce last segments");
+    //         announceTimeoutId = setTimeout(() => {
+    //             // Check the `directParent` element
+    //             if (!directParent) {
+    //                 console.warn("`directParent` not exist in `scheduleToAnnounceLastSegments` function");
+    //                 return;
+    //             }
 
-                announcePrevSegments(directParent.children.length - 1);
-                // Clear the timeout id after executing
-                if (announceTimeoutId !== null) clearTimeout(announceTimeoutId);
+    //             announcePrevSegments(directParent.children.length - 1);
+    //             // Clear the timeout id after executing
+    //             if (announceTimeoutId !== null) clearTimeout(announceTimeoutId);
 
-                // Reset variables after announce the remaining response segment(s)
-                resetParams();
-            }, ANNOUNCE_DELAY);
-        }
+    //             // Reset variables after announce the remaining response segment(s)
+    //             resetParams();
+    //         }, ANNOUNCE_DELAY);
+    //     }
 
-        // Announce prev segments, that has not been announced, until the given index
-        const announcePrevSegments = (lastIndexToAnnounce: number) => {
-            this.log("---- announcePrevSegments ----");
-            this.log(`lastAnnouncedSegmentIndex ${lastAnnouncedSegmentIndex} - lastIndexToAnnounce: ${lastIndexToAnnounce}`);
-            this.log(`total children: ${directParent?.children.length}`);
-            this.log(`textContent : ${directParent?.textContent}`);
+    //     // Announce prev segments, that has not been announced, until the given index
+    //     const announcePrevSegments = (lastIndexToAnnounce: number) => {
+    //         this.log("---- announcePrevSegments ----");
+    //         this.log(`lastAnnouncedSegmentIndex ${lastAnnouncedSegmentIndex} - lastIndexToAnnounce: ${lastIndexToAnnounce}`);
+    //         this.log(`total children: ${directParent?.children.length}`);
+    //         this.log(`textContent : ${directParent?.textContent}`);
 
-            for (let c = lastAnnouncedSegmentIndex + 1; c <= lastIndexToAnnounce; c++) {
+    //         for (let c = lastAnnouncedSegmentIndex + 1; c <= lastIndexToAnnounce; c++) {
 
-                // Check
-                if (!directParent) {
-                    console.warn("`directParent` is null");
-                    return;
-                }
+    //             // Check
+    //             if (!directParent) {
+    //                 console.warn("`directParent` is null");
+    //                 return;
+    //             }
 
-                // Check for out-of-bound index
-                if (!directParent.children[c]) {
-                    console.warn(`[PageLive][Gemini] Can't find child of directParent with index: ${c}. Total children: ${directParent.children.length}`)
-                    return;
-                } else if (!directParent.children[c].outerHTML) {
-                    console.warn(`[PageLive][Gemini] property 'outerHTML' is ${directParent.children[c].outerHTML}`)
-                }
+    //             // Check for out-of-bound index
+    //             if (!directParent.children[c]) {
+    //                 console.warn(`[PageLive][Gemini] Can't find child of directParent with index: ${c}. Total children: ${directParent.children.length}`)
+    //                 return;
+    //             } else if (!directParent.children[c].outerHTML) {
+    //                 console.warn(`[PageLive][Gemini] property 'outerHTML' is ${directParent.children[c].outerHTML}`)
+    //             }
 
-                this.log(`announcing: ${directParent.children[c].outerHTML}`);
+    //             this.log(`announcing: ${directParent.children[c].outerHTML}`);
 
-                // Announce
-                window.pageLive.announce({
-                    msg: directParent.children[c].outerHTML
-                    , omitPreannounce: true,
-                });
-            }
-            // Set the last announced segment index
-            lastAnnouncedSegmentIndex = lastIndexToAnnounce;
-        }
+    //             // Announce
+    //             window.pageLive.announce({
+    //                 msg: directParent.children[c].outerHTML
+    //                 , omitPreannounce: true,
+    //             });
+    //         }
+    //         // Set the last announced segment index
+    //         lastAnnouncedSegmentIndex = lastIndexToAnnounce;
+    //     }
 
-        // Define observer and the callback
-        const newResponseObserver = new MutationObserver((mutationList) => {
-            // Catch `directParentContainer` if not yet available
-            if (!directParentContainer) {
-                for (const mutation of mutationList) {
-                    // Match each added nodes
-                    if (mutation.type === 'childList') {
-                        mutation.addedNodes.forEach((node: Node) => {
-                            // Check if this is one of the `directParentContainer` ?
-                            // Elements that qualifies to be `directParentContainer` could be added on same mutations callback.
-                            // So on one 'mutations callback' the `directParentContainer` could be set more than time, which is good. Because then the element will be the closest to `directParent` element which will increase performance a little.
-                            const el = node as HTMLElement;
-                            if (!directParentContainer && isDirectParentContainer(el)) {
-                                // Save the ref
-                                this.log("Found `directParentContainer`");
-                                directParentContainer = el;
-                            }
-                        });
-                    }
-                }
-            }
+    //     // Define observer and the callback
+    //     const newResponseObserver = new MutationObserver((mutationList) => {
+    //         // Catch `directParentContainer` if not yet available
+    //         if (!directParentContainer) {
+    //             for (const mutation of mutationList) {
+    //                 // Match each added nodes
+    //                 if (mutation.type === 'childList') {
+    //                     mutation.addedNodes.forEach((node: Node) => {
+    //                         // Check if this is one of the `directParentContainer` ?
+    //                         // Elements that qualifies to be `directParentContainer` could be added on same mutations callback.
+    //                         // So on one 'mutations callback' the `directParentContainer` could be set more than time, which is good. Because then the element will be the closest to `directParent` element which will increase performance a little.
+    //                         const el = node as HTMLElement;
+    //                         if (!directParentContainer && isDirectParentContainer(el)) {
+    //                             // Save the ref
+    //                             this.log("Found `directParentContainer`");
+    //                             directParentContainer = el;
+    //                         }
+    //                     });
+    //                 }
+    //             }
+    //         }
 
-            // Try to query `directParent` if `directParentContainer` has found
-            if (!directParent && directParentContainer) {
-                this.log("Looking for `directParent` ");
-                directParent = directParentContainer.querySelector(DIRECT_PARENT_SELECTOR);
-                if (directParent) {
-                    this.log("We found direct parent!");
-                }
-            }
+    //         // Try to query `directParent` if `directParentContainer` has found
+    //         if (!directParent && directParentContainer) {
+    //             this.log("Looking for `directParent` ");
+    //             directParent = directParentContainer.querySelector(DIRECT_PARENT_SELECTOR);
+    //             if (directParent) {
+    //                 this.log("We found direct parent!");
+    //             }
+    //         }
 
-            // Count the current response segments count, if `directParent` has been found
-            if (directParent) {
-                const segmentsCount = directParent.children.length;
+    //         // Count the current response segments count, if `directParent` has been found
+    //         if (directParent) {
+    //             const segmentsCount = directParent.children.length;
 
-                // Is there any segments added ?
-                if (segmentsCount > prevSegmentsCount) {
-                    this.log(`Segments added from ${prevSegmentsCount} to ${segmentsCount}`)
-                    // Announce all prev segments, that has not been announced, except the last segment 
-                    announcePrevSegments(segmentsCount - 1);
+    //             // Is there any segments added ?
+    //             if (segmentsCount > prevSegmentsCount) {
+    //                 this.log(`Segments added from ${prevSegmentsCount} to ${segmentsCount}`)
+    //                 // Announce all prev segments, that has not been announced, except the last segment 
+    //                 announcePrevSegments(segmentsCount - 1);
 
-                    // Schedule to announce, will be canceled when another segment is attached
-                    scheduleToAnnounceRemainingSegments();
-                }
-                // Set the segments count for the next mutations callback
-                prevSegmentsCount = segmentsCount;
-            }
-            // Set timeout to announce the last segments that has not been announced
-            // if (directParent && (se)) scheduleToAnnounceRemainingSegments();
-        })
+    //                 // Schedule to announce, will be canceled when another segment is attached
+    //                 scheduleToAnnounceRemainingSegments();
+    //             }
+    //             // Set the segments count for the next mutations callback
+    //             prevSegmentsCount = segmentsCount;
+    //         }
+    //         // Set timeout to announce the last segments that has not been announced
+    //         // if (directParent && (se)) scheduleToAnnounceRemainingSegments();
+    //     })
 
-        // Attach observer
-        console.log("attaching observer");
-        newResponseObserver.observe(this.chatContainer, {
-            childList: true // only observe the child addition to the chat container element
-            , subtree: true
-        });
-    }
-    /**
-     * This function will be executed when the new response update is complete.
-     */
-    onResponseUpdateComplete() {
+    //     // Attach observer
+    //     console.log("attaching observer");
+    //     newResponseObserver.observe(this.chatContainer, {
+    //         childList: true // only observe the child addition to the chat container element
+    //         , subtree: true
+    //     });
+    // }
 
-    }
 
 }

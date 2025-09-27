@@ -11,7 +11,7 @@ export default class GeminiAdapterChat {
     // Note: A response is wrapped in an element, let's call it `response`. 
     // When gemini UI receiving a response, the `response` element will be inserted with 'response-segment` e.g.: <p>, <ol>, etc.
     // Below is the ref to a `response` element that currently receiving a response. After finish receiving response, this ref will be set to `null`
-    currentResponse: HTMLElement | null = null;
+    // currentResponse: HTMLElement | null = null;
     // Wait time for a 'response segment' element to be considered as fully updated by Gemini
     static SEGMENT_WAIT_SECONDS: number = 4e3; // seconds
 
@@ -34,6 +34,9 @@ export default class GeminiAdapterChat {
 
         // Wait until the chat history has completely rendered with the previous chat
         await untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds idle
+
+        // Notify user that PageLive is ready and about the loaded chat history if any
+        this.notifyUserIfChatHistoryHasBeenLoaded();
 
         // Attach observer to chat container to detect incoming response
         await this.observeChatContainer();
@@ -62,17 +65,20 @@ export default class GeminiAdapterChat {
             if (!responseContainer) {
                 // Try to catch the `responseContainer`
                 for (const mutation of mutationList) {
-                    devLog("try to get responseContainer")
+                    devLog("try to get responseContainer");
                     if (mutation.type === "childList") {
 
                         for (let c = 0; c < mutation.addedNodes.length; c++) {
-                            responseContainer = mutation.addedNodes.item(c) as HTMLElement;
-                            if (this.isResponseContainerElement(responseContainer)) {
+                            const node = mutation.addedNodes.item(c) as HTMLElement;
+                            if (this.isResponseContainerElement(node)) {
+                                responseContainer = node;
                                 devLog("Response container is found");
                                 break;
                             }
                         }
                     }
+                    // Stop loop if `responseContainer`is found
+                    if (responseContainer) break;
                 }
             }
 
@@ -150,13 +156,23 @@ export default class GeminiAdapterChat {
          * 1. Announce all segments before the last one, that has not been announced.
          * 2. Set timeout to announce the remaining of the response segments, that has not been announced.
          */
-        const newResponseObserver = new MutationObserver((mutationList, observer) => {
+        const newResponseObserver = new MutationObserver(async (mutationList, observer) => {
             const segmentsCount = responseElement.children.length;
 
             // Is total segments increased ?
             if (prevSegmentsCount < segmentsCount) {
+                // Note: Number of segments can increase more than 1 on 1 callback. On a found case 2 segments added at once.
+                // Assuming Gemini UI only updating the last segment, we can announce right away the n-1 segments.
+                // For example, if 2 segments added at once the earlier segment is instantly announced and the later will be announce with delay.
+                // So the last segment to be announced is the second last
+                const secondLastSegmentIndex = segmentsCount - 2; // -2 because this is an index of the second last
 
-                // TODO announce the previous not yet announced segments
+                devLog(`Segments increased from ${prevSegmentsCount} to ${segmentsCount}`);
+
+                // announce the previous not yet announced segments
+                devLog(`lastAnnouncedSegment before :${lastAnnouncedSegment}`);
+                lastAnnouncedSegment = await this.announceSegments(responseElement, lastAnnouncedSegment, secondLastSegmentIndex);
+                devLog(`lastAnnouncedSegment after :${lastAnnouncedSegment}`);
 
                 // Schedule to announce the remaining not-yet-announced segments
                 remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, observer);
@@ -165,6 +181,12 @@ export default class GeminiAdapterChat {
                 prevSegmentsCount = segmentsCount;
             }
 
+        });
+
+        // Observe
+        devLog("Start observe response element");
+        newResponseObserver.observe(responseElement, {
+            childList: true,
         });
     }
 
@@ -182,7 +204,9 @@ export default class GeminiAdapterChat {
         if (announceTimeout) clearTimeout(announceTimeout);
 
         return setTimeout(() => {
-            this.announceSegments(responseElement, lastAnnouncedSegment, responseElement.children.length - 1);
+            const lastSegmentToAnnounce = responseElement.children.length - 1;
+            devLog(`Delayed announced, from segment ${lastAnnouncedSegment + 1} to ${lastSegmentToAnnounce} `);
+            this.announceSegments(responseElement, lastAnnouncedSegment, lastSegmentToAnnounce);
 
             // The incoming response has been completely received
             this.onResponseComplete(observer);
@@ -195,32 +219,40 @@ export default class GeminiAdapterChat {
      * @param lastAnnouncedSegment The index of the last segment elements that has been announced
      * @param lastIndex The last index of the response segment elements to be announced 
      */
-    announceSegments(responseElement: HTMLElement, lastAnnouncedSegment: number, lastIndex: number) {
-        for (let c: number = lastAnnouncedSegment + 1; c <= lastAnnouncedSegment; c++) {
+    async announceSegments(responseElement: HTMLElement, lastAnnouncedSegment: number, lastIndex: number) {
+        devLog("announce segment from " + (lastAnnouncedSegment + 1) + " until " + lastIndex);
+        for (let c: number = lastAnnouncedSegment + 1; c <= lastIndex; c++) {
             // Type check
             if (!responseElement.children[c]) {
-                prodWarn(`Unablet to find segment with index ${c}`);
+                prodWarn(`Unable to find segment with index ${c}`);
                 prodWarn(`response element: ${responseElement}`);
-                return;
+                return lastAnnouncedSegment;
             }
             const segmentElement = responseElement.children[c] as HTMLElement;
             if (!segmentElement.outerHTML) {
                 prodWarn("Segment element does not have property 'outerHTML' - 4720");
-                return;
+                return lastAnnouncedSegment;
             }
 
+            devLog("announcing :");
+            devLog(segmentElement.outerHTML);
             window.pageLive.announce({
                 msg: segmentElement.outerHTML
                 , omitPreannounce: true
             });
+
+            // Increase the `lastAnnouncedSegment`
+            lastAnnouncedSegment = c;
         }
+        // Return `lastAnnouncedSegment` to be used for next mutations
+        return lastAnnouncedSegment;
     }
     /**
      * Handler when a response is completely received
      * @param {MutationObserver} newResponseObserver The observer for the incoming new response
      */
     async onResponseComplete(newResponseObserver: MutationObserver) {
-        // TODO reset variables
+        // Are there variables need to be reset ?
 
         // Disconnect 'new response observer'
         newResponseObserver.disconnect();
@@ -229,6 +261,37 @@ export default class GeminiAdapterChat {
         this.observeChatContainer();
     }
 
+    /**
+     * Notify user after the previous chat history has been loaded
+     */
+    notifyUserIfChatHistoryHasBeenLoaded() {
+        // How many responses have been loaded ?
+        const promptResponseElements = this.getPromptResponseElements();
+
+        // Notify user
+        if (promptResponseElements) {
+            const total = promptResponseElements.length;
+
+            if (total > 0) {
+                let msg = `${total} responses loaded`;
+                window.pageLive.announce({
+                    msg, omitPreannounce: true
+                });
+            }
+        }
+    }
+
+    /**
+     * Get the list of `PromptResponse` elements. Each `promptResponse` element contain the pair of 1 prompt and 1 response.
+     * @return {NodeListOf<Element> | null} List of `promptResponse` elements
+     */
+    getPromptResponseElements(): NodeListOf<Element> | null {
+        if (!this.chatContainer) {
+            prodWarn("Chat container not found - 5821");
+            return null;
+        }
+        return this.chatContainer.querySelectorAll("div.conversation-container");
+    }
 }
 
 

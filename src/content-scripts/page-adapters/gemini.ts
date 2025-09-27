@@ -158,34 +158,36 @@ const geminiPageAdapter = async () => {
      * It will return the timeout ID so that it can be cleared if needed.
      * @returns {ReturnType<typeof setTimeout>} - Returns the timeout ID.
      */
-    function setTimeoutToStartObserveNewResponses() {
-        return setTimeout(() => {
-            // console.log(`[PageLive][Gemini] Starting to observe ${CHAT_CONTAINER_SELECTOR} after ${OBSERVE_DELAY}`);
+    // function setTimeoutToStartObserveNewResponses() {
+    //     return setTimeout(() => {
+    //         // console.log(`[PageLive][Gemini] Starting to observe ${CHAT_CONTAINER_SELECTOR} after ${OBSERVE_DELAY}`);
 
-            // Start observing the chat history container for new Gemini responses
-            // FIXME uncomment below after testing
-            // observeNewResponses();
-        }, DELAY_TO_START_OBSERVE_NEW_RESPONSES);
-    }
+    //         // Start observing the chat history container for new Gemini responses
+    //         // FIXME uncomment below after testing
+    //         // observeNewResponses();
+    //     }, DELAY_TO_START_OBSERVE_NEW_RESPONSES);
+    // }
 
     /**
      * This function will check if the chat container is still being populated by the previous chat.
      * If yes, it will delay the start of observing the chat container.
      */
-    function observeIfPreviousChatBeingRendered() {
-        // To know if the chat container is still being populated by the previous chat, we will use a MutationObserver.
-        // Every time a new node is added to the chat container, we reschedule the observation (for current chat) timeout.
-        previousChatObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.addedNodes.length > 0) {
-                    // console.log('[PageLive][Gemini] Previous chat is being rendered, rescheduling observation timeout');
-                    // Reschedule the observation timeout
-                    clearTimeout(observeNewResponsesTimeoutId);
-                    observeNewResponsesTimeoutId = setTimeoutToStartObserveNewResponses();
-                }
-            });
-        });
-    }
+    // function observeIfPreviousChatBeingRendered() {
+    //     // To know if the chat container is still being populated by the previous chat, we will use a MutationObserver.
+    //     // Every time a new node is added to the chat container, we reschedule the observation (for current chat) timeout.
+    //     previousChatObserver = new MutationObserver((mutations) => {
+    //         mutations.forEach((mutation) => {
+    //             if (mutation.addedNodes.length > 0) {
+    //                 // console.log('[PageLive][Gemini] Previous chat is being rendered, rescheduling observation timeout');
+    //                 // Reschedule the observation timeout
+    //                 clearTimeout(observeNewResponsesTimeoutId);
+    //                 observeNewResponsesTimeoutId = setTimeoutToStartObserveNewResponses();
+    //             }
+    //         });
+    //     });
+    // }
+
+
     /**
      * @description This function will observe the chat history container for new Gemini responses.
      * This function Will match for every new mutation.
@@ -859,10 +861,10 @@ const geminiPageAdapter = async () => {
 
     // Use timeout to start the chat container observation after delay
     // FIXME : line below is transition to use class-based page adapter
-    let observeNewResponsesTimeoutId = setTimeoutToStartObserveNewResponses();
+    // let observeNewResponsesTimeoutId = setTimeoutToStartObserveNewResponses();
 
     // Check if the chat container is still being populated by the previous chat. If yes, delay to start observing chat container, by replace the timeout with the new one
-    observeIfPreviousChatBeingRendered();
+    // observeIfPreviousChatBeingRendered();
 
     // New gemini responses will not be rendered wholely. It will be rendered in parts.
     // Using MutationObserver, we will know if reponses are still being added to the element.
@@ -886,7 +888,7 @@ const geminiPageAdapter = async () => {
     // Update chat info to dialog title, even if the chat info is not yet parsed
     updateDialogWithChatInfo();
     // Initial announce info
-    window.pageLive.initialAnnounceInfo.push("Gemini page");
+    // window.pageLive.initialAnnounceInfo.push("Gemini page");
 
     // Add resize event handler, to refresh references to key elements
     addWindowResizeListener();
@@ -925,7 +927,7 @@ const geminiPageAdapter = async () => {
     // Run the adapter.
     // This is a bit tricky, because we need to run this after PageLive is ready. But PageReady is waiting for the some elements exist in DOM.
     // That is why when the readyState is 'loading', we need to wait for DOMContentLoaded, or run it right away if the readyState is already pass 'loading'.
-    function runGeminiAdapterWhenPageReady() {
+    async function runGeminiAdapterWhenPageReady() {
         geminiPageAdapter();
 
         // Start the class-based page adapter. In the future, the IIEF will be moved to the class itself.
@@ -933,6 +935,7 @@ const geminiPageAdapter = async () => {
         const adapter = new GeminiAdapter();
     }
 
+    console.log(`document ready state: ${document.readyState}`);
     if (document.readyState === 'loading') {
         // The document is still loading, so wait for DOMContentLoaded
         document.addEventListener('DOMContentLoaded', runGeminiAdapterWhenPageReady);
