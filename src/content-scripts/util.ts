@@ -96,9 +96,13 @@ export async function waitForAnElement(selector: string, maxWaitTime = 60e3): Pr
  * @return {void}
  */
 export function devLog(msg: string): void {
-    // TODO check if this is DEV
-    console.log(`[PageLive][dev] ${msg}`);
-    console.log(msg);
+    // Check if the environment is development
+    const isDev = process.env.NODE_ENV === 'development';
+
+    // For dev only
+    if (isDev) {
+       console.log(`[PageLive][dev] ${msg}`);
+    }
 }
 
 /**

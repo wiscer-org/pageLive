@@ -1,4 +1,4 @@
-import { untilElementIdle } from "../util";
+import { devLog, untilElementIdle } from "../util";
 import GeminiAdapterChat from "./gemini-chat";
 
 /**
@@ -50,6 +50,13 @@ export default class GeminiAdapter {
 
         // Observe chat container for incoming new responses
         // this.observeNewResponses();
+
+        // Unexplained: Without the console.log, does not matter what the string is, the Developer Tool's console will output series of "[PageLive][dev] [Object object]".
+        // To log out something  will remove those logs. Any `console.log` in page adaper will has the same effect.
+        // Maybe it's related to the browser's lifecycle. Maybe `console.log` will suspend on something.
+        // To reproduce, comment the `console.log` below.
+        // Console log below also could be used as log for dev purposes.
+        devLog("Gemini adapter is ready");
     }
     /**
      * This function to requery the 'persisted' elements, such as `chatListContainer`.
