@@ -1,12 +1,16 @@
 # Changelog
 
-## v2.2.0 (on progress)
+## v2.2.0 (not released)
 
 - Announce new response per segments instead of the whole response. This will decrease users' waiting time for the new response to be announced.
+- Indentify whether response(s) rendered as new response or loading saved chat.
+
+### On Progress
+
+- Convert Gemini page adapter to class-based page adapter.
 
 ### Planned
 
-- Indentify whether response(s) rendered as new response or loading saved chat.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
