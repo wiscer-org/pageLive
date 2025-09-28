@@ -139,9 +139,13 @@ export default class KeybindManager {
     static Keybinds = Keybinds;
 
     private pageLive: PageLive;
-    public keybinds: Map<Keybinds, KeybindDetail> = new Map();
+    // Declare property with the definite assignment assertion (!)
+    public keybinds!: Map<Keybinds, KeybindDetail>;
 
     constructor(pageLive: PageLive) {
+        // Assign the definite assignment assertion
+        this.keybinds = new Map();
+
         this.pageLive = pageLive;
         this.initializeKeybinds();
 

@@ -19,20 +19,19 @@ export default class PageLive {
     // Timeout before element containing the each announcement is removed.
     announceItemTimeout: number = 42e3; // Timeout before element containing the each announcement is removed.
     // The main container for the PageLive extension
-    container: HTMLDivElement = document.createElement('div');
+    container!: HTMLDivElement;
     // Announce container element
     ANNOUNCE_CONTAINER_ID: string = 'announce-list';
-    announceContainer: HTMLDivElement = document.createElement('div');
+    announceContainer!: HTMLDivElement;
     // Infos to be announced after the PageLive is initialized
-    initialAnnounceInfo: string[] = [
-        "PageLive is ready.",
-        "Ctrl + / for more info.",
-    ];
+    // Definite Assignment Assertion, because assigning an array may result in 'undefined'
+    initialAnnounceInfo!: string[];
 
     // Other libraries
-    page: Page = new Page(this);
-    keybindManager: KeybindManager = new KeybindManager(this);
-    dialogManager: DialogManager = new DialogManager(this);
+    // Declare the property with the definite assignment assertion (!)
+    page!: Page;
+    keybindManager!: KeybindManager;
+    dialogManager!: DialogManager;
 
     // Check if the environment is development
     isDev = process.env.NODE_ENV === 'development';
@@ -41,6 +40,19 @@ export default class PageLive {
     dev = this.isDev ? devMock : dev;
 
     constructor() {
+        this.container = document.createElement('div');
+        this.announceContainer = document.createElement('div')
+
+        this.initialAnnounceInfo = [
+            "PageLive is ready.",
+            "Ctrl + / for more info.",
+        ]
+
+        // Initiliaze the definite assignment assertion (!)
+        this.page = new Page(this);
+        this.keybindManager = new KeybindManager(this);
+        this.dialogManager = new DialogManager(this);
+
         this.init();
     }
     /**
@@ -48,7 +60,6 @@ export default class PageLive {
      */
     async init() {
         console.log('[PageLive] Initializing PageLive...');
-
         // Prepare the main container for PageLive
         this.preparePageLiveContainer();
 
@@ -57,6 +68,8 @@ export default class PageLive {
 
         // Prepare and ensure the announce container
         this.prepareAnnounceContainer();
+
+
     }
     /**
      * This function will announce initial info (info only after the page is loaded) with some delay. 

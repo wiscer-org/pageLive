@@ -12,12 +12,13 @@ export class DialogManager {
     private pageLive: PageLive;
     private dialogId: string = 'dialog2a2b';
     private dialog: HTMLDialogElement;
-    // Element of the title of this dialog
-    private titleElement: HTMLHeadingElement = document.createElement('h1');
-    private snapshotInfos: string[] = [];
-    private snapshotInfosElement: HTMLDivElement = document.createElement('div');
+    // Element of the title of this dialog. Use definite assignment assertion because `document` may not available during `DialogManager` initialization.
+    private titleElement!: HTMLHeadingElement;
+    // Array also need definite assignment assertion
+    private snapshotInfos!: string[];
+    private snapshotInfosElement!: HTMLDivElement;
     // The container of keybind list 
-    private keybindsContainer: HTMLDivElement = document.createElement('div');
+    private keybindsContainer!: HTMLDivElement;
 
     // Callback function everytime the dialog is opened
     onEveryOpenCallback: (() => Promise<void>) | null = null;
@@ -66,6 +67,12 @@ export class DialogManager {
      * Initializes the dialog manager by ensuring the dialog container is present in the DOM.
      */
     private init(): void {
+        // Initialized the definite assignment assertion
+        this.titleElement = document.createElement('h1');
+        this.snapshotInfos = [];
+        this.snapshotInfosElement = document.createElement('div');
+        this.keybindsContainer = document.createElement('div');
+
         this.initDialogElement();
 
         // Ensure the dialog container is present in the DOM
