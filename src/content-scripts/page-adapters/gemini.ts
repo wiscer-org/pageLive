@@ -931,11 +931,9 @@ const geminiPageAdapter = async () => {
         geminiPageAdapter();
 
         // Start the class-based page adapter. In the future, the IIEF will be moved to the class itself.
-        // FIXME uncomment
         const adapter = new GeminiAdapter();
     }
 
-    console.log(`document ready state: ${document.readyState}`);
     if (document.readyState === 'loading') {
         // The document is still loading, so wait for DOMContentLoaded
         document.addEventListener('DOMContentLoaded', runGeminiAdapterWhenPageReady);

@@ -69,7 +69,6 @@ export default class GeminiAdapter {
 
             // Set a new timer
             resizeTimer = setTimeout(async () => {
-                console.log("[PageLive][Gemini] Window is resized");
                 await this.waitOrUpdateKeyElementsRef();
 
                 // Also update the chat adapter
