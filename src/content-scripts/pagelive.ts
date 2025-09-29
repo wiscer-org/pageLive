@@ -14,14 +14,15 @@ export default class PageLive {
     // Provide types to be used in the PageAdapters.
     static KeybindManager = KeybindManager;
 
-    pageLiveContainerId: string = 'pagelive';
-    announceContainerId: string = 'announce';
+    // Definite assignment assertion
+    pageLiveContainerId!: string;
+    // announceContainerId!: string;
     // Timeout before element containing the each announcement is removed.
-    announceItemTimeout: number = 42e3; // Timeout before element containing the each announcement is removed.
+    announceItemTimeout!: number; // Timeout before element containing the each announcement is removed.
     // The main container for the PageLive extension
     container!: HTMLDivElement;
     // Announce container element
-    ANNOUNCE_CONTAINER_ID: string = 'announce-list';
+    ANNOUNCE_CONTAINER_ID!: string;
     announceContainer!: HTMLDivElement;
     // Infos to be announced after the PageLive is initialized
     // Definite Assignment Assertion, because assigning an array may result in 'undefined'
@@ -40,6 +41,12 @@ export default class PageLive {
     dev = this.isDev ? devMock : dev;
 
     constructor() {
+        // Set the definite assigment
+        this.pageLiveContainerId = 'pagelive';
+        // this.announceContainerId = 'announce';
+        this.announceItemTimeout = 40e3;
+        this.ANNOUNCE_CONTAINER_ID = 'announce-list'
+
         this.container = document.createElement('div');
         this.announceContainer = document.createElement('div')
 
