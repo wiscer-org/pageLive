@@ -210,7 +210,7 @@ export class DialogManager {
         } else {
             // If there is a callback function to be run on the next open, run it and clear the callback
             // Need to be awaited, in case the callback function has async operations, e.g. update the dialog content
-            if (this.onNextOpenCallback !== null) {
+            if (typeof this.onNextOpenCallback === "function") {
                 await this.onNextOpenCallback();
                 this.onNextOpenCallback = null;
             }
