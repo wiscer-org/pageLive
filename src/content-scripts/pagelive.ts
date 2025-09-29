@@ -33,8 +33,8 @@ export default class PageLive {
     keybindManager!: KeybindManager;
     dialogManager!: DialogManager;
 
-    // Check if the environment is development
-    isDev = process.env.NODE_ENV === 'development';
+    // This is to decide later whether this is dev or prod
+    isDev = false;
 
     // Development utilities, only available in development mode
     dev = this.isDev ? devMock : dev;
@@ -59,6 +59,11 @@ export default class PageLive {
      * Initializes the PageLive container and applies styles.
      */
     async init() {
+        // Check if this DEV or PROD
+        // Note: This set by vite, based on the `build:watch` command in package.json. Meanwhile import.meta.env.PROD will return if it is PRODUCTION
+        // accessing `import.meta.env` in constructor will result in `undefined`. Assumed it has not been set as result of vite process.
+        this.isDev = import.meta.env.DEV;
+
         console.log('[PageLive] Initializing PageLive...');
         // Prepare the main container for PageLive
         this.preparePageLiveContainer();
@@ -106,11 +111,8 @@ export default class PageLive {
      * @param {HTMLDivElement} container - The container to apply styles to.
      */
     applyContainerStyle(container: HTMLDivElement) {
-        // For now, we will use the same styles for both dev and prod environments.
-        // If needed, we can make the pageLive visible in dev mode.
-        const isDev = false;
 
-        if (isDev) {
+        if (this.isDev) {
             container.style.position = 'fixed';
             container.style.top = '0';
             container.style.left = '0';
