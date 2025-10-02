@@ -101,7 +101,9 @@ export function devLog(msg: string): void {
 
     // For dev only
     if (isDev) {
-       console.log(`[PageLive][dev] ${msg}`);
+        // Warning! At one case, `console.log` in this function will cause name collision, e.g.: 'he' already difined.
+        // For now we still use `console.log` but might be commented or altered.
+        console.log(`[PageLive][dev] ${msg}`);
     }
 }
 
@@ -109,5 +111,7 @@ export function devLog(msg: string): void {
  * Print warnings used in production
  */
 export function prodWarn(msg: string) {
+    // Warning! At one case, `console.log` in this function will cause name collision, e.g.: 'he' already difined.
+    // For now we still use `console.log` but might be commented or altered.
     console.warn(`[PageLive] ${msg}`);
 }
