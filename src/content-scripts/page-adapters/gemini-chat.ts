@@ -7,22 +7,19 @@ import { devLog, prodWarn, untilElementIdle, waitForAnElement } from "../util";
 export default class GeminiAdapterChat {
     // Ref to the chat container: containing all prompts and responses 
     chatContainer: HTMLElement | null = null;
-    // Ref to an element to currently receiving responses.
-    // Note: A response is wrapped in an element, let's call it `response`. 
-    // When gemini UI receiving a response, the `response` element will be inserted with 'response-segment` e.g.: <p>, <ol>, etc.
-    // Below is the ref to a `response` element that currently receiving a response. After finish receiving response, this ref will be set to `null`
-    // currentResponse: HTMLElement | null = null;
     // Wait time for a 'response segment' element to be considered as fully updated by Gemini
     static SEGMENT_WAIT_SECONDS: number = 4e3; // seconds
 
     constructor() { }
+
     /**
      * Wait and initialize things
-     * @returns 
+     * @returns {Promise<void>}
      */
     async init(): Promise<void> {
         // Set element refs
         await this.updateElementRefs();
+        // FIXME Function below might not need to be called here
         // Attach `window resized` handler. After window is resized the HTML elements will be rendered so we need to update the HTML element references
         await this.onWindowResized();
 
@@ -55,8 +52,6 @@ export default class GeminiAdapterChat {
     observeChatContainer() {
         // Container of response element that we are trying to catch on mutations
         let responseContainer: HTMLElement | null = null;
-        // Response element: The direct parent of response segment elements
-        // let responseElement: HTMLElement | null = null;
 
         // Observer to 'catch' the `responseElement` that will be added during receving new response
         const responseContainerObserver = new MutationObserver((mutationList, observer) => {
@@ -342,4 +337,3 @@ export default class GeminiAdapterChat {
 //								div.response-container-content
 //									div.response-content
 //										message-content#message-content-id-r_d1657b4a1ad3e5b2.model-response-text
-
