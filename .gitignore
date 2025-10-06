@@ -17,3 +17,6 @@ Thumbs.db
 
 # Builts
 builts/
+
+# Puppeteer session data
+user-data/

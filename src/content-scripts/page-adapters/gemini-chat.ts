@@ -3,10 +3,13 @@ import { devLog, prodWarn, untilElementIdle, waitForAnElement } from "../util";
  * This class features interaction with the chat container element of gemini page.
  * Chat container is the element that wraps the series of prompts and responses of the current active chat.
  * Note: A new response will not be rendered all at once, but received in streams. The gemini UI will add / update the response segment elements.
- */
+*/
 export default class GeminiAdapterChat {
+
     // Ref to the chat container: containing all prompts and responses 
     chatContainer: HTMLElement | null = null;
+    // Selector to the chat container
+    static CHAT_CONTAINER_SELECTOR = "#chat-history";
     // Wait time for a 'response segment' element to be considered as fully updated by Gemini
     static SEGMENT_WAIT_SECONDS: number = 4e3; // seconds
 
@@ -40,7 +43,7 @@ export default class GeminiAdapterChat {
     }
 
     async updateElementRefs() {
-        this.chatContainer = await waitForAnElement("#chat-history");
+        this.chatContainer = await waitForAnElement(GeminiAdapterChat.CHAT_CONTAINER_SELECTOR);
     }
 
     /**

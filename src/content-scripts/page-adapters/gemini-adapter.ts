@@ -34,7 +34,11 @@ export default class GeminiAdapter {
         // Add window resize listener, which will update the key element references too
         await this.addWindowResizeListener();
 
+        // Initiliaze object that handles current active chat
         this.chatContainerAdapter.init();
+
+        // Notify PageLive that the page adapter is fully loaded
+        window.pageLive.page.ready();
 
         // Unexplained: Without the console.log, does not matter what the string is, the Developer Tool's console will output series of "[PageLive][dev] [Object object]".
         // To log out something  will remove those logs. Any `console.log` in page adaper will has the same effect.

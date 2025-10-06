@@ -1,12 +1,6 @@
 // gemini.ts - Injected only on gemini.google.com
 
-// import { fail } from "assert";
-// import { parse } from "path";
-// import { parse } from "path";
-// import { parseElementsId } from "../general-dev";
-// import { Keybinds } from "../keybind-manager";
 import { Chat } from "../page";
-// import { isRandomString } from "../util";
 import GeminiAdapter from "./gemini-adapter";
 
 /**
@@ -918,7 +912,7 @@ const geminiPageAdapter = async () => {
     window.pageLive.dialogManager.onEveryOpenCallback = onDialogOpen
 
     // Notify PageLive that the page adapter is fully loaded
-    window.pageLive.page.ready();
+    // window.pageLive.page.ready();
 };
 
 
