@@ -3,9 +3,9 @@ import assert from "node:assert";
 import { Browser, Page } from "puppeteer";
 import { launchBrowser } from "./e2e.utils";
 import GeminiAdapterChat from "../../src/content-scripts/page-adapters/gemini-chat";
-import { waitForAnElement } from "../../src/content-scripts/util";
 
-// This file is general e2e test file for gemini
+// This file is general e2e test file for gemini.
+// Tests in this file will focus on elements in gemini, to detect if there is any changes on Gemini web page that may effect PageLive
 describe("Gemini general tests", async () => {
     let page!: Page;
     let browser!: Browser;
@@ -46,8 +46,5 @@ describe("Gemini general tests", async () => {
             assert.notEqual(chatContainer, null);
         });
 
-        it("Should have initial announcement by `PageLive`", (t) => {
-            assert.equal(true, true, "This should be true");
-        });
     });
 });
