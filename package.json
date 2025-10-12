@@ -6,6 +6,7 @@
     "dev": "vite",
     "build:watch": "NODE_ENV=development vite build --watch",
     "build": "vite build",
+    "watch:dist:wrap": "node ./scripts/watch-dist-wrap.js",
     "test": "tsx --test"
   },
   "devDependencies": {
