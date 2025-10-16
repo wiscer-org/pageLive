@@ -2,21 +2,11 @@
 
 import { Chat } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
-import GeminiChatAdapter from "./gemini-chat";
-
-
 
 //IIEF to avoid symbol conflicts after bundling
 (() => {
     // Define page adapter to be executed on DOMContentLoaded
     const geminiPageAdapter = async () => {
-        // const CHAT_CONTAINER_SELECTOR = "#chat-history";
-
-        // Element name for Gemini response
-        // const RESPONSE_ELEMENT_NAME = 'MESSAGE-CONTENT';
-
-        // Current chat container
-        // let chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
         // Chat list container on the right side navigation
         let chatListContainer: HTMLElement | null = null;
 
@@ -52,9 +42,6 @@ import GeminiChatAdapter from "./gemini-chat";
                 // Set a new timer
                 resizeTimer = setTimeout(() => {
                     // Requery the key / persisted HTMLElements
-                    // !DELETE below
-                    // chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
-                    // ensureChatListContainerElement(true);
                     chatInputElement = getChatInputElement();
 
                     // Execute GeminiChat.onWindowResize() to let GeminiChat handle the resize event
@@ -62,30 +49,6 @@ import GeminiChatAdapter from "./gemini-chat";
                 }, DEBOUNCE_DELAY);
             });
         }
-
-        /**
-         * Wait for the chat container to be available
-         * This is necessary because the chat container may not be immediately available on page load.
-         * It will wait for up to 10 seconds before giving up.
-         * @returns {Promise<boolean>} - Returns true if the page is ready for PageLive to continue, false otherwise.
-         */
-        // async function waitForChatContainer(): Promise<boolean> {
-        //     const MAX_WAIT_TIME = 60e3; // 60 seconds
-        //     // Incremental interval
-        //     let interval = 200;
-        //     let waited = 0;
-
-        //     while (!chatContainer && waited < MAX_WAIT_TIME) {
-        //         await new Promise(res => setTimeout(res, interval));
-        //         waited += interval;
-
-        //         // increase interval to reduce number of loops
-        //         interval = Math.min(interval + 100, 3000); // Cap the interval to a maximum of 3 seconds
-
-        //         chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR) as HTMLElement | null;
-        //     }
-        //     return !!chatContainer
-        // }
 
         /**
          * Return the `Container` element. If null, try to query from the document.
@@ -102,12 +65,14 @@ import GeminiChatAdapter from "./gemini-chat";
             }
 
             if (!chatListContainer) {
-                console.warn('[PageLive][Gemini] Chat list container not found. Unable to check if side nav is opened.');
-                window.pageLive.announce({ msg: "Chat list container not found" });
+                const msg = "Chat list container not found";
+                prodWarn(msg);
+                window.pageLive.announce({ msg });
                 return false;
             }
             return true;
         }
+
         /**
          * Get the HTML element that if clicked will toggle the side nav
          * @return {Promise<HTMLElement|null>} The element if found
@@ -120,7 +85,7 @@ import GeminiChatAdapter from "./gemini-chat";
             // If still not exist, notify
             if (!sideNavToogleButton) {
                 const msg = "Failed to find side nav toggle button";
-                console.warn(`[PageLive][Gemini] ${msg}`);
+                prodWarn(msg);
                 window.pageLive.announce({ msg });
             }
             return sideNavToogleButton;
@@ -152,14 +117,13 @@ import GeminiChatAdapter from "./gemini-chat";
                 await new Promise(r => setTimeout(r, 50));
 
                 chatInputElement.focus();
-
                 // No need to announce, since screen reader will read the focused element automatically.
             }
         }
 
         /**
          * Open Gemini's chat menu on the side nav.
-         * @param {string } chatId The id of the chat. If is an empty string will open the current active chat.
+         * @param {string} chatId The id of the chat. If is an empty string will open the current active chat.
          * @return {Promise<void>}
          */
         async function openChatActionsMenu(chatId: string): Promise<void> {
@@ -221,8 +185,6 @@ import GeminiChatAdapter from "./gemini-chat";
          * Delete the current chat, if possible 
          */
         async function currentChatDelete() {
-            // console.log('[PageLive][Gemini] Deleting current chat');
-
             // Detect if this is a new chat. If yes, cannot find the chat menu button, thus cannot continue. Announce so the user knows.
             const isUnsavedChat = isThisUnsavedChat();
             if (isUnsavedChat) {
@@ -325,9 +287,8 @@ import GeminiChatAdapter from "./gemini-chat";
 
             // Ensure the `chatListContainer` exist
             await ensureChatListContainerElement();
-            if (!chatListContainer) return false;
 
-            return chatListContainer.querySelector('.side-nav-opened') !== null;
+            return chatListContainer?.querySelector('.side-nav-opened') !== null;
         }
 
         /**
@@ -355,7 +316,7 @@ import GeminiChatAdapter from "./gemini-chat";
             const scrollerElement = chatListContainer.closest('infinite-scroller');
             if (!scrollerElement) {
                 const msg = "Failed to find the closest infinite-scroller element";
-                console.error(`[PageLive][Gemini] ${msg}`);
+                prodWarn(msg);
                 window.pageLive.announce({ msg });
                 return;
             }
@@ -462,6 +423,7 @@ import GeminiChatAdapter from "./gemini-chat";
 
             return chatListContainer?.querySelector(`.conversation${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
         }
+
         /**
          * Get the title of the active chat from the chat list. If not found, return empty string.
          * @returns
