@@ -598,7 +598,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             }
             // If active chat title exist, add to the dialog snapshot info
             else if (activeChat.title) {
-                title += ` chat titled  "${activeChat.title}."`;
+                title = ` ${activeChat.title}.`;
             }
             // Either chat info yet not parsed, or no title found
             else {
