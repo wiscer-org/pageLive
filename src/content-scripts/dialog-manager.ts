@@ -193,7 +193,7 @@ export class DialogManager {
     private renderPageLiveInfo(): void {
         const infoContent = document.createElement('div');
         infoContent.innerHTML = `
-            <h2>PageLive Extension</h2>
+            <h2>About PageLive Extension</h2>
             <p>PageLive is a free chrome extension to help screen reader users to interact with specified web apps.</p>
             <p>Visit PageLive chrome web store to get more info about PageLive and the supported web pages.</p>
             <p>To close this modal, use Esc key or the shortcut Ctrl + /</p>
