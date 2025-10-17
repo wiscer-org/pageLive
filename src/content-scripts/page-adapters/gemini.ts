@@ -46,9 +46,10 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
         /**
          * Start the page adapter process
+         * @todo Move more initialization code here
          */
         async function start() {
-            throw new Error("Function not implemented.");
+            // TODO later
         }
 
         /**
@@ -513,7 +514,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * Start new chat, by clicking a button on side nav.
          */
         async function startNewChat() {
-            window.pageLive.announce({ msg: "Start a new chat" });
+            window.pageLive.announce({ msg: "Start new chat", omitPreannounce: true });
 
             // Make sure side nav is opened
             const isSideNavOpened = await checkIsSideNavOpened();
