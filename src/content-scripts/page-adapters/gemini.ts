@@ -7,9 +7,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 (() => {
     // Define page adapter to be executed on DOMContentLoaded
     const geminiPageAdapter = async () => {
-        // Chat list container on the right side navigation
-        let chatListContainer: HTMLElement | null = null;
-
         // Selector for chat item container, per chat item, on the right side navigation
         const CHAT_ITEM_CONTAINER_SELECTOR = '.conversation-items-container';
         const CHAT_TITLE_CONTAINER_SELECTOR = '.conversation';     // If selected, it will have .selected class
@@ -22,6 +19,37 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
         // Class of chat actions container. This should be class name, not selector, because it will be used in `classList.contains` to check if the class name exist
         const CHAT_ACTIONS_CONTAINER_CLASS = "conversation-actions-container";
+
+        /**
+         * Wait and get the key elements
+         * @return {Promise<boolean>} Return false if any of the key elements not found. Otherwise return `true`.
+         */
+        async function getKeyElements(): Promise<boolean> {
+            let allFound = true;
+
+            // Chat list container
+            chatListContainer = await waitForAnElement('.chat-history');
+            if (!chatListContainer) allFound = false;
+
+            // Chat input
+            const chatInputSelector = '.new-input-ui[role="textbox"]';
+            const temporaryChatInputElement = await waitForAnElement(chatInputSelector);
+            if (temporaryChatInputElement === null) {
+                allFound = false;
+            } else {
+                // Need to be converted to HTMLInputElement
+                chatInputElement = temporaryChatInputElement as HTMLInputElement;
+            }
+
+            return allFound;
+        }
+
+        /**
+         * Start the page adapter process
+         */
+        async function start() {
+            throw new Error("Function not implemented.");
+        }
 
         /**
          * This function to requery the 'persisted' elements, such as `chatListContainer`.
@@ -40,8 +68,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
                 clearTimeout(resizeTimer);
 
                 // Set a new timer
-                resizeTimer = setTimeout(() => {
+                resizeTimer = setTimeout(async () => {
                     // Requery the key / persisted HTMLElements
+                    await getKeyElements();
                     chatInputElement = getChatInputElement();
 
                     // Execute GeminiChat.onWindowResize() to let GeminiChat handle the resize event
@@ -56,22 +85,22 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * @param {boolean} reQuery If set true, will re-parse / re-query the element.
          * @returns {Promise<boolean>} if the `chatListContainer` exist.
          */
-        async function ensureChatListContainerElement(reQuery = false): Promise<boolean> {
-            // If null or need to re-query again
-            if (chatListContainer === null || reQuery) {
-                // Get the chat list container
-                // chatListContainer = document.querySelector('[data-test-id="all-conversations"]') as HTMLElement | null;
-                chatListContainer = document.querySelector('.chat-history');
-            }
+        // async function ensureChatListContainerElement(reQuery = false): Promise<boolean> {
+        //     // If null or need to re-query again
+        //     if (chatListContainer === null || reQuery) {
+        //         // Get the chat list container
+        //         // chatListContainer = document.querySelector('[data-test-id="all-conversations"]') as HTMLElement | null;
+        //         chatListContainer = document.querySelector('.chat-history');
+        //     }
 
-            if (!chatListContainer) {
-                const msg = "Chat list container not found";
-                prodWarn(msg);
-                window.pageLive.announce({ msg });
-                return false;
-            }
-            return true;
-        }
+        //     if (!chatListContainer) {
+        //         const msg = "Chat list container not found";
+        //         prodWarn(msg);
+        //         window.pageLive.announce({ msg });
+        //         return false;
+        //     }
+        //     return true;
+        // }
 
         /**
          * Get the HTML element that if clicked will toggle the side nav
@@ -102,9 +131,10 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * This function will focus the chat input element.
          */
         async function focusChatInput() {
-            if (!chatInputElement) {
-                chatInputElement = getChatInputElement();
-            }
+            // !DELETE: below
+            // if (!chatInputElement) {
+            //     chatInputElement = getChatInputElement();
+            // }
 
             if (chatInputElement) {
                 // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
@@ -285,8 +315,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             // the elements '.conversation-items-container' and '.conversation-actions-container' will have 'side-nav-opened' class.
             // Side nav considered opened if there is element '.side-nav-opened' in the chat list container
 
-            // Ensure the `chatListContainer` exist
-            await ensureChatListContainerElement();
+            // DELETE below: Ensure the `chatListContainer` exist
+            // await ensureChatListContainerElement();
 
             return chatListContainer?.querySelector('.side-nav-opened') !== null;
         }
@@ -300,8 +330,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * @return {Promise<void>}
          */
         async function populateChatList(findActiveChat = false, shouldCloseBackNavBar = true) {
-            // Chat list is required to continue
-            await ensureChatListContainerElement();
+            // DELETE: Chat list is required to continue
+            // await ensureChatListContainerElement();
+            // Type checking
             if (!chatListContainer) return;
 
             // Required: Loading image to be observed
@@ -342,9 +373,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
                 // Use Promise until 1 of the conditions met
                 await new Promise(async (resolve) => {
-                    // Check chat list container again
-                    await ensureChatListContainerElement();
-                    if (!chatListContainer) return;
+                    // DELETE below: Check chat list container again
+                    // await ensureChatListContainerElement();
+                    // if (!chatListContainer) return;
 
                     // Flags for 'is loading' state
                     let loadingStarted = false;
@@ -418,8 +449,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * @returns {HTMLElement|null} Get the active chat items container
          */
         async function getSelectedChatElement(): Promise<HTMLElement | null> {
-            // Make sure the chat list container exist
-            await ensureChatListContainerElement();
+            // DELETE: Make sure the chat list container exist
+            // await ensureChatListContainerElement();
 
             return chatListContainer?.querySelector(`.conversation${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
         }
@@ -444,8 +475,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * Get the active chat actions element in the chat list.
          */
         async function getSelectedChatActionsContainerElement(): Promise<HTMLElement | null> {
-            // The chat list container is required
-            await ensureChatListContainerElement();
+            // DELETE: The chat list container is required
+            // await ensureChatListContainerElement();
 
             // Find the active chat item element in the chat list
             return chatListContainer?.
@@ -599,31 +630,21 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             await syncActiveChatInfo();
         }
 
+        // References to HTML elements
+        let chatInputElement: HTMLInputElement | null;
+        // Chat list container on the right side navigation
+        let chatListContainer: HTMLElement | null = null;
 
         // =============== Execution ===============
-        // Start the process
 
-        // // Wait for the page to be ready
-        // const isChatContainerExist = await waitForChatContainer();
+        // Wait and get key elements
+        await getKeyElements();
 
-        // // If the chat container is not found after waiting, log a warning and stop the observation setup
-        // if (!isChatContainerExist) {
-        //     console.warn('[PageLive][Gemini] Chat container not found after waiting. Stopping observation setup.');
-        //     return;
-        // }
+        start();
 
         // Object to handle chat container related features
         const chatAdapter = new GeminiAdapterChat();
         await chatAdapter.init();
-
-        // References to HTML elements
-        let chatInputElement: HTMLInputElement | null;
-
-        // New gemini responses will not be rendered wholely. It will be rendered in parts.
-        // Using MutationObserver, we will know if reponses are still being added to the element.
-        // After finish rendering, we will get the final response and announce it.
-        // Below is the variable to point to the last element containing the Gemini responses:
-        let lastGeminiResponseElement: HTMLElement | null = null;
 
         // Information about the current chat. This will be lazy loaded on one of several events, e.g. when side nav is opened, pageLive dialog is opened, etc.
         // Only attach to `window.pageLive.page` when have tried to parse the info.
@@ -699,7 +720,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          */
         async init(): Promise<void> {
             // Set element refs
-            await this.updateElementRefs();
+            await this.getKeyElements();
             // FIXME Function below might not need to be called here
             // Attach `window resized` handler. After window is resized the HTML elements will be rendered so we need to update the HTML element references
             await this.onWindowResized();
@@ -720,7 +741,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             await this.observeChatContainer();
         }
 
-        async updateElementRefs() {
+        async getKeyElements() {
             this.chatContainer = await waitForAnElement(GeminiAdapterChat.CHAT_CONTAINER_SELECTOR);
         }
 
@@ -728,7 +749,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * Handler when window is resized. This function will be called by `GeminiAdapter`class.
          */
         async onWindowResized() {
-            await this.updateElementRefs();
+            await this.getKeyElements();
         }
         observeChatContainer() {
             // Container of response element that we are trying to catch on mutations
@@ -1015,7 +1036,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         }
     }
 
-    // FRun the adapter. This is a bit tricky, because we need to run this after PageLive is ready. But PageReady is waiting for the some elements exist in DOM.
+    // Run the adapter. This is a bit tricky, because we need to run this after PageLive is ready. But PageReady is waiting for the some elements exist in DOM.
     // That is why when the readyState is 'loading', we need to wait for DOMContentLoaded, or run it right away if the readyState is already pass 'loading'.
     async function runGeminiAdapterWhenPageReady() {
         geminiPageAdapter();
@@ -1031,3 +1052,5 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         runGeminiAdapterWhenPageReady();
     }
 })();
+
+
