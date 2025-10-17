@@ -87,6 +87,11 @@ export async function waitForAnElement(selector: string, maxWaitTime = 60e3): Pr
 
         element = document.querySelector(selector) as HTMLElement | null;
     }
+
+    if(element === null) {
+        prodWarn(`Element with selector "${selector}" not found after waiting for ${maxWaitTime} ms.`);
+    }
+
     return element;
 }
 
