@@ -3,11 +3,12 @@
 ## v2.2.0 (not released)
 
 - Announce new response per segments instead of the whole response. This will decrease users' waiting time for the new response to be announced.
-- Indentify whether response(s) rendered as new response or loading saved chat.
+- Identify whether response(s) rendered as new response or loading saved chat.
+- Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
 
 ### On Progress
 
-- Convert Gemini page adapter to class-based page adapter.
+-
 
 ### Planned
 
@@ -19,8 +20,6 @@
 
 - Keyboard shorcuts to read previous / next chat item (prompts & responses).
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
-- Enhance response announcement: Announce content as it streams in, rather than waiting for the full response to be rendered.
-- Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
 
 ## v2.1.2
 
