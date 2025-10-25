@@ -1,5 +1,6 @@
 // gemini.ts - Injected only on gemini.google.com
 
+import { last } from "lodash";
 import { Chat } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
@@ -538,6 +539,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
                 // Click the button
                 newChatButton.click();
             }
+
+            // After the button is clicked, the UI will be re-rendered, causing `chatContainer` element to be disconnected.
+            // Wait a little for the UI to be re-rendered, then re-query the key elements
+            await new Promise(r => setTimeout(r, 4000)); // 4 seconds is long enough for the UI to be re-rendered, and quick enough before user finish typing the first input.
+            chatAdapter.init();
         }
         /**
          * Parse the current active chat info from the document, if possible.
@@ -706,12 +712,13 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
         // Ref to the chat container: containing all prompts and responses 
         chatContainer: HTMLElement | null = null;
+        chatContainerObserver: MutationObserver | null = null;
         // Selector to the chat container
         static CHAT_CONTAINER_SELECTOR = "#chat-history";
         // Selector to a response container
         static RESPONSE_ELEMENT_NAME = 'MESSAGE-CONTENT';
         // Wait time for a 'response segment' element to be considered as fully updated by Gemini
-        static SEGMENT_WAIT_SECONDS: number = 4e3; // seconds
+        static SEGMENT_WAIT_SECONDS: number = 1e3; // seconds
 
         constructor() { }
 
@@ -722,9 +729,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         async init(): Promise<void> {
             // Set element refs
             await this.getKeyElements();
-            // FIXME Function below might not need to be called here
-            // Attach `window resized` handler. After window is resized the HTML elements will be rendered so we need to update the HTML element references
-            await this.onWindowResized();
 
             // Validate element ref
             if (!this.chatContainer) {
@@ -756,16 +760,29 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             // Container of response element that we are trying to catch on mutations
             let responseContainer: HTMLElement | null = null;
 
+            // Note: .gpi-static-text-loader is the class for the loading text 'Just a sec..'
+
+            // Stop observing the previous observer if any
+            if (this.chatContainerObserver) {
+                this.chatContainerObserver.disconnect();
+                this.chatContainerObserver = null;
+            }
+
             // Observer to 'catch' the `responseElement` that will be added during receving new response
-            const responseContainerObserver = new MutationObserver((mutationList, observer) => {
+            this.chatContainerObserver = new MutationObserver(async (mutationList, observer) => {
+
+                // Set to null if previously found `responseContainer` is no longer connected
+                if (!responseContainer?.isConnected) responseContainer = null;
 
                 // Not yet have responseContainer ?
-                if (!responseContainer) {
+                if (!responseContainer || responseContainer.isConnected === false) {
+                    if (responseContainer?.isConnected === false) {
+                        devLog("Previously found responseContainer is no longer connected. Resetting.");
+                    }
+
                     // Try to catch the `responseContainer`
                     for (const mutation of mutationList) {
-                        devLog("try to get responseContainer");
                         if (mutation.type === "childList") {
-
                             for (let c = 0; c < mutation.addedNodes.length; c++) {
                                 const node = mutation.addedNodes.item(c) as HTMLElement;
                                 if (this.isResponseContainerElement(node)) {
@@ -782,12 +799,15 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
                 // Try to query `responseElement` within the `responseContainer`
                 if (responseContainer) {
+                    devLog("Try to get responseElement within responseContainer");
+
                     // Use selector, not by selecting on each of the `mutation.addedNodes` because the `responseElement` is a `div`without classes or id that can be used to identify.
                     // The selector : `message-content > div`
                     let responseElement = responseContainer.querySelector('message-content > div') as HTMLElement;
 
                     // If `responseElement` is found, start observing the incoming response segments
                     if (responseElement) {
+                        devLog("Response element is found, start observing incoming response");
                         this.observeIncomingResponse(responseElement);
                         // Disconnect the 'response container' observer
                         observer.disconnect();
@@ -802,9 +822,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             }
 
             // Observe elements addition of subtree of chat container
-            responseContainerObserver.observe(this.chatContainer, {
+            this.chatContainerObserver.observe(this.chatContainer, {
                 childList: true,
                 subtree: true,
+                characterData: true,
+
             });
         }
 
