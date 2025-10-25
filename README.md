@@ -2,7 +2,7 @@
 
 **PageLive** is a Chrome browser extension designed to assist users on Gemini AI (gemini.google.com) by automatically announcing new responses for improved accessibility.
 
-**Current Version:** 1.1.0
+**Current Version:** 2.2.0
 
 ## Desktop Screen Reader Support
 
@@ -31,13 +31,14 @@ PageLive is free and open source.
 
 ### Gemini
 
+- Press Ctrl + / to toogle dialog. The dialog contains information about chat / conversation, keyboard shortcuts, and other information about PageLive.
+- Start new chat : Ctrl + Alt + O
+- Delete current chat : Ctrl + Shift + Backspace
+- Announce the last response : Ctrl + Shift + Enter
+- Focus the chat input : Shift + Esc
 - Announces new responses automatically for screen reader users.
 
 ## Planned Features
-
-### Gemini (Planned)
-
-- Keyboard shortcut to delete the current chat/conversation.
 
 ### Grok (xAI) (Planned)
 
