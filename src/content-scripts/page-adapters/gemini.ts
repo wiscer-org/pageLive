@@ -1,6 +1,6 @@
 // gemini.ts - Injected only on gemini.google.com
 
-import { last } from "lodash";
+import { initial, last } from "lodash";
 import { Chat } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
@@ -43,6 +43,53 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             }
 
             return allFound;
+        }
+
+        /**
+         * Initialize the page adapter
+         */
+        async function init() {
+            await getKeyElements();
+
+            // Add resize event handler, to refresh references to key elements
+            addWindowResizeListener();
+
+            // Feed info to pageLive & pageLive.page
+            window.pageLive.page.name = 'Gemini';
+            // Update chat info to dialog title, even if the chat info is not yet parsed
+            updateDialogWithChatInfo();
+            // Initial announce info
+            // window.pageLive.initialAnnounceInfo.push("Gemini page");
+
+            // Add keybind 'focus chat input'
+            window.pageLive.keybindManager.registerKeybind(
+                window.PageLiveStatics.KeybindManager.Keybinds.FocusChatInput,
+                focusChatInput
+            );
+            // Add keybind 'announce last response'
+            window.pageLive.keybindManager.registerKeybind(
+                window.PageLiveStatics.KeybindManager.Keybinds.AnnounceLastResponse,
+                // announceLastResponse
+                chatAdapter.announceLastResponse.bind(chatAdapter)
+            );
+            // Add keybind 'delete current chat'
+            window.pageLive.keybindManager.registerKeybind(
+                window.PageLiveStatics.KeybindManager.Keybinds.ChatCurrentDelete,
+                currentChatDelete
+            );
+            // Add keybind 'start new chat'
+            window.pageLive.keybindManager.registerKeybind(
+                window.PageLiveStatics.KeybindManager.Keybinds.NewChat,
+                startNewChat
+            )
+
+            // Add callback to be executed the next time dialog is shown
+            window.pageLive.dialogManager.onEveryOpenCallback = onDialogOpen
+
+            // Notify PageLive that the page adapter is fully loaded
+            window.pageLive.page.ready();
+
+            start();
         }
 
         /**
@@ -543,6 +590,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             // After the button is clicked, the UI will be re-rendered, causing `chatContainer` element to be disconnected.
             // Wait a little for the UI to be re-rendered, then re-query the key elements
             await new Promise(r => setTimeout(r, 4000)); // 4 seconds is long enough for the UI to be re-rendered, and quick enough before user finish typing the first input.
+            await init();
             chatAdapter.init();
         }
         /**
@@ -643,11 +691,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         let chatListContainer: HTMLElement | null = null;
 
         // =============== Execution ===============
-
-        // Wait and get key elements
-        await getKeyElements();
-
-        start();
+        // Initialize the page adapter
+        init();
 
         // Object to handle chat container related features
         const chatAdapter = new GeminiAdapterChat();
@@ -664,43 +709,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             title: ''
         }
 
-        // Feed info to pageLive & pageLive.page
-        window.pageLive.page.name = 'Gemini';
-        // Update chat info to dialog title, even if the chat info is not yet parsed
-        updateDialogWithChatInfo();
-        // Initial announce info
-        // window.pageLive.initialAnnounceInfo.push("Gemini page");
-
-        // Add resize event handler, to refresh references to key elements
-        addWindowResizeListener();
-
-        // Add keybind 'focus chat input'
-        window.pageLive.keybindManager.registerKeybind(
-            window.PageLiveStatics.KeybindManager.Keybinds.FocusChatInput,
-            focusChatInput
-        );
-        // Add keybind 'announce last response'
-        window.pageLive.keybindManager.registerKeybind(
-            window.PageLiveStatics.KeybindManager.Keybinds.AnnounceLastResponse,
-            // announceLastResponse
-            chatAdapter.announceLastResponse.bind(chatAdapter)
-        );
-        // Add keybind 'delete current chat'
-        window.pageLive.keybindManager.registerKeybind(
-            window.PageLiveStatics.KeybindManager.Keybinds.ChatCurrentDelete,
-            currentChatDelete
-        );
-        // Add keybind 'start new chat'
-        window.pageLive.keybindManager.registerKeybind(
-            window.PageLiveStatics.KeybindManager.Keybinds.NewChat,
-            startNewChat
-        )
-
-        // Add callback to be executed the next time dialog is shown
-        window.pageLive.dialogManager.onEveryOpenCallback = onDialogOpen
-
-        // Notify PageLive that the page adapter is fully loaded
-        window.pageLive.page.ready();
     };
 
     /**
