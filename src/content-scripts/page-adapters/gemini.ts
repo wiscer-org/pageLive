@@ -10,7 +10,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
     const geminiPageAdapter = async () => {
         // Selector for chat item container, per chat item, on the right side navigation
         const CHAT_ITEM_CONTAINER_SELECTOR = '.conversation-items-container';
-        const CHAT_TITLE_CONTAINER_SELECTOR = '.conversation';     // If selected, it will have .selected class
+        const CHAT_TITLE_CONTAINER_SELECTOR = '.conversation';     // If selected, it will also have .selected class
         // Selector for chat item title, per chat item, on the right side navigation
         const CHAT_TITLE_SELECTOR = ' .conversation-title';
         // Selector of container of chat item action buttons, per chat item.
@@ -656,6 +656,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          */
         function updateDialogWithChatInfo() {
             let title = "Gemini";
+            let attributes = {};
 
             const isUnsavedChat = isThisUnsavedChat();
             if (isUnsavedChat) {
@@ -663,7 +664,22 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             }
             // If active chat title exist, add to the dialog snapshot info
             else if (activeChat.title) {
+                // Event handler when the title element is clicked
+                const focusChatInSideNav = async () => {
+                    await ensureSideNavOpened();
+                    // Find the active chat element
+                    const activeChatElement = await getSelectedChatElement();
+                    console.log(activeChatElement);
+                    // Focus the active chat element
+                    activeChatElement?.focus();
+                }
+
                 title = ` ${activeChat.title}.`;
+                attributes = {
+                    ariaLabel: activeChat.title + ", click to focus the chat in the chat list.",
+                    onclick: focusChatInSideNav,
+                }
+
             }
             // Either chat info yet not parsed, or no title found
             else {
@@ -672,7 +688,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             }
 
             // Update the dialog
-            window.pageLive.dialogManager.setTitle(title);
+            window.pageLive.dialogManager.setTitle(title, attributes);
             // Note: For now we will not set the page snapshot info, since we do not have much info to show
         }
 

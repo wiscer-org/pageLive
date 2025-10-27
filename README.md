@@ -32,6 +32,7 @@ PageLive is free and open source.
 ### Gemini
 
 - Press Ctrl + / to toogle dialog. The dialog contains information about chat / conversation, keyboard shortcuts, and other information about PageLive.
+- The title of the dialog is also a button, which if pressed will close the dialog and move focus to the current chat in the side navigation.
 - Start new chat : Ctrl + Alt + O
 - Delete current chat : Ctrl + Shift + Backspace
 - Announce the last response : Ctrl + Shift + Enter

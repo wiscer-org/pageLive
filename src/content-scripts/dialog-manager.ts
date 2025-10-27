@@ -115,9 +115,49 @@ export class DialogManager {
     /**
      * Set the title of the dialog.
      * @param {string} title - The title to be set.
+     * @param {Record<string, string | (()=>void)| null>} [attributes] - Optional attributes to set on the title element. Use `null` to remove an attribute.
      */
-    public setTitle(title: string): void {
+    public setTitle(title: string, attributes?: Record<string, string | (() => void) | null>): void {
         this.titleElement.textContent = title;
+
+        if (attributes) {
+            // Helper to convert camelCase to kebab-case (ariaLabel -> aria-label)
+            const toAttrName = (n: string) => n.includes('-') ? n : n.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+            for (const [name, value] of Object.entries(attributes)) {
+                const attrName = toAttrName(name);
+
+                console.log(`set attribute ${name} to ${attrName}`);
+
+                if (typeof value === 'function') {
+                    // If the name looks like an event handler (onClick / onclick), attach as an event listener
+                    if (name.toLowerCase().startsWith('on') && name.length > 2) {
+                        const eventName = name.slice(2).toLowerCase();
+                        this.titleElement.addEventListener(eventName, (event) => {
+                            // Close the dialog before running the event handler
+                            this.close();
+                            // Call the provided event handler
+                            (value as EventListener)(event);
+                        });
+                    } else {
+                        // Fallback: assign as a property
+                        (this.titleElement as any)[name] = value;
+                    }
+                } else if (value === null) {
+                    this.titleElement.removeAttribute(attrName);
+                } else {
+                    this.titleElement.setAttribute(attrName, value);
+                }
+            }
+
+            // If any onclick handler was provided (either 'onclick' or 'onClick'), style the title like a button
+            const hasOnClick = Object.keys(attributes).some(k => k.toLowerCase() === 'onclick' && typeof (attributes as any)[k] === 'function');
+            if (hasOnClick) {
+                this.titleElement.setAttribute('role', 'button');
+                this.titleElement.style.textDecoration = 'underline';
+                this.titleElement.style.cursor = 'pointer';
+            }
+        }
     }
 
     /**
