@@ -669,9 +669,13 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
                     await ensureSideNavOpened();
                     // Find the active chat element
                     const activeChatElement = await getSelectedChatElement();
-                    console.log(activeChatElement);
                     // Focus the active chat element
-                    activeChatElement?.focus();
+                    if (!activeChatElement) {
+                        const msg = "Failed to find active chat element in the chat list.";
+                        prodWarn(msg); window.pageLive.announce({ msg });
+                    } else {
+                        activeChatElement.focus();
+                    }
                 }
 
                 title = ` ${activeChat.title}.`;
@@ -679,7 +683,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
                     ariaLabel: activeChat.title + ", click to focus the chat in the chat list.",
                     onclick: focusChatInSideNav,
                 }
-
             }
             // Either chat info yet not parsed, or no title found
             else {
