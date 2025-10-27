@@ -21,6 +21,17 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         // Class of chat actions container. This should be class name, not selector, because it will be used in `classList.contains` to check if the class name exist
         const CHAT_ACTIONS_CONTAINER_CLASS = "conversation-actions-container";
 
+        // Information about the current chat. This will be lazy loaded on one of several events, e.g. when side nav is opened, pageLive dialog is opened, etc.
+        // Only attach to `window.pageLive.page` when have tried to parse the info.
+        const EMPTY_CHAT: Chat = {
+            id: "", // empty string means parsed but not found
+            title: ""
+        }
+        let activeChat: Chat = {
+            id: null, // null means not yet parsed
+            title: ''
+        }
+
         /**
          * Wait and get the key elements
          * @return {Promise<boolean>} Return false if any of the key elements not found. Otherwise return `true`.
@@ -697,17 +708,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         // Object to handle chat container related features
         const chatAdapter = new GeminiAdapterChat();
         await chatAdapter.init();
-
-        // Information about the current chat. This will be lazy loaded on one of several events, e.g. when side nav is opened, pageLive dialog is opened, etc.
-        // Only attach to `window.pageLive.page` when have tried to parse the info.
-        const EMPTY_CHAT: Chat = {
-            id: "", // empty string means parsed but not found
-            title: ""
-        }
-        let activeChat: Chat = {
-            id: null, // null means not yet parsed
-            title: ''
-        }
 
     };
 
