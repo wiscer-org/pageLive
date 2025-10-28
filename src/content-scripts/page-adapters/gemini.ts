@@ -25,11 +25,13 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         // Only attach to `window.pageLive.page` when have tried to parse the info.
         const EMPTY_CHAT: Chat = {
             id: "", // empty string means parsed but not found
-            title: ""
+            title: "",
+            promptCount: 0,
         }
         let activeChat: Chat = {
             id: null, // null means not yet parsed
-            title: ''
+            title: '',
+            promptCount: -1, // < 0 means not yet parsed
         }
 
         /**
@@ -620,9 +622,17 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
                 // Parse the title from the chat list
                 await ensureSideNavOpened();
-                // Populte the chat list until the active chat is found
+                // Populate the chat list until the active chat is found
                 await populateChatList(true);
                 activeChat.title = await parseSelectedChatTitle();
+
+                // Parse the prompt count. For Gemini, we will consider each user prompt as a 'prompt'
+                const promptResponseElements = await chatAdapter.getPromptResponseElements();
+                if (promptResponseElements === null) {
+                    activeChat.promptCount = -2; // -2 means failed to parse
+                } else {
+                    activeChat.promptCount = promptResponseElements.length;
+                }
             }
 
             // Update dialog if shouldUpdateDialog is set true
@@ -655,6 +665,19 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * Update the dialog with everything related to the current active chat info.
          */
         function updateDialogWithChatInfo() {
+            updateDialogTitle();
+
+            // Create snapshot about the number of prompts in the chat
+            if (activeChat.promptCount >= 0) {
+                let snapshotInfos = [`This chat has ${activeChat.promptCount} prompt${activeChat.promptCount !== 1 ? 's' : ''}.`];
+                window.pageLive.dialogManager.setSnapshotInfos(snapshotInfos);
+            }
+        }
+
+        /**
+         * Update the dialog title with the current active chat info.
+         */
+        function updateDialogTitle() {
             let title = "Gemini";
             let attributes = {};
 
@@ -692,7 +715,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
             // Update the dialog
             window.pageLive.dialogManager.setTitle(title, attributes);
-            // Note: For now we will not set the page snapshot info, since we do not have much info to show
         }
 
         /**
