@@ -127,8 +127,6 @@ export class DialogManager {
             for (const [name, value] of Object.entries(attributes)) {
                 const attrName = toAttrName(name);
 
-                console.log(`set attribute ${name} to ${attrName}`);
-
                 if (typeof value === 'function') {
                     // If the name looks like an event handler (onClick / onclick), attach as an event listener
                     if (name.toLowerCase().startsWith('on') && name.length > 2) {
