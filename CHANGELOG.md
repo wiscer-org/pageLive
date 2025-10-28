@@ -3,6 +3,7 @@
 ## v2.2.0 (not released)
 
 - The dialog title is now a button, which will close the dialog and move focus to the current chat in the chat list in the side navigation.
+- Dialog contains number of prompts in the active chat.
 - Announce new response per segments instead of the whole response. This will decrease users' waiting time for the new response to be announced.
 - Identify whether response(s) rendered as new response or loading saved chat.
 - Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.

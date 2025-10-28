@@ -8,6 +8,8 @@ export type Chat = {
     id: string | null;
     // The title of the chat, usually the first few words of the chat
     title: string;
+    // The number of prompts in the chat. Should be equal to the number of responses.
+    promptCount: number;
 }
 
 /**
