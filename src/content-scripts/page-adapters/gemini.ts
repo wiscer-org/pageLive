@@ -767,7 +767,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         // Selector to a response container
         static RESPONSE_ELEMENT_NAME = 'MESSAGE-CONTENT';
         // Wait time for a 'response segment' element to be considered as fully updated by Gemini
-        static SEGMENT_WAIT_SECONDS: number = 1e3; // seconds
+        static SEGMENT_WAIT_SECONDS: number = 3e3; // seconds
 
         constructor() { }
 
@@ -974,7 +974,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
             return setTimeout(() => {
                 const lastSegmentToAnnounce = responseElement.children.length - 1;
-                devLog(`Delayed announced, from segment ${lastAnnouncedSegment + 1} to ${lastSegmentToAnnounce} `);
+                devLog(`Delayed announced, from segment index ${lastAnnouncedSegment + 1} to ${lastSegmentToAnnounce} `);
                 this.announceSegments(responseElement, lastAnnouncedSegment, lastSegmentToAnnounce);
 
                 // The incoming response has been completely received
@@ -989,7 +989,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
          * @param lastIndex The last index of the response segment elements to be announced 
          */
         async announceSegments(responseElement: HTMLElement, lastAnnouncedSegment: number, lastIndex: number) {
-            devLog("announce segment from " + (lastAnnouncedSegment + 1) + " until " + lastIndex);
+            devLog("announce segment index from " + (lastAnnouncedSegment + 1) + " until " + lastIndex);
             for (let c: number = lastAnnouncedSegment + 1; c <= lastIndex; c++) {
                 // Type check
                 if (!responseElement.children[c]) {
@@ -1004,7 +1004,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
                 }
 
                 devLog("announcing :");
-                devLog(segmentElement.outerHTML);
+                devLog(segmentElement.textContent || '[empty segment]');
                 window.pageLive.announce({
                     msg: segmentElement.outerHTML
                     , omitPreannounce: true
