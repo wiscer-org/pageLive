@@ -791,8 +791,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             // Notify user that PageLive is ready and about the loaded chat history if any
             this.notifyUserIfChatHistoryHasBeenLoaded();
 
+            // Note: Line below is commented since Gemini just implemented 'announce' feature on their page.
             // Attach observer to chat container to detect incoming response
-            await this.observeChatContainer();
+            // await this.observeChatContainer();
         }
 
         async getKeyElements() {
