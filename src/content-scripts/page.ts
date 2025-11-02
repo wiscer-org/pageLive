@@ -1,5 +1,10 @@
 import PageLive from "./pagelive";
 
+// Type to represent items in a chat, like a prompt or a response.
+export type ChatUnit = {
+    isYourPrompt: boolean; // true if this item is a prompt from the user, false if it's a response from the AI
+    contentElement: HTMLElement; // The HTML element that contains the content of this chat item
+}
 
 // Type to represent specific chat, e.g. current active chat, or the last chat, etc.
 export type Chat = {
@@ -10,6 +15,8 @@ export type Chat = {
     title: string;
     // The number of prompts in the chat. Should be equal to the number of responses.
     promptCount: number;
+    // List of items in the chat, including prompts and responses.
+    units?: ChatUnit[];
 }
 
 /**
