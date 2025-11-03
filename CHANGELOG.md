@@ -1,13 +1,6 @@
 # Changelog
 
-## v2.2.0 (not released)
-
-- The dialog title is now a button, which will close the dialog and move focus to the current chat in the chat list in the side navigation.
-- Dialog contains number of prompts in the active chat.
-- Deprecated: The feature to announce new response is deprecated since Gemini just recently implemented that feature. So the progress below is curerntly not being used. However the code is not removed for this time being.
-- Announce new response per segments instead of the whole response. This will decrease users' waiting time for the new response to be announced.
-- Identify whether response(s) rendered as new response or loading saved chat.
-- Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
+## v3.0.0 (not released)
 
 ### On Progress
 
@@ -15,14 +8,23 @@
 
 ### Planned
 
+- Create dialog 'Chat Map' to map prompts/response : shortened prompt/response text content and each text is button to focus to prompt/response element correspondingly.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
 
 ### Future
 
-- Keyboard shorcuts to read previous / next chat item (prompts & responses).
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v2.2.0
+
+- The dialog title is now a button, which will close the dialog and move focus to the current chat in the chat list in the side navigation.
+- Dialog contains number of prompts in the active chat.
+- Deprecated: The feature to announce new response is deprecated since Gemini just recently implemented that feature. So the progress below is curerntly not being used. However the code is not removed for this time being.
+- Announce new response per segments instead of the whole response. This will decrease users' waiting time for the new response to be announced.
+- Identify whether response(s) rendered as new response or loading saved chat.
+- Page adapters need to make sure page is ready (key HTML elements existed) before continue process, e.g.: register keybinds, announce, etc.
 
 ## v2.1.2
 
