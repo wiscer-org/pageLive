@@ -669,9 +669,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
 
             // Create snapshot about the number of prompts in the chat
             if (activeChat.promptCount >= 0) {
-                let snapshotInfos = [`This chat has ${activeChat.promptCount} prompt${activeChat.promptCount !== 1 ? 's' : ''} or more.`];
+                let snapshotInfos = [`This chat has ${activeChat.promptCount} prompt${activeChat.promptCount !== 1 ? 's' : ''}.`];
                 if (activeChat.promptCount == 0) snapshotInfos = ["This chat has no response yet."];
-
+                if (activeChat.promptCount >= 10) snapshotInfos = ["This chat has 10 or more prompts."];
                 window.pageLive.dialogManager.setSnapshotInfos(snapshotInfos);
             }
         }
