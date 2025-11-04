@@ -27,6 +27,8 @@ export enum Keybinds {
     FocusChatInput = 'Shift + Esc', // Focus the chat input
     AnnounceLastResponse = 'Ctrl + Shift + Enter', // Announce the last response
     NewChat = 'Ctrl + Alt + O', // Start new chat
+    ContentMapToggleUp = "Ctrl + Shift + ArrowUp", // Toggle content mapping mode
+    ContentMapToggleDown = "Ctrl + Shift + ArrowDown",
 }
 
 /**
@@ -106,6 +108,33 @@ const createKeybindDetail = (
                     shiftKey: false,
                     key: 'o',
                     altKey: true,
+                    metaKey: false,
+                }
+            };
+            break;
+
+        case Keybinds.ContentMapToggleUp:
+            keybindDetail = {
+                description: description || 'Toggle Content Map',
+                action: action,
+                keys: {
+                    ctrlKey: true,
+                    shiftKey: true,
+                    key: 'ArrowUp',
+                    altKey: false,
+                    metaKey: false,
+                }
+            };
+            break;
+        case Keybinds.ContentMapToggleDown:
+            keybindDetail = {
+                description: description || 'Toggle Content Map',
+                action: action,
+                keys: {
+                    ctrlKey: true,
+                    shiftKey: true,
+                    key: 'ArrowDown',
+                    altKey: false,
                     metaKey: false,
                 }
             };
@@ -212,7 +241,7 @@ export default class KeybindManager {
                     break;
                 }
             }
-        });
+        }, { capture: true });
     }
 
     /**
