@@ -739,6 +739,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         }
 
         async function onDialogOpen(): Promise<void> {
+            // Close Cotent Mapper dialog if opened
+            contentMapper.close();
             // Synchronize the active chat info
             await syncActiveChatInfo();
         }
@@ -836,7 +838,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             this.dialog.ariaLabel = "PageLive Content Map. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.";
             window.pageLive.container.appendChild(this.dialog);
 
-            // Should announce when dialog is closed
+            // Should announce when dialog is closed.
+            // Define the onclose event handler, instead inside `close` function, to support dialog is being closed by `esc` key.
             this.dialog.onclose = async () => {
                 // After dialog is closed, browser automatically will focus on the last focus element. Thus, the 'dialog is closed' is not announced properly.
                 // To increase being announced, wait few seconds.
@@ -1010,11 +1013,15 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             return this.dialog;
         }
         async close() {
+            if (!this.dialog.open) return;
             this.dialog.close();
         }
         async showModal() {
             // If there is schedule to generate chatUnits, do it now and put 'generating..' label
             if (this.generationTimeout !== null) this.scheduleGenerateChatUnits(0);
+
+            // Close PageLive main dialog if opened
+            window.pageLive.dialogManager.close();
 
             this.dialog.showModal();
 

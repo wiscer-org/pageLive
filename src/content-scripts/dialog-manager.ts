@@ -52,6 +52,9 @@ export class DialogManager {
      * Same functionality as the native HTMLDialogElement.close() method.
      */
     async close() {
+        // Not continue if the dialog is already closed
+        if (!this.dialog.open) return;
+
         this.dialog.close();
 
         // Wait a bit, to avoid screen reader read 'assertive' aria-live from other elements in the page.
