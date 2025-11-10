@@ -88,7 +88,7 @@ export async function waitForAnElement(selector: string, maxWaitTime = 60e3): Pr
         element = document.querySelector(selector) as HTMLElement | null;
     }
 
-    if(element === null) {
+    if (element === null) {
         prodWarn(`Element with selector "${selector}" not found after waiting for ${maxWaitTime} ms.`);
     }
 
@@ -119,4 +119,42 @@ export function prodWarn(msg: string) {
     // Warning! At one case, `console.log` in this function will cause name collision, e.g.: 'he' already difined.
     // For now we still use `console.log` but might be commented or altered.
     console.warn(`[PageLive] ${msg}`);
+}
+
+/**
+ * Trim a sentence by given the word count. 
+ * If the given string is longer than the expected word count, will append with '...'
+ * @param {stirng} sentence
+ * @param {number} wordCount The maximum expected words.
+ * @param {string} ellipsis Will be put at the end of the return string, if needed. Default: "..."
+ * @return {string} The shortened sentence
+ */
+export function shortenText(sentence: string, wordCount: number = 15, ellipsis = "...") {
+    // if (typeof sentence !== 'string') return '';
+
+    const trimmed = sentence.trim();
+    if (trimmed.length === 0) return '';
+
+    // Guard: non-positive wordCount -> return ellipsis-only (indicates truncation)
+    if (wordCount <= 0) return ellipsis;
+
+    // Split on whitespace (one or more) to get words
+    const words = trimmed.split(/\s+/);
+
+    if (words.length <= wordCount) {
+        // Return original trimmed sentence when not exceeding the limit
+        return trimmed;
+    }
+
+    // Take the first `wordCount` words and append ellipsis
+    const shortened = words.slice(0, wordCount).join(' ');
+    return `${shortened}${ellipsis}`;
+}
+
+/**
+ * Auto incremented number, used to get unique number
+ */
+let autoNumber = 1;
+export function uniqueNumber() {
+    return autoNumber++;
 }

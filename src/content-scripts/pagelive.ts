@@ -120,8 +120,8 @@ export default class PageLive {
     applyContainerStyle(container: HTMLDivElement) {
 
         // Note: For now, apply prod styles always
-        // if (this.isDev) {
-        if (false) {
+        if (this.isDev) {
+            // if (false) {
             container.style.position = 'fixed';
             container.style.top = '0';
             container.style.left = '0';

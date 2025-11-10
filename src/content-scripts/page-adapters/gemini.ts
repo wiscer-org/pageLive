@@ -1,8 +1,7 @@
 // gemini.ts - Injected only on gemini.google.com
 
-import { initial, last } from "lodash";
-import { Chat } from "../page";
-import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
+import { Chat, ChatUnit } from "../page";
+import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber } from "../util";
 
 //IIEF to avoid symbol conflicts after bundling
 (() => {
@@ -74,6 +73,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
             // Initial announce info
             // window.pageLive.initialAnnounceInfo.push("Gemini page");
 
+            // Add keybinds for the Content Map
+            window.pageLive.keybindManager.registerKeybind(
+                window.PageLiveStatics.KeybindManager.Keybinds.ContentMapToggle,
+                contentMapper.toggleModal.bind(contentMapper)
+            )
             // Add keybind 'focus chat input'
             window.pageLive.keybindManager.registerKeybind(
                 window.PageLiveStatics.KeybindManager.Keybinds.FocusChatInput,
@@ -745,14 +749,287 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle } from "../util";
         let chatListContainer: HTMLElement | null = null;
 
         // =============== Execution ===============
-        // Initialize the page adapter
-        init();
 
         // Object to handle chat container related features
         const chatAdapter = new GeminiAdapterChat();
         await chatAdapter.init();
 
+        // Content Mapper, to map chat units to a Modal
+        const contentMapper = new ContentMapper();
+        await contentMapper.init()
+
+        // Initialize the page adapter
+        init();
     };
+
+    /**
+     * This class is to map the chat / content to a dialog.
+     */
+    class ContentMapper {
+        private dialog!: HTMLDialogElement;
+        private dialogContent!: HTMLDivElement;
+        private dialogHeader!: HTMLElement;
+        // A dummy focusable non-form element used force SR (NVDA) to change to 'browse mode'
+        private dummyFocusableElement!: HTMLElement;
+        // Selectors for each prompt or response elements
+        private promptSelector!: string;
+        private responseSelector!: string;
+        // The Direct parent of the wrapper element of each pair prompt and response (promptResponse)
+        private promptResponseParent!: HTMLElement;
+        // The virtual `chatUnit`s parsed from the `document`
+        private chatUnits: ChatUnit[] = [];
+        // Timeout id to schedule chat units generation
+        private generationTimeout: ReturnType<typeof setTimeout> | null = null;
+
+        // Attribute used in HTML elements to ref between the real element and the element in the ContentMap Dialog. 
+        static EL_REF_ATTR = "pl-el-ref"; // Stands or 'pagelive element ref'
+        // Unique autoincremented, can be used
+
+        constructor() {
+            this.initAndAttachDialog();
+
+            // Create dummy non-form focusable element
+            this.dummyFocusableElement = document.createElement("span");
+            this.dummyFocusableElement.textContent = ""
+            this.dummyFocusableElement.setAttribute("tabindex", "-1");
+            this.dummyFocusableElement.setAttribute("pl-info", "content-mapper-dummy-element");
+            // this.dummyFocusableElement.style.position = "absolute";
+            // this.dummyFocusableElement.style.left = "-9999px";
+            window.pageLive.container.appendChild(this.dummyFocusableElement);
+
+        }
+        /**
+         * Initiate or re-initiate this class
+         * @param {number} delay Time to generate the content map. This is useful to differentiate initialization (long delay) and re-initialization (instant). Default value is for first initialization.
+         * @returns 
+         */
+        async init(delay: number = 12e3) {
+            // Note: `PromptResponse` is the term for the pair of a prompt and a response.
+            // In Gemini UI, a prompt and a response elements are wrapped in an element with class `.conversation-container`
+            // For performance reason, we need to observe the element and the direct children, not using 'subtree' option.
+            // Thus, we need to use direct parent to observer if `PromptResponse` element has been added / removed.
+            // The element will be called `PromptResponseParent`
+
+            // Note: below is the hierarcy down to chat / response.
+            // Note: There are 1 more `.chat-history` on the side nav.
+            // div#chat-history.chat-history-scroll-container > 
+            //      infinite-scroller.chat-history >
+            //          div.conversation-container >
+            //              user-query
+            //              model-response
+
+            // `promptResponseParent` is mandatory. If not available, cancel the whole process.
+
+            const el = await waitForAnElement("infinite-scroller.chat-history");
+            if (el === null) {
+                prodWarn("[ContentMap] chat units parent is N/A - 89");
+                return;
+            }
+            this.promptResponseParent = el;
+
+            // Wait a bit long because the page must be very busy at first load
+            this.scheduleGenerateChatUnits(delay);
+        }
+        async initAndAttachDialog() {
+            this.dialog = document.createElement("dialog");
+            this.dialog.id = "pl-content-mapper-dialog";
+            this.dialog.ariaLabel = "PageLive Content Map. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.";
+            window.pageLive.container.appendChild(this.dialog);
+
+            // Should announce when dialog is closed
+            this.dialog.onclose = async () => {
+                // After dialog is closed, browser automatically will focus on the last focus element. Thus, the 'dialog is closed' is not announced properly.
+                // To increase being announced, wait few seconds.
+                await new Promise(r => setTimeout(r, 3e3));
+                window.pageLive.announce({ msg: "Content Map is closed" });
+            }
+
+            // Create the heading
+            this.dialogHeader = document.createElement("header");
+            this.dialog.appendChild(this.dialogHeader);
+
+            this.dialogContent = document.createElement("div");
+            this.dialog.appendChild(this.dialogContent);
+
+            // Create dialog footer
+            const dialogFooter = document.createElement("div") as HTMLDivElement;
+            this.dialog.appendChild(dialogFooter);
+            const closeButton: HTMLButtonElement = document.createElement("button") as HTMLButtonElement;
+            closeButton.textContent = "Close";
+            closeButton.ariaLabel = "Close Content Map, or press escape";
+            closeButton.onclick = this.close.bind(this);
+            dialogFooter.appendChild(closeButton);
+
+        }
+        /**
+         * Schedule timeout to generate chat units
+         */
+        scheduleGenerateChatUnits(delay: number = 500) {
+            if (this.generationTimeout !== null) clearTimeout(this.generationTimeout);
+            if (delay === 0) this.generateChatUnits();
+            else this.generationTimeout = setTimeout(this.generateChatUnits.bind(this), delay);
+        }
+        /**
+         * Generate array of `ChatUnit` from the HTMLElement
+         * @param {boolean} shouldRender Will automatically render to the dialog if set to true. Default value: true.
+         */
+        async generateChatUnits(shouldRender = true) {
+            // If the `chatUnitsParent` has been disconnected, due to Angular framework, re-initiate this class
+            if (!this.promptResponseParent.isConnected) this.init(0);
+
+            // Set the content as "generating.."
+            this.dialogContent.innerHTML = "<div>Generating Content Map..</div>";
+
+            // Note: `.conversation-container` is element wrapper for the pair user-query and model-response
+            // Note: `user-query` and `model-response` element are at the same level. `message-content` is decendant of `model-response`
+            // FIXME: should use this function scope of class scope ?
+            const PROMPT_ELEMENT_NAME = "USER-QUERY";
+            const RESPONSE_ELEMENT_NAME = "MODEL-RESPONSE";
+            const RESPONSE_CONTENT_ELEMENT_NAME = "MESSAGE-CONTENT";
+
+            // Parse `promptResponse` element (element that wraps a pair of 'prompt' and 'response' element)
+            const promptResponseElements = document.querySelectorAll('.conversation-container');
+            // Extract chatUnits
+            const chatUnits: ChatUnit[] = [];
+            promptResponseElements.forEach((element) => {
+                const el = element as HTMLElement;
+                // The prompt
+                const promptElement = el.querySelector(PROMPT_ELEMENT_NAME) as HTMLElement;
+                if (promptElement === null) prodWarn("[ContentMap] Failed to find prompt element - 429");
+                chatUnits.push({
+                    isYourPrompt: true,
+                    contentElement: promptElement,
+                    shortContent: shortenText(promptElement.textContent),
+                });
+                // Set tabindex
+                promptElement.setAttribute("tabindex", "0");
+                // Set 'element ref attribute' if not available to the element
+                if (!promptElement.getAttribute(ContentMapper.EL_REF_ATTR)) promptElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
+
+                // The response element (the same level with prompt element) is `RESPONSE_ELEMENT_NAME` including non-message response element. The real message is in the `RESPONSE_CONTENT_ELEMENT_NAME`
+                // const responseElement = el.querySelector(RESPONSE_ELEMENT_NAME) as HTMLElement; // This will include the llm-model-related element
+                const responseElement = el.querySelector(RESPONSE_CONTENT_ELEMENT_NAME) as HTMLElement;
+                if (responseElement === null) prodWarn("[ContentMap] Failed to find response element - 842");
+                chatUnits.push({
+                    isYourPrompt: false,
+                    contentElement: responseElement,
+                    shortContent: shortenText(responseElement.textContent, 30),
+                });
+                // Set tabindex
+                responseElement.setAttribute("tabindex", "0");
+                // Set 'element ref attribute' if not available to the element
+                if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
+            });
+
+            // Remove the ref to the timeout 
+            this.generationTimeout = null;
+
+            if (shouldRender) await this.renderChatUnits(chatUnits);
+
+            return chatUnits;
+        }
+        async renderChatUnits(cUnit: ChatUnit[]) {
+            this.dialogHeader.innerHTML = `<h1>Content Mapper</h1><p>Showing ${cUnit.length / 2} prompts &amp; the response.</p>`;
+            this.dialogContent.innerHTML = "";
+            let pairCounter = 1; // Used to print the number of the response
+            cUnit.forEach(chatUnit => {
+                const el = document.createElement("div") as HTMLDivElement;
+
+                el.className = "pl-chat-unit";
+                el.setAttribute('role', 'button');
+                el.setAttribute("aria-atomic", "true");
+                el.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber().toString());
+                el.setAttribute("tabindex", "0");
+
+                // Set attribute to ref the real element with the element in the ContentMapper dialog.
+                const attrRefValue = chatUnit.contentElement.getAttribute(ContentMapper.EL_REF_ATTR);
+                if (!attrRefValue) prodWarn(`[ContentMapper] Failed to find attribute ${ContentMapper.EL_REF_ATTR} from real element - 4245`)
+                el.setAttribute(ContentMapper.EL_REF_ATTR, attrRefValue || "");
+
+                // Set styling
+                // el.style.textDecoration = 'underline';
+                el.style.cursor = 'pointer';
+                el.style.marginBottom = "16px";
+
+                let text = "";
+                if (chatUnit.isYourPrompt) {
+                    text = "You prompted: ";
+                    el.style.textAlign = "right";
+                } else {
+                    text = `Response #${pairCounter++}: `;
+                    el.style.textAlign = "left";
+                }
+                // Append the text content
+                const contentElement = document.createElement("div") as HTMLElement;
+                // Use `.textContent` instead of `.innerHTML` to escape HTML entities
+                contentElement.textContent = text + chatUnit.shortContent || "";
+                // contentElement.ariaLabel = text + chatUnit.shortContent;
+                el.appendChild(contentElement);
+
+                // Set click handler to focus on the source element
+                el.addEventListener("click", async (e) => {
+                    this.close();
+                    // console.log(e.target);
+                    // console.log("currentTarget:");
+                    // console.log(e.currentTarget);
+                    // e.currentTarget
+
+                    // Find the source element based on the ref element
+                    // Note: use `currentTarget` instead of `target`, because `target` might be a child element of the clicked element.
+                    const currentTarget = e.currentTarget as HTMLElement;
+
+                    // console.log("Clicked element:");
+                    // console.log(currentTarget);
+                    const el_ref = currentTarget.getAttribute(ContentMapper.EL_REF_ATTR);
+                    // console.log(this.promptResponseParent);
+                    // console.log(`[${ContentMapper.EL_REF_ATTR}="${el_ref}"]`);
+                    const sourceElement = this.promptResponseParent.querySelector(`[${ContentMapper.EL_REF_ATTR}="${el_ref}"]`) as HTMLElement;
+                    // console.log('source element text:');
+                    // console.log(sourceElement?.textContent);
+
+                    // Focus to the element
+                    if (sourceElement) {
+                        sourceElement.focus();
+                        await new Promise(r => setTimeout(r, 500));
+                        sourceElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        this.dummyFocusableElement.focus();
+                        await new Promise(r => setTimeout(r, 500));
+                        sourceElement.focus();
+
+                    }
+                    else console.log("ERROR can not find target element");
+                });
+
+                this.dialogContent.appendChild(el);
+            });
+
+            // FIXME: Remove the "show thinking" 
+        }
+        dialogElement() {
+            return this.dialog;
+        }
+        async close() {
+            this.dialog.close();
+        }
+        async showModal() {
+            // If there is schedule to generate chatUnits, do it now and put 'generating..' label
+            if (this.generationTimeout !== null) this.scheduleGenerateChatUnits(0);
+
+            this.dialog.showModal();
+
+            // Focus on the last element with the `pl-el-ref`, stands for 'pagelive element ref'
+            const refElements = this.dialogContent.querySelectorAll(`[${ContentMapper.EL_REF_ATTR}]`);
+            if (refElements.length > 0) {
+                const lastElement = refElements[refElements.length - 1] as HTMLElement;
+                lastElement.focus();
+            }
+        }
+        async toggleModal() {
+            if (this.dialog.open) this.close();
+            else this.showModal();
+        }
+    }
 
     /**
     * This class features interaction with the chat container element of gemini page.

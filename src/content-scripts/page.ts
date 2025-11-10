@@ -4,6 +4,7 @@ import PageLive from "./pagelive";
 export type ChatUnit = {
     isYourPrompt: boolean; // true if this item is a prompt from the user, false if it's a response from the AI
     contentElement: HTMLElement; // The HTML element that contains the content of this chat item
+    shortContent?: string; // The shortened text content of the element
 }
 
 // Type to represent specific chat, e.g. current active chat, or the last chat, etc.
