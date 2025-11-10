@@ -12,6 +12,7 @@
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
+- There are elements of `span[aria-hidden="true"]` which causing keyboard character not readable. Create notif & action for user to set the `aria-hidden=false`
 
 ### Future
 
