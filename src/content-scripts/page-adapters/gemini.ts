@@ -203,7 +203,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // }
 
             if (chatInputElement) {
-                // TODO: Close any dialogs / modals first
+                // Close any dialogs / modals first
+                window.pageLive.dialogManager.close();
+                contentMapper.close();
 
                 // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
                 // By change focus to other element first, before change focus to the input, will force the SR change to Form/Input mode. Thus, user can type right away without having to change SR mode.
