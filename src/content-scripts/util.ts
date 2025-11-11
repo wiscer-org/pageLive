@@ -28,9 +28,14 @@ export function isRandomString(str: string): boolean {
  * Will be resolved, considered as idle, if after some delay there is no more mutations of the element
  * @param {HTMLElement} el The element to be observed
  * @param {number} delay The delay in miliseconds for there is no more mutations on the element to be considered as idle. Default value: 300 ms.
+ * @param {object} options Additional options for future expansion
  * @return {Promise<void>} Will be resolved after the element is idle
  */
-export async function untilElementIdle(el: HTMLElement, delay = 300): Promise<void> {
+export async function untilElementIdle(el: HTMLElement, delay = 300,
+    options: {
+        childList?: boolean,
+        subtree?: boolean,
+    } = { childList: true, subtree: false }): Promise<void> {
     // The id of timeout to resolve
     let resolveTimeout: ReturnType<typeof setTimeout>;
 
@@ -56,7 +61,9 @@ export async function untilElementIdle(el: HTMLElement, delay = 300): Promise<vo
 
         // Observer the element.
         idleObserver.observe(el, {
-            childList: true, // As the indication that the element is still busy
+            // Use provided option or default to true
+            childList: options.childList ?? true, // As the indication that the element is still busy
+            subtree: options.subtree ?? false, // Whether to observe the subtree
         })
 
         // Schedule to resolve, useful if the element is already idle
