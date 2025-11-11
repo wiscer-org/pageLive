@@ -786,13 +786,15 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         private chatUnits: ChatUnit[] = [];
         // Timeout id to schedule chat units generation
         private generationTimeout: ReturnType<typeof setTimeout> | null = null;
+        // Observer to observe addition / removal of promptResponse elements
+        private promptResponseObserver!: MutationObserver;
 
         // Attribute used in HTML elements to ref between the real element and the element in the ContentMap Dialog. 
         static EL_REF_ATTR = "pl-el-ref"; // Stands or 'pagelive element ref'
-        // Unique autoincremented, can be used
+
 
         constructor() {
-            this.initAndAttachDialog();
+            this.constructDialog();
 
             // Create dummy non-form focusable element
             this.dummyFocusableElement = document.createElement("span");
@@ -802,6 +804,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // this.dummyFocusableElement.style.position = "absolute";
             // this.dummyFocusableElement.style.left = "-9999px";
             window.pageLive.container.appendChild(this.dummyFocusableElement);
+
+            // Observer to schedule chat units generation when there is any addition / removal of promptResponse elements
+            this.promptResponseObserver = new MutationObserver((mutationList) => this.scheduleGenerateChatUnits());
 
         }
         /**
@@ -825,7 +830,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             //              model-response
 
             // `promptResponseParent` is mandatory. If not available, cancel the whole process.
-
             const el = await waitForAnElement("infinite-scroller.chat-history");
             if (el === null) {
                 prodWarn("[ContentMap] chat units parent is N/A - 89");
@@ -833,10 +837,16 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             }
             this.promptResponseParent = el;
 
+            // Observe the `promptResponseParent` for any addition / removal of `PromptResponse` element
+            this.promptResponseObserver.disconnect();
+            this.promptResponseObserver.observe(this.promptResponseParent, {
+                childList: true,
+            });
+
             // Wait a bit long because the page must be very busy at first load
             this.scheduleGenerateChatUnits(delay);
         }
-        async initAndAttachDialog() {
+        async constructDialog() {
             this.dialog = document.createElement("dialog");
             this.dialog.id = "pl-content-mapper-dialog";
             this.dialog.ariaLabel = "PageLive Content Map. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.";
@@ -871,7 +881,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         /**
          * Schedule timeout to generate chat units
          */
-        scheduleGenerateChatUnits(delay: number = 500) {
+        scheduleGenerateChatUnits(delay: number = 4e3) {
             if (this.generationTimeout !== null) clearTimeout(this.generationTimeout);
             if (delay === 0) this.generateChatUnits();
             else this.generationTimeout = setTimeout(this.generateChatUnits.bind(this), delay);
