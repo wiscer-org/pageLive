@@ -203,6 +203,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // }
 
             if (chatInputElement) {
+                // TODO: Close any dialogs / modals first
+
                 // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
                 // By change focus to other element first, before change focus to the input, will force the SR change to Form/Input mode. Thus, user can type right away without having to change SR mode.
 
@@ -872,6 +874,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             if (delay === 0) this.generateChatUnits();
             else this.generationTimeout = setTimeout(this.generateChatUnits.bind(this), delay);
         }
+
         /**
          * Generate array of `ChatUnit` from the HTMLElement
          * @param {boolean} shouldRender Will automatically render to the dialog if set to true. Default value: true.
@@ -905,7 +908,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     shortContent: shortenText(promptElement.textContent),
                 });
                 // Set tabindex
-                promptElement.setAttribute("tabindex", "0");
+                promptElement.setAttribute("tabindex", "-1");
                 // Set 'element ref attribute' if not available to the element
                 if (!promptElement.getAttribute(ContentMapper.EL_REF_ATTR)) promptElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
 
@@ -919,7 +922,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     shortContent: shortenText(responseElement.textContent, 30),
                 });
                 // Set tabindex
-                responseElement.setAttribute("tabindex", "0");
+                responseElement.setAttribute("tabindex", "-1");
                 // Set 'element ref attribute' if not available to the element
                 if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
             });
@@ -970,36 +973,30 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 el.appendChild(contentElement);
 
                 // Set click handler to focus on the source element
+                // Goal: the handler will focus on the Gemini's source element in the SR 'browse mode'
+                // Problem: When focusing on the source element directly, NVDA still remain in 'focus / interactive mode', not switching back to 'browse mode'.
+                // Strategy: 
+                // - Focus to a dummy non-form focusable element first, to trick SR to switch to 'browse mode',
+                // - Ten focus to the source element after a short delay. The SR mode is still in 'browse mode'.
                 el.addEventListener("click", async (e) => {
                     this.close();
-                    // console.log(e.target);
-                    // console.log("currentTarget:");
-                    // console.log(e.currentTarget);
-                    // e.currentTarget
-
                     // Find the source element based on the ref element
                     // Note: use `currentTarget` instead of `target`, because `target` might be a child element of the clicked element.
                     const currentTarget = e.currentTarget as HTMLElement;
-
-                    // console.log("Clicked element:");
-                    // console.log(currentTarget);
+                    // The ref value
                     const el_ref = currentTarget.getAttribute(ContentMapper.EL_REF_ATTR);
-                    // console.log(this.promptResponseParent);
-                    // console.log(`[${ContentMapper.EL_REF_ATTR}="${el_ref}"]`);
                     const sourceElement = this.promptResponseParent.querySelector(`[${ContentMapper.EL_REF_ATTR}="${el_ref}"]`) as HTMLElement;
-                    // console.log('source element text:');
-                    // console.log(sourceElement?.textContent);
 
                     // Focus to the element
                     if (sourceElement) {
-                        sourceElement.focus();
-                        await new Promise(r => setTimeout(r, 500));
-                        sourceElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // FIXME: Directly focusing to the source element does not work well with NVDA
+                        // sourceElement.focus();
+                        // await new Promise(r => setTimeout(r, 500));
+                        sourceElement.scrollIntoView({ behavior: 'smooth', block: "start" });
 
                         this.dummyFocusableElement.focus();
                         await new Promise(r => setTimeout(r, 500));
                         sourceElement.focus();
-
                     }
                     else console.log("ERROR can not find target element");
                 });
