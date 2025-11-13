@@ -16,6 +16,9 @@
         "content-scripts/pagelive.js",
         "content-scripts/gemini.js"
       ],
+      "css": [
+        "assets/pagelive-Bimp4i1u.css"
+      ],
       "run_at": "document_start"
     }
   ],

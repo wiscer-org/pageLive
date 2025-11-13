@@ -4,12 +4,12 @@ import { DialogManager } from "./dialog-manager";
 import Page from "./page";
 import * as dev from './general-dev';
 import * as devMock from './general-dev-mock';
-
+import './pagelive.css';
 /**
- * This class is the connecting point for all the shared libraries in the PageLive extension.
- * This class will be initialized and used in the `PageAdapter` content scripts, e.g.: gemini.ts, grok.ts, reddit.ts, etc.
- * To avoid name conflicts with the PageAdapters, PageAdapters need to be inside IIEF.
- */
+* This class is the connecting point for all the shared libraries in the PageLive extension.
+* This class will be initialized and used in the `PageAdapter` content scripts, e.g.: gemini.ts, grok.ts, reddit.ts, etc.
+* To avoid name conflicts with the PageAdapters, PageAdapters need to be inside IIEF.
+*/
 export default class PageLive {
     // Provide types to be used in the PageAdapters.
     static KeybindManager = KeybindManager;
@@ -122,26 +122,28 @@ export default class PageLive {
         // Note: For now, apply prod styles always
         if (this.isDev) {
             // if (false) {
-            container.style.position = 'fixed';
-            container.style.top = '0';
-            container.style.left = '0';
-            container.style.zIndex = '99999';
-            container.style.background = 'rgba(255,255,0,0.2)';
-            container.style.border = '2px solid orange';
-            container.style.padding = '8px';
-            container.style.width = '100vw';
-            container.style.height = 'auto';
-            container.style.color = 'black';
+            container.classList.add('dev-mode');
+            // container.style.position = 'fixed';
+            // container.style.top = '0';
+            // container.style.left = '0';
+            // container.style.zIndex = '99999';
+            // container.style.background = 'rgba(255,255,0,0.2)';
+            // container.style.border = '2px solid orange';
+            // container.style.padding = '8px';
+            // container.style.width = '100vw';
+            // container.style.height = 'auto';
+            // container.style.color = 'black';
         } else {
-            container.style.position = 'absolute';
-            container.style.width = '1px';
-            container.style.height = '1px';
-            container.style.overflow = 'hidden';
-            container.style.clipPath = 'inset(50%)';
-            container.style.margin = '-1px';
-            container.style.padding = '0';
-            container.style.border = '0';
-            container.style.background = 'none';
+            container.classList.remove('dev-mode');
+            // container.style.position = 'absolute';
+            // container.style.width = '1px';
+            // container.style.height = '1px';
+            // container.style.overflow = 'hidden';
+            // container.style.clipPath = 'inset(50%)';
+            // container.style.margin = '-1px';
+            // container.style.padding = '0';
+            // container.style.border = '0';
+            // container.style.background = 'none';
         }
     }
     /**
