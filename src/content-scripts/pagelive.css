@@ -1,32 +1,33 @@
 /* PageLive container styles */
 #pagelive {
-  position: "absolute";
-  width: "1px";
-  height: "1px";
-  overflow: "hidden";
-  clip-path: "inset(50%)";
-  margin: "-1px";
-  padding: "0";
-  border: "0";
-  background: "none";
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  background: none;
 }
 #pagelive.dev-mode {
-  position: "fixed";
-  top: "0";
-  left: "0";
-  z-index: "99999";
-  background: "rgba(255,255,0,0.2)";
-  border: "2px solid orange";
-  padding: "8px";
-  width: "100vw";
-  height: "auto";
-  color: "black";
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99999;
+  background: rgba(255, 255, 0, 0.2);
+  border: 2px solid orange;
+  padding: 8px;
+  width: 100vw;
+  height: auto;
+  color: black;
+  clip-path: none;
 }
 
 /* PageLive generic dialog styles
    Scoped to dialogs created by PageLive via the `pl-el` class to avoid
    interfering with host page dialogs. Other PageLive content-scripts
-   can reuse these rules by adding `class:"pl-el"` to their dialogs.
+   can reuse these rules by adding `class:pl-el` to their dialogs.
 */
 
 dialog.pl-el {

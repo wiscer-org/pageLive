@@ -17,7 +17,7 @@
         "content-scripts/gemini.js"
       ],
       "css": [
-        "assets/pagelive-Bimp4i1u.css"
+        "assets/pl-1.css"
       ],
       "run_at": "document_start"
     }

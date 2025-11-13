@@ -123,27 +123,8 @@ export default class PageLive {
         if (this.isDev) {
             // if (false) {
             container.classList.add('dev-mode');
-            // container.style.position = 'fixed';
-            // container.style.top = '0';
-            // container.style.left = '0';
-            // container.style.zIndex = '99999';
-            // container.style.background = 'rgba(255,255,0,0.2)';
-            // container.style.border = '2px solid orange';
-            // container.style.padding = '8px';
-            // container.style.width = '100vw';
-            // container.style.height = 'auto';
-            // container.style.color = 'black';
         } else {
             container.classList.remove('dev-mode');
-            // container.style.position = 'absolute';
-            // container.style.width = '1px';
-            // container.style.height = '1px';
-            // container.style.overflow = 'hidden';
-            // container.style.clipPath = 'inset(50%)';
-            // container.style.margin = '-1px';
-            // container.style.padding = '0';
-            // container.style.border = '0';
-            // container.style.background = 'none';
         }
     }
     /**
