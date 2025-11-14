@@ -1002,7 +1002,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             return chatUnits;
         }
         async renderChatUnits(cUnits: ChatUnit[]) {
-            const subHeaderText = cUnits.length === 0 ? "This chat doesn't have anys prompts / responses." : `Content Mapper - Showing ${cUnits.length / 2} prompts & the response.`;
+            const subHeaderText = cUnits.length === 0 ? "This chat doesn't have anys prompts / responses." : `Showing ${cUnits.length / 2} prompts & the response.`;
             this.dialogHeader.innerHTML = `<h1>Content Mapper</h1><p>${subHeaderText}</p>`;
             // this.dialogContent.innerHTML = "";
             let promptCounter = 1; // Used to print the sequence of prompts / responses. Latest response is 0, and decrease upwards.
