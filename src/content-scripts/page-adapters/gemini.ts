@@ -199,10 +199,16 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
          * This function will focus the chat input element.
          */
         async function focusChatInput() {
-            // !DELETE: below
-            // if (!chatInputElement) {
-            //     chatInputElement = getChatInputElement();
-            // }
+            if (!chatInputElement) {
+                prodWarn("Chat input element not found. Re-querying the element.");
+                chatInputElement = getChatInputElement();
+            }
+
+            if (!chatInputElement?.isConnected) {
+                prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
+                window.pageLive.announce({ msg: "Chat input element not found." });
+                return;
+            }
 
             if (chatInputElement) {
                 // Close any dialogs / modals first
