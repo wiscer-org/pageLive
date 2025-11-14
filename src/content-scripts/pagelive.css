@@ -1,5 +1,5 @@
-/* PageLive container styles */
-#pagelive {
+/* To visually hide content */
+.pl-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -10,7 +10,7 @@
   border: 0;
   background: none;
 }
-#pagelive.dev-mode {
+.pl-sr-only.dev-mode {
   position: fixed;
   top: 0;
   left: 0;

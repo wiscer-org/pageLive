@@ -118,7 +118,7 @@ export default class PageLive {
      * @param {HTMLDivElement} container - The container to apply styles to.
      */
     applyContainerStyle(container: HTMLDivElement) {
-
+        container.classList.add('pl-sr-only');
         // Note: For now, apply prod styles always
         if (this.isDev) {
             // if (false) {
