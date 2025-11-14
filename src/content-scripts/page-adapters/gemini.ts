@@ -1,9 +1,11 @@
 // gemini.ts - Injected only on gemini.google.com
 
+import { remove } from "lodash";
 import { Chat, ChatUnit } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber } from "../util";
 
 //IIEF to avoid symbol conflicts after bundling
+
 (() => {
     // Define page adapter to be executed on DOMContentLoaded
     const geminiPageAdapter = async () => {
@@ -773,7 +775,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
      */
     class ContentMapper {
         private dialog!: HTMLDialogElement;
-        private dialogContent!: HTMLDivElement;
+        private dialogContent!: HTMLElement;
         private dialogHeader!: HTMLElement;
         // A dummy focusable non-form element used force SR (NVDA) to change to 'browse mode'
         private dummyFocusableElement!: HTMLElement;
@@ -806,7 +808,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             window.pageLive.container.appendChild(this.dummyFocusableElement);
 
             // Observer to schedule chat units generation when there is any addition / removal of promptResponse elements
-            this.promptResponseObserver = new MutationObserver((mutationList) => this.scheduleGenerateChatUnits());
+            this.promptResponseObserver = new MutationObserver((mutationList) => {
+                // If dialog is opened, schedule sooner generation
+                if (this.dialog.open) this.scheduleGenerateChatUnits(500);
+                else this.scheduleGenerateChatUnits()
+            });
 
         }
         /**
@@ -850,6 +856,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             this.dialog = document.createElement("dialog");
             this.dialog.id = "pl-content-mapper-dialog";
             this.dialog.ariaLabel = "PageLive Content Map. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.";
+            // Mark this dialog as a PageLive element so the generic PageLive stylesheet
+            // (imported above) will apply only to PageLive dialogs.
+            this.dialog.classList.add('pl-el');
+
+            // Append dialog to PageLive container
             window.pageLive.container.appendChild(this.dialog);
 
             // Should announce when dialog is closed.
@@ -863,20 +874,47 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             // Create the heading
             this.dialogHeader = document.createElement("header");
+            // header should be intrinsic height and stay at top
+            // class-based styling will apply when dialog is open
             this.dialog.appendChild(this.dialogHeader);
 
-            this.dialogContent = document.createElement("div");
+            // Use semantic <main> for dialog content so the imported CSS can target
+            // `dialog > main` and make it scrollable.
+            this.dialogContent = document.createElement("main");
             this.dialog.appendChild(this.dialogContent);
 
             // Create dialog footer
-            const dialogFooter = document.createElement("div") as HTMLDivElement;
+            const dialogFooter = document.createElement("footer") as HTMLElement;
             this.dialog.appendChild(dialogFooter);
+
             const closeButton: HTMLButtonElement = document.createElement("button") as HTMLButtonElement;
             closeButton.textContent = "Close";
             closeButton.ariaLabel = "Close Content Map, or press escape";
             closeButton.onclick = this.close.bind(this);
             dialogFooter.appendChild(closeButton);
 
+            // Create IntersectionObserver to observe the dialog heading. 
+            // When the heading is enter / leave the viewport, 
+            // we will scroll the Gemini's prompt element into view to trigger Gemini to load the previous prompt/ responses if any.
+            const dialogHeaderObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // alert("heading is entering viewport");
+                        console.log(`chat units count: ${this.chatUnits.length}`);
+                        // Scroll the first chat unit into view to trigger Gemini to load previous prompt/ response if any
+                        if (this.chatUnits.length > 0) {
+                            const firstChatUnit = this.chatUnits[0];
+                            firstChatUnit.contentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+
+                            alert('scrolling to the first chat unit');
+                        }
+                    }
+                });
+            }, {
+                root: this.dialog,
+                threshold: 0.0,
+            });
+            // dialogHeaderObserver.observe(this.dialogHeader);
         }
         /**
          * Schedule timeout to generate chat units
@@ -896,7 +934,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             if (!this.promptResponseParent.isConnected) this.init(0);
 
             // Set the content as "generating.."
-            this.dialogContent.innerHTML = "<div>Generating Content Map..</div>";
+            this.dialogHeader.innerHTML = "<div>Generating Content Map...</div>";
+            // this.dialogContent.innerHTML = "<div>Generating Content Map..</div>";
 
             // Note: `.conversation-container` is element wrapper for the pair user-query and model-response
             // Note: `user-query` and `model-response` element are at the same level. `message-content` is decendant of `model-response`
@@ -939,6 +978,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
             });
 
+            this.chatUnits = chatUnits;
+
             // Remove the ref to the timeout 
             this.generationTimeout = null;
 
@@ -946,77 +987,166 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             return chatUnits;
         }
-        async renderChatUnits(cUnit: ChatUnit[]) {
-            this.dialogHeader.innerHTML = `<h1>Content Mapper</h1><p>Showing ${cUnit.length / 2} prompts &amp; the response.</p>`;
-            this.dialogContent.innerHTML = "";
-            let pairCounter = 1; // Used to print the number of the response
-            cUnit.forEach(chatUnit => {
-                const el = document.createElement("div") as HTMLDivElement;
+        async renderChatUnits(cUnits: ChatUnit[]) {
+            this.dialogHeader.innerHTML = `<h1>Content Mapper</h1><p>Showing ${cUnits.length / 2} prompts &amp; the response.</p>`;
+            // this.dialogContent.innerHTML = "";
+            let promptCounter = 1; // Used to print the sequence of prompts / responses. Latest response is 0, and decrease upwards.
 
-                el.className = "pl-chat-unit";
-                el.setAttribute('role', 'button');
-                el.setAttribute("aria-atomic", "true");
-                el.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber().toString());
-                el.setAttribute("tabindex", "0");
+            // Render strategy: remove no longer existing chat unit elements from Content Map,
+            // skip render the existing chat unit elements, and insert only the new chat unit elements from chat container (source).
 
-                // Set attribute to ref the real element with the element in the ContentMapper dialog.
-                const attrRefValue = chatUnit.contentElement.getAttribute(ContentMapper.EL_REF_ATTR);
-                if (!attrRefValue) prodWarn(`[ContentMapper] Failed to find attribute ${ContentMapper.EL_REF_ATTR} from real element - 4245`)
-                el.setAttribute(ContentMapper.EL_REF_ATTR, attrRefValue || "");
-
-                // Set styling
-                // el.style.textDecoration = 'underline';
-                el.style.cursor = 'pointer';
-                el.style.marginBottom = "16px";
-
-                let text = "";
-                if (chatUnit.isYourPrompt) {
-                    text = "You prompted: ";
-                    el.style.textAlign = "right";
-                } else {
-                    text = `Response #${pairCounter++}: `;
-                    el.style.textAlign = "left";
-                }
-                // Append the text content
-                const contentElement = document.createElement("div") as HTMLElement;
-                // Use `.textContent` instead of `.innerHTML` to escape HTML entities
-                contentElement.textContent = text + chatUnit.shortContent || "";
-                // contentElement.ariaLabel = text + chatUnit.shortContent;
-                el.appendChild(contentElement);
-
-                // Set click handler to focus on the source element
-                // Goal: the handler will focus on the Gemini's source element in the SR 'browse mode'
-                // Problem: When focusing on the source element directly, NVDA still remain in 'focus / interactive mode', not switching back to 'browse mode'.
-                // Strategy: 
-                // - Focus to a dummy non-form focusable element first, to trick SR to switch to 'browse mode',
-                // - Ten focus to the source element after a short delay. The SR mode is still in 'browse mode'.
-                el.addEventListener("click", async (e) => {
-                    this.close();
-                    // Find the source element based on the ref element
-                    // Note: use `currentTarget` instead of `target`, because `target` might be a child element of the clicked element.
-                    const currentTarget = e.currentTarget as HTMLElement;
-                    // The ref value
-                    const el_ref = currentTarget.getAttribute(ContentMapper.EL_REF_ATTR);
-                    const sourceElement = this.promptResponseParent.querySelector(`[${ContentMapper.EL_REF_ATTR}="${el_ref}"]`) as HTMLElement;
-
-                    // Focus to the element
-                    if (sourceElement) {
-                        // FIXME: Directly focusing to the source element does not work well with NVDA
-                        // sourceElement.focus();
-                        // await new Promise(r => setTimeout(r, 500));
-                        sourceElement.scrollIntoView({ behavior: 'smooth', block: "start" });
-
-                        this.dummyFocusableElement.focus();
-                        await new Promise(r => setTimeout(r, 500));
-                        sourceElement.focus();
-                    }
-                    else console.log("ERROR can not find target element");
-                });
-
-                this.dialogContent.appendChild(el);
+            const existingChatUnitElements = this.dialogContent.querySelectorAll(`[${ContentMapper.EL_REF_ATTR}]`);
+            // Create a Set of existing `pl-el-ref` attr values for quick lookup
+            const existingRefsSet = new Set<string>();
+            existingChatUnitElements.forEach(el => {
+                const ref = el.getAttribute(ContentMapper.EL_REF_ATTR);
+                if (ref) existingRefsSet.add(ref);
             });
 
+            // Remove chat unit elements that are no longer exist in the `chatUnits` array
+            await this.removeNonExistingChatUnitElements(existingChatUnitElements, cUnits);
+
+            // Strategy: Iterate through `chatUnits` from last to first, because Gemini loads latest prompts / responses at the bottom then loads the previous ones when scrolling up.
+            // Insert the new chat unit element, and leave out the existing ones.
+            // 2 key elements: `lowerEl` and `upperEl` for each chat unit.
+            // `lowerEl`: The newer chat unit element, used to determine the insertion point of the current chat unit if it is new.
+            // `upperEl`: The older chat unit element, used to determine whether to insert or skip insertion of the iterated chat unit.
+            let lowerEl: HTMLElement | null = null; // Initially null, will be set to the last chat unit element after first iteration
+            // Start with the last existing chat unit element as the `upperEl`
+            let upperElIndex = existingChatUnitElements.length - 1;
+            let upperEl: HTMLElement | null = null;
+            // Dummy element with no match ref, used as the `upperEl` when all existing elements has been checked
+            const dummyUpperEl = document.createElement("div");
+            dummyUpperEl.setAttribute(ContentMapper.EL_REF_ATTR, "DUMMY_NO_MATCH");
+
+            for (let i = cUnits.length - 1; i >= 0; i--) {
+                const chatUnit = cUnits[i];
+                if (!chatUnit.isYourPrompt) promptCounter--; // Will be set to 0 for the latest response
+
+                let failsafe = 60;
+                while (true) {
+                    // If `upperElIndex` < 0, means all existing elements has been checked.
+                    if (upperElIndex < 0) upperEl = dummyUpperEl;
+                    else upperEl = existingChatUnitElements[upperElIndex] as HTMLElement;
+
+                    // Get the ref values to compare
+                    const upperElRef = upperEl.getAttribute(ContentMapper.EL_REF_ATTR);
+                    const chatUnitRef = chatUnit.contentElement.getAttribute(ContentMapper.EL_REF_ATTR);
+                    if (!chatUnitRef) {
+                        prodWarn(`[ContentMapper] Chat unit has no ref attribute - 512`);
+                        continue;
+                    }
+
+                    if (upperElRef === chatUnitRef) {
+                        // Match found, move the `upperElIndex` to the next existing element for the next iteration
+                        upperElIndex--;
+                        lowerEl = upperEl;
+                        break; // Exit, continue to the next chat unit
+                    } else {
+                        // No match, construct and insert the element before the `lowerEl`
+                        const el = this.constructChatUnitElement(chatUnit, promptCounter);
+
+                        // Append the element or insert before lowerEl
+                        if (lowerEl === null) this.dialogContent.append(el);
+                        else lowerEl.before(el);
+
+                        lowerEl = el;
+                    }
+                    break;
+                }
+                if (failsafe-- < 0) {
+                    alert("Infinite loop detected in renderChatUnits - 531");
+                    break;
+                }
+            }
+            devLog(`[ContentMapper] Finished rendering ${cUnits.length} chat units.`);
+
+            // Note: On first load, Gemini doesn't load all prompts / responses, only the latest some (10 pairs).
+            // When user scrolls up, more prompts / responses will be loaded.
+
             // FIXME: Remove the "show thinking" 
+        }
+        removeNonExistingChatUnitElements(
+            existingChatUnitElements: NodeListOf<Element>,
+            chatUnits: ChatUnit[],
+        ) {
+            existingChatUnitElements.forEach(el => {
+                const ref = el.getAttribute(ContentMapper.EL_REF_ATTR);
+                // If the ref is not in the current chatUnits, remove the element
+                const isExistInChatUnits = chatUnits.some(cu => {
+                    const cuRef = cu.contentElement.getAttribute(ContentMapper.EL_REF_ATTR);
+                    return cuRef === ref;
+                });
+                if (!isExistInChatUnits) {
+                    el.remove();
+                }
+            });
+        }
+        constructChatUnitElement(chatUnit: ChatUnit, promptCounter: number): HTMLElement {
+            const el = document.createElement("div") as HTMLDivElement;
+
+            el.className = "pl-chat-unit";
+            el.setAttribute('role', 'button');
+            el.setAttribute("aria-atomic", "true");
+            el.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber().toString());
+            el.setAttribute("tabindex", "0");
+
+            // Set attribute to ref the real element with the element in the ContentMapper dialog.
+            const attrRefValue = chatUnit.contentElement.getAttribute(ContentMapper.EL_REF_ATTR);
+            if (!attrRefValue) prodWarn(`[ContentMapper] Failed to find attribute ${ContentMapper.EL_REF_ATTR} from real element - 4245`)
+            el.setAttribute(ContentMapper.EL_REF_ATTR, attrRefValue || "");
+
+            // Set styling
+            // el.style.textDecoration = 'underline';
+            el.style.cursor = 'pointer';
+            el.style.marginBottom = "16px";
+
+            let text = "";
+            if (chatUnit.isYourPrompt) {
+                text = "You prompted: ";
+                el.style.textAlign = "right";
+            } else {
+                // Use text with `-number` to indicate the order of the response. The latest response considered as number 0
+                if (promptCounter === 0) text = `Latest Response: `;
+                else text = `Response ${promptCounter}: `;
+                el.style.textAlign = "left";
+            }
+            // Append the text content
+            const contentElement = document.createElement("div") as HTMLElement;
+            // Use `.textContent` instead of `.innerHTML` to escape HTML entities
+            contentElement.textContent = text + chatUnit.shortContent || "";
+            // contentElement.ariaLabel = text + chatUnit.shortContent;
+            el.appendChild(contentElement);
+
+            // Set click handler to focus on the source element
+            // Goal: the handler will focus on the Gemini's source element in the SR 'browse mode'
+            // Problem: When focusing on the source element directly, NVDA still remain in 'focus / interactive mode', not switching back to 'browse mode'.
+            // Strategy: 
+            // - Focus to a dummy non-form focusable element first, to trick SR to switch to 'browse mode',
+            // - Ten focus to the source element after a short delay. The SR mode is still in 'browse mode'.
+            el.addEventListener("click", async (e) => {
+                this.close();
+                // Find the source element based on the ref element
+                // Note: use `currentTarget` instead of `target`, because `target` might be a child element of the clicked element.
+                const currentTarget = e.currentTarget as HTMLElement;
+                // The ref value
+                const el_ref = currentTarget.getAttribute(ContentMapper.EL_REF_ATTR);
+                const sourceElement = this.promptResponseParent.querySelector(`[${ContentMapper.EL_REF_ATTR}="${el_ref}"]`) as HTMLElement;
+
+                // Focus to the element
+                if (sourceElement) {
+                    // FIXME: Directly focusing to the source element does not work well with NVDA
+                    // sourceElement.focus();
+                    // await new Promise(r => setTimeout(r, 500));
+                    sourceElement.scrollIntoView({ behavior: 'smooth', block: "start" });
+
+                    this.dummyFocusableElement.focus();
+                    await new Promise(r => setTimeout(r, 500));
+                    sourceElement.focus();
+                }
+                else console.log("ERROR can not find target element");
+            });
+            return el;
         }
         dialogElement() {
             return this.dialog;
