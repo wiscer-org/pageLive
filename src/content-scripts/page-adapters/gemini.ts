@@ -604,15 +604,17 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             // Find the start-new-chat button. Selector below
             // const newChatButton = document.querySelector('[data-test-id="new-chat-button"]') as HTMLElement | null;
-            const newChatButton = document.querySelector('[data-test-id="expanded-button"]') as HTMLElement | null;
+            // const newChatButton = document.querySelector('[data-test-id="expanded-button"]') as HTMLElement | null;
+            const newChatButton = document.querySelector('[data-test-id="new-chat-button"] button') as HTMLElement | null;
 
             if (newChatButton === null) {
                 const msg = "Failed to find the new chat button";
-                console.error(`[PageLive][Gemini] ${msg}`);
+                prodWarn(msg);
                 window.pageLive.announce({ msg });
                 return;
             } else {
-                // Click the button
+                // Close all dialogs / modals first
+                await closeAllDialogsAndModals();
                 newChatButton.click();
             }
 
@@ -755,6 +757,12 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             contentMapper.close();
             // Synchronize the active chat info
             await syncActiveChatInfo();
+        }
+
+        async function closeAllDialogsAndModals(): Promise<void> {
+            window.pageLive.dialogManager.close();
+            contentMapper.close();
+            window.pageLive.announce({ msg: "all modals has been closed" });
         }
 
         // References to HTML elements
