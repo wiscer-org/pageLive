@@ -1,6 +1,6 @@
 // gemini.ts - Injected only on gemini.google.com
 
-import { remove } from "lodash";
+import { first, remove } from "lodash";
 import { Chat, ChatUnit } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber } from "../util";
 
@@ -807,7 +807,34 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
         // Attribute used in HTML elements to ref between the real element and the element in the ContentMap Dialog. 
         static EL_REF_ATTR = "pl-el-ref"; // Stands or 'pagelive element ref'
+        // Attribute to mark the element just created, so will be ignored by IntersectionObserver
+        // The reason is that when the observer just start observing, the callback will be triggered right away. The presence of this attr will cancel the effect.
+        static EL_CREATED_ATTR = "pl-el-created"; // Stands for 'pagelive element created'
 
+        // To observe the top chat unit element appearing in the viewport, to trigger Gemini to load previous prompt/ responses if any.
+        private chatUnitTopObserver = new IntersectionObserver((entries) => {
+            // const dialogHeaderObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // Check the attribute to ignore the just created element
+                if (entry.target.hasAttribute(ContentMapper.EL_CREATED_ATTR)) {
+                    // Remove the attribute so next time this element can be observed normally
+                    entry.target.removeAttribute(ContentMapper.EL_CREATED_ATTR);
+                    return;
+                }
+
+                if (entry.isIntersecting) {
+                    // Scroll the first chat unit into view to trigger Gemini to load previous prompt/ response if any
+                    if (this.chatUnits.length > 0) {
+                        const firstChatUnit = this.chatUnits[0];
+                        firstChatUnit.contentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+                        devLog('scrolling to the first chat unit');
+                    }
+                }
+            });
+        }, {
+            root: this.dialog,
+            threshold: 0.0,
+        });
 
         constructor() {
             this.constructDialog();
@@ -1078,6 +1105,14 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             // Note: On first load, Gemini doesn't load all prompts / responses, only the latest some (10 pairs).
             // When user scrolls up, more prompts / responses will be loaded.
+            // Now we need to observe the Content Map dialog's top chat unit element to trigger Gemini to load previous prompts / responses when it is in viewport.
+            const firstChatUnitElement = this.dialogContent.querySelector(`[${ContentMapper.EL_REF_ATTR}]`);
+            // Put an attribute to mark this element has just been added, so the IntersectionObserver will ignore it first time.
+            if (firstChatUnitElement) {
+                firstChatUnitElement.setAttribute(ContentMapper.EL_CREATED_ATTR, "true");
+                this.chatUnitTopObserver.disconnect();
+                this.chatUnitTopObserver.observe(firstChatUnitElement);
+            }
 
             // FIXME: Remove the "show thinking" 
         }
