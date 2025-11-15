@@ -937,7 +937,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             const closeButton: HTMLButtonElement = document.createElement("button") as HTMLButtonElement;
             closeButton.textContent = "Close";
-            closeButton.ariaLabel = "Close Content Map, or press escape";
+            closeButton.ariaLabel = "Close Content Map. To read older responses, scroll up using up arrow key.";
             closeButton.onclick = this.close.bind(this);
             dialogFooter.appendChild(closeButton);
 
@@ -1055,9 +1055,10 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             return chatUnits;
         }
         async renderChatUnits(cUnits: ChatUnit[]) {
-            const subHeaderText = cUnits.length === 0 ? "This chat doesn't have anys prompts / responses." : `Showing ${cUnits.length / 2} responses.`;
-            this.dialogHeader.innerHTML = `<h1>Content Mapper</h1><p>${subHeaderText}</p>`;
-            // this.dialogContent.innerHTML = "";
+            const subHeaderText = cUnits.length === 0 ? "This chat doesn't have anys prompts / responses. Press esc to close." : `Showing ${cUnits.length / 2} responses. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.`;
+            this.dialogHeader.innerHTML = `<h1>PageLive Content Map</h1><p>${subHeaderText}</p>`;
+            this.dialog.ariaLabel = this.dialogHeader.textContent;
+            
             let promptCounter = 1; // Used to print the sequence of prompts / responses. Latest response is 0, and decrease upwards.
             let newPromptResponseCount = 0; // Count how many new prompt / response added
 
