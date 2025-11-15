@@ -988,7 +988,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 // Remove the announce after some time to avoid clutter
                 setTimeout(() => {
                     this.dialogAnnounceList.removeChild(newAnnounce);
-                }, 1000);
+                }, 15e3);
             }
         }
         /**
