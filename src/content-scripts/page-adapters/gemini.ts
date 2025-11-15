@@ -1,4 +1,5 @@
 // gemini.ts - Injected only on gemini.google.com
+import { update } from "lodash";
 import { Chat, ChatUnit } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber } from "../util";
 
@@ -680,14 +681,20 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         /**
          * Update the dialog with everything related to the current active chat info.
          */
-        function updateDialogWithChatInfo() {
-            updateDialogTitle();
+        function updateDialogWithChatInfo(shouldUpdateDialogTitle = true) {
+            if (shouldUpdateDialogTitle) updateDialogTitle();
 
             // Create snapshot about the number of prompts in the chat
             if (activeChat.promptCount >= 0) {
-                let snapshotInfos = [`This chat has ${activeChat.promptCount} prompt${activeChat.promptCount !== 1 ? 's' : ''}.`];
+
+                // let snapshotInfos = [`This chat has ${activeChat.promptCount} prompt${activeChat.promptCount !== 1 ? 's' : ''}.`];
+                let snapshotInfos = [];
                 if (activeChat.promptCount == 0) snapshotInfos = ["This chat has no response yet."];
-                if (activeChat.promptCount >= 10) snapshotInfos = ["This chat has 10 or more prompts."];
+                else {
+                    const remainder = activeChat.promptCount % 10;
+                    if (remainder === 0) snapshotInfos = [`This chat has ${activeChat.promptCount} or more responses.`];
+                    else snapshotInfos = [`This chat has ${activeChat.promptCount} responses.`];
+                }
                 window.pageLive.dialogManager.setSnapshotInfos(snapshotInfos);
             }
         }
@@ -742,7 +749,23 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // Update the dialog
             window.pageLive.dialogManager.setTitle(title, attributes);
         }
+        /**
+         * Update the active chat info. 
+         * Mostly used by external entity, e.g.: When `ContentMapper` receives older chat units
+         */
+        function updateActiveChatInfo(chat: Partial<Chat>) {
+            activeChat = {
+                id: chat.id ?? activeChat.id ?? '',
+                title: chat.title ?? activeChat.title ?? '',
+                promptCount: chat.promptCount ?? activeChat.promptCount ?? -2,
+            };
 
+            // Expose to global page if we have a valid id
+            if (activeChat.id)
+                window.pageLive.page.activeChat = activeChat;
+
+            updateDialogWithChatInfo(false);
+        }
         /**
          * Synchronize the active chat info with the URL & document, if possible.
          */
@@ -783,7 +806,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         await chatAdapter.init();
 
         // Content Mapper, to map chat units to a Modal
-        const contentMapper = new ContentMapper();
+        const contentMapper = new ContentMapper(updateActiveChatInfo);
         await contentMapper.init()
 
         // Initialize the page adapter
@@ -794,6 +817,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
      * This class is to map the chat / content to a dialog.
      */
     class ContentMapper {
+        // External refs
+        private updateActiveChatInfo !: (chat: Partial<Chat>) => void
+        // Elements
         private dialog!: HTMLDialogElement;
         // To contain SR only announcement when dialog is opened
         private dialogAnnounceList!: HTMLElement;
@@ -844,7 +870,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             threshold: 0.0,
         });
 
-        constructor() {
+        constructor(updateActiveChatInfo: (chat: Partial<Chat>) => void) {
+            this.updateActiveChatInfo = updateActiveChatInfo;
             this.constructDialog();
 
             // Create dummy non-form focusable element
@@ -1059,6 +1086,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             this.generationTimeout = null;
 
             if (shouldRender) await this.renderChatUnits(chatUnits);
+
+            // Update external resource
+            this.updateActiveChatInfo({
+                promptCount: chatUnits.length / 2,
+            });
 
             return chatUnits;
         }
