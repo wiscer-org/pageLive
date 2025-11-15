@@ -1,6 +1,4 @@
 // gemini.ts - Injected only on gemini.google.com
-
-import { first, remove } from "lodash";
 import { Chat, ChatUnit } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber } from "../util";
 
@@ -789,6 +787,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
      */
     class ContentMapper {
         private dialog!: HTMLDialogElement;
+        // To contain SR only announcement when dialog is opened
+        private dialogAnnounceList!: HTMLElement;
         private dialogContent!: HTMLElement;
         private dialogHeader!: HTMLElement;
         // A dummy focusable non-form element used force SR (NVDA) to change to 'browse mode'
@@ -909,9 +909,16 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             this.dialog.onclose = async () => {
                 // After dialog is closed, browser automatically will focus on the last focus element. Thus, the 'dialog is closed' is not announced properly.
                 // To increase being announced, wait few seconds.
-                await new Promise(r => setTimeout(r, 3e3));
+                await new Promise(r => setTimeout(r, 500));
                 window.pageLive.announce({ msg: "Content Map is closed" });
             }
+
+            // Create SR only container to announce when dialog is opened
+            this.dialogAnnounceList = document.createElement("div");
+            this.dialogAnnounceList.classList.add("pl-sr-only");
+            this.dialogAnnounceList.setAttribute("aria-live", "polite");
+            this.dialogAnnounceList.classList.add("dev-mode");
+            this.dialog.appendChild(this.dialogAnnounceList);
 
             // Create the heading
             this.dialogHeader = document.createElement("header");
@@ -956,6 +963,25 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 threshold: 0.0,
             });
             // dialogHeaderObserver.observe(this.dialogHeader);
+        }
+        /**
+         * If dialog is opened, use the announce-list element inside the dialog.
+         * If closed, use the global announce-list element.
+         */
+        async announce(options: { msg: string, omitPreannounce?: boolean }) {
+            if (!this.dialog.open) window.pageLive.announce(options);
+            else {
+                if (!options.omitPreannounce) {
+                    this.announce({ msg: "Content Map updated.", omitPreannounce: true });
+                }
+                const newAnnounce = document.createElement("div");
+                newAnnounce.textContent = options.msg;
+                this.dialogAnnounceList.appendChild(newAnnounce);
+                // Remove the announce after some time to avoid clutter
+                setTimeout(() => {
+                    this.dialogAnnounceList.removeChild(newAnnounce);
+                }, 1000);
+            }
         }
         /**
          * Schedule timeout to generate chat units
@@ -1033,6 +1059,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             this.dialogHeader.innerHTML = `<h1>Content Mapper</h1><p>${subHeaderText}</p>`;
             // this.dialogContent.innerHTML = "";
             let promptCounter = 1; // Used to print the sequence of prompts / responses. Latest response is 0, and decrease upwards.
+            let newPromptResponseCount = 0; // Count how many new prompt / response added
 
             // Render strategy: remove no longer existing chat unit elements from Content Map,
             // skip render the existing chat unit elements, and insert only the new chat unit elements from chat container (source).
@@ -1087,6 +1114,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     } else {
                         // No match, construct and insert the element before the `lowerEl`
                         const el = this.constructChatUnitElement(chatUnit, promptCounter);
+                        newPromptResponseCount++;
 
                         // Append the element or insert before lowerEl
                         if (lowerEl === null) this.dialogContent.append(el);
@@ -1100,6 +1128,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     alert("Infinite loop detected in renderChatUnits - 531");
                     break;
                 }
+            }
+            // If dialog is open, notify users how many new prompts / responses added
+            if (this.dialog.open && newPromptResponseCount > 0) {
+                const msg = `${newPromptResponseCount / 2} new responses${newPromptResponseCount !== 1 ? 's' : ''} has been added to Content Map.`;
+                this.announce({ msg });
             }
             devLog(`[ContentMapper] Finished rendering ${cUnits.length} chat units.`);
 
@@ -1116,7 +1149,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             // FIXME: Remove the "show thinking" 
         }
-        removeNonExistingChatUnitElements(
+        async removeNonExistingChatUnitElements(
             existingChatUnitElements: NodeListOf<Element>,
             chatUnits: ChatUnit[],
         ) {
