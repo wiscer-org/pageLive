@@ -696,39 +696,47 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
          * Update the dialog title with the current active chat info.
          */
         function updateDialogTitle() {
+            // Event handler when the title element is clicked
+            const focusChatInSideNav = async () => {
+                await ensureSideNavOpened();
+                // Find the active chat element
+                const activeChatElement = await getSelectedChatElement();
+                // Focus the active chat element
+                if (!activeChatElement) {
+                    // Find the first H1 in the side nav
+                    const firstHeading = chatListContainer?.querySelector("h1");
+                    if (firstHeading) {
+                        firstHeading.setAttribute("tabindex", "-1");
+                        firstHeading.focus();
+                        window.pageLive.announce({ msg: "Focus moved to side nav" });
+                    } else {
+                        const msg = "Failed to find active chat element in the chat list.";
+                        prodWarn(msg); window.pageLive.announce({ msg });
+                    }
+                } else {
+                    activeChatElement.focus();
+                }
+            }
+
             let title = "Gemini";
-            let attributes = {};
+            let attributes = {
+                ariaLabel: "",
+                onclick: focusChatInSideNav
+            };
 
             const isUnsavedChat = isThisUnsavedChat();
             if (isUnsavedChat) {
                 title += " new chat.";
-            }
-            // If active chat title exist, add to the dialog snapshot info
-            else if (activeChat.title) {
-                // Event handler when the title element is clicked
-                const focusChatInSideNav = async () => {
-                    await ensureSideNavOpened();
-                    // Find the active chat element
-                    const activeChatElement = await getSelectedChatElement();
-                    // Focus the active chat element
-                    if (!activeChatElement) {
-                        const msg = "Failed to find active chat element in the chat list.";
-                        prodWarn(msg); window.pageLive.announce({ msg });
-                    } else {
-                        activeChatElement.focus();
-                    }
-                }
-
+                attributes.ariaLabel = `${title}, click to select chats on side nav.`;
+            } else if (activeChat.title) {
+                // If active chat title exist, add to the dialog snapshot info
                 title = ` ${activeChat.title}.`;
-                attributes = {
-                    ariaLabel: activeChat.title + ", click to focus the chat in the chat list.",
-                    onclick: focusChatInSideNav,
-                }
-            }
-            // Either chat info yet not parsed, or no title found
-            else {
+                attributes.ariaLabel = activeChat.title + ", click to focus the chat in the chat list.";
+            } else {
+                // Either chat info yet not parsed, or no title found
                 // No title, maybe a new chat
                 title += " chat, title not available.";
+                attributes.ariaLabel = `${title}, click to select chats on side nav.`;
             }
 
             // Update the dialog
@@ -1058,7 +1066,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             const subHeaderText = cUnits.length === 0 ? "This chat doesn't have anys prompts / responses. Press esc to close." : `Showing ${cUnits.length / 2} responses. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.`;
             this.dialogHeader.innerHTML = `<h1>PageLive Content Map</h1><p>${subHeaderText}</p>`;
             this.dialog.ariaLabel = this.dialogHeader.textContent;
-            
+
             let promptCounter = 1; // Used to print the sequence of prompts / responses. Latest response is 0, and decrease upwards.
             let newPromptResponseCount = 0; // Count how many new prompt / response added
 
