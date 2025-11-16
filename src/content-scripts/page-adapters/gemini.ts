@@ -931,9 +931,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         async constructDialog() {
             this.dialog = document.createElement("dialog");
             this.dialog.id = "pl-content-mapper-dialog";
-            this.dialog.ariaLabel = "PageLive Content Map. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.";
+            // this.dialog.ariaLabel = "aria label: PageLive Content Map. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.";
             // Mark this dialog as a PageLive element so the generic PageLive stylesheet
-            // (imported above) will apply only to PageLive dialogs.
             this.dialog.classList.add('pl-el');
 
             // Append dialog to PageLive container
@@ -1021,9 +1020,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         /**
          * Schedule timeout to generate chat units
          */
-        scheduleGenerateChatUnits(delay: number = 4e3) {
+        async scheduleGenerateChatUnits(delay: number = 4e3) {
             if (this.generationTimeout !== null) clearTimeout(this.generationTimeout);
-            if (delay === 0) this.generateChatUnits();
+            if (delay === 0) await this.generateChatUnits();
             else this.generationTimeout = setTimeout(this.generateChatUnits.bind(this), delay);
         }
 
@@ -1286,7 +1285,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         }
         async showModal() {
             // If there is schedule to generate chatUnits, do it now and put 'generating..' label
-            if (this.generationTimeout !== null) this.scheduleGenerateChatUnits(0);
+            if (this.generationTimeout !== null) await this.scheduleGenerateChatUnits(0);
 
             // Close PageLive main dialog if opened
             window.pageLive.dialogManager.close();
