@@ -972,7 +972,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             const closeButton: HTMLButtonElement = document.createElement("button") as HTMLButtonElement;
             closeButton.textContent = "Close";
-            closeButton.ariaLabel = "Close Content Map. To read older responses, scroll up using up arrow key.";
+            closeButton.ariaLabel = "Close Content Map or press esc key.";
             closeButton.onclick = this.close.bind(this);
             dialogFooter.appendChild(closeButton);
 
@@ -1226,13 +1226,17 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             el.style.marginBottom = "16px";
 
             let text = "";
+            let ariaLabel = "";
             if (chatUnit.isYourPrompt) {
                 text = "You prompted: ";
                 el.style.textAlign = "right";
             } else {
                 // Use text with `-number` to indicate the order of the response. The latest response considered as number 0
-                if (promptCounter === 0) text = `Latest Response: `;
-                else text = `Response ${promptCounter}: `;
+                if (promptCounter === 0) {
+                    text = `Latest Response: `;
+                    // Append 'go up to read older..' to aria-label specific for the last response
+                    ariaLabel = `Latest Response: ${chatUnit.shortContent} | PageLive tips: read lines above for older responses.`;
+                } else text = `Response ${promptCounter}: `;
                 el.style.textAlign = "left";
             }
             // Append the text content
@@ -1241,6 +1245,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             contentElement.textContent = text + chatUnit.shortContent || "";
             // contentElement.ariaLabel = text + chatUnit.shortContent;
             el.appendChild(contentElement);
+            if (ariaLabel) el.ariaLabel = ariaLabel;
 
             // Set click handler to focus on the source element
             // Goal: the handler will focus on the Gemini's source element in the SR 'browse mode'
