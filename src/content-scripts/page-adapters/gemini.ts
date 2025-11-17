@@ -1,5 +1,5 @@
 // gemini.ts - Injected only on gemini.google.com
-import { update } from "lodash";
+import { spawn } from "child_process";
 import { Chat, ChatUnit } from "../page";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber } from "../util";
 
@@ -954,6 +954,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             this.dialogAnnounceList.classList.add("dev-mode");
             this.dialog.appendChild(this.dialogAnnounceList);
 
+            const headerHiddenSpan = document.createElement("span");
+            headerHiddenSpan.classList.add("pl-sr-only");
+            headerHiddenSpan.textContent = "Info: press escape, or Enter on one of the responses to close this Content Map and focus to the source.";
+            this.dialog.append(headerHiddenSpan);
+
             // Create the heading
             this.dialogHeader = document.createElement("header");
             // header should be intrinsic height and stay at top
@@ -971,9 +976,14 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             const closeButton: HTMLButtonElement = document.createElement("button") as HTMLButtonElement;
             closeButton.textContent = "Close";
-            closeButton.ariaLabel = "Close Content Map or press esc key.";
+            closeButton.ariaLabel = "Close Content Map or press esc.";
             closeButton.onclick = this.close.bind(this);
             dialogFooter.appendChild(closeButton);
+
+            const footerSpan = document.createElement("span");
+            footerSpan.textContent = "End of dialog. Scroll up to read older responses.";
+            footerSpan.classList.add("pl-sr-only");
+            dialogFooter.append(footerSpan);
 
             // Create IntersectionObserver to observe the dialog heading. 
             // When the heading is enter / leave the viewport, 
@@ -1094,7 +1104,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             return chatUnits;
         }
         async renderChatUnits(cUnits: ChatUnit[]) {
-            const subHeaderText = cUnits.length === 0 ? "This chat doesn't have anys prompts / responses. Press esc to close." : `Showing ${cUnits.length / 2} responses. Press escape to close, or press Enter on one of the prompts / responses to close this Content Map and focus the content.`;
+            const subHeaderText = cUnits.length === 0 ? "This chat doesn't have anys prompts / responses. Press esc to close." : `Showing ${cUnits.length / 2} responses.`;
             this.dialogHeader.innerHTML = `<h1>PageLive Content Map</h1><p>${subHeaderText}</p>`;
             this.dialog.ariaLabel = this.dialogHeader.textContent;
 
@@ -1234,7 +1244,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 if (promptCounter === 0) {
                     text = `Latest Response: `;
                     // Append 'go up to read older..' to aria-label specific for the last response
-                    ariaLabel = `Latest Response: ${chatUnit.shortContent} | PageLive tips: read lines above for older responses.`;
+                    ariaLabel = `Latest Response: ${chatUnit.shortContent}`;
                 } else text = `Response ${promptCounter}: `;
                 el.style.textAlign = "left";
             }
