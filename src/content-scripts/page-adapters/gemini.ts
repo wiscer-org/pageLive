@@ -622,6 +622,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             await new Promise(r => setTimeout(r, 4000)); // 4 seconds is long enough for the UI to be re-rendered, and quick enough before user finish typing the first input.
             await init();
             chatAdapter.init();
+            contentMapper.init(0);
         }
         /**
          * Parse the current active chat info from the document, if possible.
