@@ -1,6 +1,8 @@
 # Changelog
 
-## v3.0.0 (not released)
+## v3.1.0 (not released)
+
+-
 
 ### On Progress
 
@@ -8,7 +10,6 @@
 
 ### Planned
 
-- Create dialog 'Chat Map' to map prompts/response : shortened prompt/response text content and each text is button to focus to prompt/response element correspondingly.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
@@ -17,6 +18,12 @@
 ### Future
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v3.0.0
+
+- Create dialog 'Content Map' to map prompts/response : shortened prompt/response text content and each text is button to focus to prompt/response element correspondingly.
+- Move focus to side nav when 'new chat' title in dialog is clicked.
+- Deactivate feature to announce new responses, due the feature just provided by Gemini.
 
 ## v2.2.0
 
