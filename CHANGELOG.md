@@ -2,18 +2,19 @@
 
 ## v3.1.0 (not released)
 
--
+- Fixed: After item in Content Map is clicked, screen reader not changed to 'Browse mode' and not focus to the corresponding response element. Increase success rate to force SR to switch to 'Browse mode' by set `scrollIntoView.behaviour=instant' and increase wait time before change element focus.
 
 ### On Progress
 
+- There are elements of `span[aria-hidden="true"]` which causing keyboard character not readable. Create notif & action for user to set the `aria-hidden=false`
 -
 
 ### Planned
 
+- Fix: Content Map does not change the text 'Latest response' on the previous response when a new response is received.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
-- There are elements of `span[aria-hidden="true"]` which causing keyboard character not readable. Create notif & action for user to set the `aria-hidden=false`
 
 ### Future
 

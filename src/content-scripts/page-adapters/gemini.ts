@@ -1277,10 +1277,13 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     // FIXME: Directly focusing to the source element does not work well with NVDA
                     // sourceElement.focus();
                     // await new Promise(r => setTimeout(r, 500));
-                    sourceElement.scrollIntoView({ behavior: 'smooth', block: "start" });
+
+                    // "behaviour:'instant'" will more likely to force SR to change mode to 'Browse mode' compared to 'scroll'
+                    sourceElement.scrollIntoView({ behavior: "instant", block: "start" });
 
                     this.dummyFocusableElement.focus();
-                    await new Promise(r => setTimeout(r, 500));
+                    // Increased wait time to increase success rate to force SR change mode to 'Browse mode'
+                    await new Promise(r => setTimeout(r, 1e3));
                     sourceElement.focus();
                 }
                 else console.log("ERROR can not find target element");
