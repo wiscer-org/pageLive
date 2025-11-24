@@ -108,6 +108,10 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             window.pageLive.page.ready();
 
             start();
+
+            // Init the child objects
+            chatAdapter.init();
+            contentMapper.init(0);
         }
 
         /**
@@ -621,8 +625,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // Wait a little for the UI to be re-rendered, then re-query the key elements
             await new Promise(r => setTimeout(r, 4000)); // 4 seconds is long enough for the UI to be re-rendered, and quick enough before user finish typing the first input.
             await init();
-            chatAdapter.init();
-            contentMapper.init(0);
+            // chatAdapter.init();
+            // contentMapper.init(0);
         }
         /**
          * Parse the current active chat info from the document, if possible.
@@ -804,11 +808,11 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
         // Object to handle chat container related features
         const chatAdapter = new GeminiAdapterChat();
-        await chatAdapter.init();
+        // await chatAdapter.init();
 
         // Content Mapper, to map chat units to a Modal
         const contentMapper = new ContentMapper(updateActiveChatInfo);
-        await contentMapper.init()
+        // await contentMapper.init()
 
         // Initialize the page adapter
         init();
