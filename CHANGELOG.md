@@ -4,11 +4,11 @@
 
 - Fixed: After item in Content Map is clicked, screen reader not changed to 'Browse mode' and not focus to the corresponding response element. Increase success rate to force SR to switch to 'Browse mode' by set `scrollIntoView.behaviour=instant' and increase wait time before change element focus.
 - Also tested with Brave browser.
+- Reveal `.katex-html[aria-hidden="true"]` to be accessible by SR, by add attribute `pl-disable-aria-hidden` and set the `aria-hidden` to `false`.
 
 ### On Progress
 
-- There are elements of `span[aria-hidden="true"]` which causing keyboard character not readable. Create notif & action for user to set the `aria-hidden=false`
--
+- Force SR to 'browse mode' when focus in the chat item in the side nav chat list.
 
 ### Planned
 

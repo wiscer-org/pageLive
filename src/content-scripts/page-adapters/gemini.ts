@@ -830,30 +830,59 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
     };
 
     /**
-     * Class to reveal content that not supposed to be hidden
-     * Currently, Gemini sometimes hides Keyboard's key simbol using aria-hidden
+     * Reveal content that not supposed to be hidden
+     * Currently, Gemini sometimes hides Keyboard's key or Math content using `.katext-html[aria-hidden="true"]`
      */
     class ContentRevealer {
+        static KATEX_CLASS = 'katex-html';
         private chatContainer!: HTMLElement;
         // Observer to reveal the hidden content
-        private observer = new MutationObserver(() => {
-            // TODO observe and manipulate the element that has `aria-hidden=true`
+        private observer = new MutationObserver((mList) => {
+            mList.forEach((mutation) => {
+                // Handle added nodes
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach((node) => {
+                        this.modifyToRevealContent(node);
+                    });
+                }
+                // Handle attribute changes
+                if (mutation.type === 'attributes') {
+                    this.modifyToRevealContent(mutation.target);
+                }
+            });
         });
         async init(chatContainer: HTMLElement | null) {
             if (!chatContainer) {
                 prodWarn('[ContentRevealer] received chat container is null - j3d');
                 return;
             }
-
             this.chatContainer = chatContainer;
+
+            // Query all elements and inspect each one
+            const allElements = this.chatContainer.querySelectorAll(`.${ContentRevealer.KATEX_CLASS}`);
+            allElements.forEach((element) => {
+                this.modifyToRevealContent(element);
+            });
 
             this.observer.disconnect();
             this.observer.observe(this.chatContainer, {
                 childList: true,
                 subtree: true,
                 attributes: true,
-                attributeFilter: [],
+                attributeFilter: ['aria-hidden'],
             });
+        }
+        /**
+         * Modify the node so the text content accessible by SR
+         */
+        private modifyToRevealContent(node: Node) {
+            if (!(node instanceof HTMLElement)) return;
+            if (!node.classList.contains(ContentRevealer.KATEX_CLASS)) return;
+            const ariaHidden = node.getAttribute('aria-hidden');
+            if (ariaHidden === 'true') {
+                node.setAttribute('pl-disabled-aria-hidden', 'true');
+                node.setAttribute('aria-hidden', 'false');
+            }
         }
     }
 
