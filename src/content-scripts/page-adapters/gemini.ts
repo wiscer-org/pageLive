@@ -41,6 +41,13 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         async function getKeyElements(): Promise<boolean> {
             let allFound = true;
 
+            // Active chat container
+            chatContainer = await waitForAnElement("chat-window infinite-scroller.chat-history");
+            if (!chatContainer) {
+                allFound = false;
+                prodWarn("Failed to find chat container. Code u73");
+            }
+
             // Chat list container
             chatListContainer = await waitForAnElement('.chat-history');
             if (!chatListContainer) allFound = false;
@@ -54,7 +61,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 // Need to be converted to HTMLInputElement
                 chatInputElement = temporaryChatInputElement as HTMLInputElement;
             }
-
             return allFound;
         }
 
@@ -112,6 +118,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // Init the child objects
             chatAdapter.init();
             contentMapper.init(0);
+            contentRevealer.init(chatContainer);
         }
 
         /**
@@ -800,6 +807,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         }
 
         // References to HTML elements
+        let chatContainer: HTMLElement | null = null;
         let chatInputElement: HTMLInputElement | null;
         // Chat list container on the right side navigation
         let chatListContainer: HTMLElement | null = null;
@@ -814,9 +822,40 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         const contentMapper = new ContentMapper(updateActiveChatInfo);
         // await contentMapper.init()
 
+        // Object to reveal hidden content
+        const contentRevealer = new ContentRevealer();
+
         // Initialize the page adapter
         init();
     };
+
+    /**
+     * Class to reveal content that not supposed to be hidden
+     * Currently, Gemini sometimes hides Keyboard's key simbol using aria-hidden
+     */
+    class ContentRevealer {
+        private chatContainer!: HTMLElement;
+        // Observer to reveal the hidden content
+        private observer = new MutationObserver(() => {
+            // TODO observe and manipulate the element that has `aria-hidden=true`
+        });
+        async init(chatContainer: HTMLElement | null) {
+            if (!chatContainer) {
+                prodWarn('[ContentRevealer] received chat container is null - j3d');
+                return;
+            }
+
+            this.chatContainer = chatContainer;
+
+            this.observer.disconnect();
+            this.observer.observe(this.chatContainer, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [],
+            });
+        }
+    }
 
     /**
      * This class is to map the chat / content to a dialog.
