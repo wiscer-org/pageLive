@@ -8,12 +8,11 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
   },
   plugins: [
-    hotReloadExtension({
+    process.env.NODE_ENV === 'development' && hotReloadExtension({
       log: true,
-      // Background script is mandatory
       backgroundPath: 'src/background.ts'
     }),
-  ],
+  ].filter(Boolean),
   build: {
     outDir: 'dist',
     rollupOptions: {
