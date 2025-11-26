@@ -24,6 +24,8 @@ export default class PageLive {
     // Announce container element
     ANNOUNCE_CONTAINER_ID!: string;
     announceContainer!: HTMLDivElement;
+    // Dummy non-form element to force SR to switch to browse mode
+    dummySpanElement!: HTMLSpanElement;
     // Infos to be announced after the PageLive is initialized
     // Definite Assignment Assertion, because assigning an array may result in 'undefined'
     initialAnnounceInfo!: string[];
@@ -48,7 +50,8 @@ export default class PageLive {
         this.ANNOUNCE_CONTAINER_ID = 'announce-list'
 
         this.container = document.createElement('div');
-        this.announceContainer = document.createElement('div')
+        this.announceContainer = document.createElement('div');
+        this.dummySpanElement = document.createElement('span');
 
         this.initialAnnounceInfo = [
             "PageLive is ready.",
@@ -81,7 +84,16 @@ export default class PageLive {
         // Prepare and ensure the announce container
         this.prepareAnnounceContainer();
 
-
+        this.prepareNonFormDummyElement();
+    }
+    prepareNonFormDummyElement() {
+        this.dummySpanElement = document.createElement("span");
+        this.dummySpanElement.textContent = ""
+        this.dummySpanElement.setAttribute("tabindex", "-1");
+        this.dummySpanElement.setAttribute("pl-info", "dummy-element");
+        // this.dummyFocusableElement.style.position = "absolute";
+        // this.dummyFocusableElement.style.left = "-9999px";
+        this.container.appendChild(this.dummySpanElement);
     }
     /**
      * This function will announce initial info (info only after the page is loaded) with some delay. 

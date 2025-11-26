@@ -733,7 +733,14 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                         prodWarn(msg); window.pageLive.announce({ msg });
                     }
                 } else {
-                    activeChatElement.focus();
+                    // Force SR to browse mode by focus on non-form element first
+                    const dummyElement = window.pageLive.dummySpanElement;
+                    if (typeof dummyElement?.focus === 'function') {
+                        dummyElement.focus();
+                        await new Promise(r => setTimeout(r, 50));
+                    } else prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
+                    if (typeof activeChatElement.focus === "function") activeChatElement.focus();
+                    else prodWarn('active chat element missing focus method - 81');
                 }
             }
 
