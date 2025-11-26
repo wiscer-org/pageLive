@@ -737,7 +737,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     const dummyElement = window.pageLive.dummySpanElement;
                     if (typeof dummyElement?.focus === 'function') {
                         dummyElement.focus();
-                        await new Promise(r => setTimeout(r, 50));
+                        await new Promise(r => setTimeout(r, 1e3));
                     } else prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
                     if (typeof activeChatElement.focus === "function") activeChatElement.focus();
                     else prodWarn('active chat element missing focus method - 81');
@@ -905,8 +905,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         private dialogAnnounceList!: HTMLElement;
         private dialogContent!: HTMLElement;
         private dialogHeader!: HTMLElement;
-        // A dummy focusable non-form element used force SR (NVDA) to change to 'browse mode'
-        private dummyFocusableElement!: HTMLElement;
         // Selectors for each prompt or response elements
         private promptSelector!: string;
         private responseSelector!: string;
@@ -953,15 +951,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         constructor(updateActiveChatInfo: (chat: Partial<Chat>) => void) {
             this.updateActiveChatInfo = updateActiveChatInfo;
             this.constructDialog();
-
-            // Create dummy non-form focusable element
-            this.dummyFocusableElement = document.createElement("span");
-            this.dummyFocusableElement.textContent = ""
-            this.dummyFocusableElement.setAttribute("tabindex", "-1");
-            this.dummyFocusableElement.setAttribute("pl-info", "content-mapper-dummy-element");
-            // this.dummyFocusableElement.style.position = "absolute";
-            // this.dummyFocusableElement.style.left = "-9999px";
-            window.pageLive.container.appendChild(this.dummyFocusableElement);
 
             // Observer to schedule chat units generation when there is any addition / removal of promptResponse elements
             this.promptResponseObserver = new MutationObserver((mutationList) => {
@@ -1338,10 +1327,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             // Set click handler to focus on the source element
             // Goal: the handler will focus on the Gemini's source element in the SR 'browse mode'
-            // Problem: When focusing on the source element directly, NVDA still remain in 'focus / interactive mode', not switching back to 'browse mode'.
-            // Strategy: 
-            // - Focus to a dummy non-form focusable element first, to trick SR to switch to 'browse mode',
-            // - Ten focus to the source element after a short delay. The SR mode is still in 'browse mode'.
             el.addEventListener("click", async (e) => {
                 this.close();
                 // Find the source element based on the ref element
@@ -1353,14 +1338,14 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
                 // Focus to the element
                 if (sourceElement) {
-                    // FIXME: Directly focusing to the source element does not work well with NVDA
-                    // sourceElement.focus();
-                    // await new Promise(r => setTimeout(r, 500));
-
                     // "behaviour:'instant'" will more likely to force SR to change mode to 'Browse mode' compared to 'scroll'
                     sourceElement.scrollIntoView({ behavior: "instant", block: "start" });
 
-                    this.dummyFocusableElement.focus();
+                    const dummyEl = window.pageLive.dummySpanElement;
+                    if (!dummyEl) prodWarn(`Missing dummy - k53`);
+                    else if (typeof dummyEl.focus !== "function") prodWarn("dummy not focusable - 7y4");
+                    else dummyEl.focus();
+
                     // Increased wait time to increase success rate to force SR change mode to 'Browse mode'
                     await new Promise(r => setTimeout(r, 1e3));
                     sourceElement.focus();
