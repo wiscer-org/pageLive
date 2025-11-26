@@ -10,6 +10,7 @@
 
 ### On Progress
 
+- Remove unused lib: Lodash
 - Investigate error: "Failed to find response element - 842"
 
 ### Planned
