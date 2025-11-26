@@ -6,6 +6,7 @@
 - Reveal `.katex-html[aria-hidden="true"]` to be accessible by SR, by add attribute `pl-disable-aria-hidden` and set the `aria-hidden` to `false`.
 - Force SR to 'browse mode' on 2 events: focus on the chat item in side nav after click on Page Info dialog and focus on source chat unit after click on Content Map dialog.
 - Fixed: After item in Content Map is clicked, screen reader not changed to 'Browse mode' and not focus to the corresponding response element. Increase success rate to force SR to switch to 'Browse mode' by set `scrollIntoView.behaviour=instant' and increase wait time before change element focus.
+- Use `lodash-es` instead of `lodash`.
 
 ### On Progress
 
