@@ -10,7 +10,7 @@
     "test": "tsx --test"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.20",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "^24.6.2",
     "hot-reload-extension-vite": "^1.0.13",
     "puppeteer": "^24.23.0",
@@ -19,6 +19,6 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "lodash": "^4.17.21"
+    "lodash-es": "^4.17.21"
   }
 }
