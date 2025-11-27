@@ -1133,37 +1133,45 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 // The prompt
                 const promptElement = el.querySelector(PROMPT_ELEMENT_NAME) as HTMLElement;
                 if (promptElement === null) prodWarn("[ContentMap] Failed to find prompt element - 429");
-                chatUnits.push({
-                    isYourPrompt: true,
-                    contentElement: promptElement,
-                    shortContent: shortenText(promptElement.textContent),
-                });
-                // Set tabindex
-                promptElement.setAttribute("tabindex", "-1");
-                // Set 'element ref attribute' if not available to the element
-                if (!promptElement.getAttribute(ContentMapper.EL_REF_ATTR)) promptElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
+                else {
+                    chatUnits.push({
+                        isYourPrompt: true,
+                        contentElement: promptElement,
+                        shortContent: shortenText(promptElement.textContent),
+                    });
+                    // Set tabindex
+                    promptElement.setAttribute("tabindex", "-1");
+                    // Set 'element ref attribute' if not available to the element
+                    if (!promptElement.getAttribute(ContentMapper.EL_REF_ATTR)) promptElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
+                }
 
                 // The response element (the same level with prompt element) is `RESPONSE_ELEMENT_NAME` including non-message response element. The real message is in the `RESPONSE_CONTENT_ELEMENT_NAME`
-                // const responseElement = el.querySelector(RESPONSE_ELEMENT_NAME) as HTMLElement; // This will include the llm-model-related element
-                const responseElement = el.querySelector(RESPONSE_CONTENT_ELEMENT_NAME) as HTMLElement;
+                let responseElement = el.querySelector(RESPONSE_CONTENT_ELEMENT_NAME) as HTMLElement;
                 if (responseElement === null) {
                     prodWarn("[ContentMap] Failed to find response element inside below element - 842");
+
+                    // try to use the parent selector
+                    responseElement = el.querySelector(RESPONSE_ELEMENT_NAME) as HTMLElement; // This will include the llm-model-related element
+                }
+                // Check again
+                if (responseElement === null) {
+                    prodWarn("[ContentMap] Still failed to find response element inside below element - 612");
                     // Still under investigation: Sometimes the `responseElement` is null. Logs below is to help investigation when it happens.
                     console.error(el);
                     console.log(promptResponseElements);
                     promptResponseElements.forEach(el => console.log(el));
+                } else {
+                    chatUnits.push({
+                        isYourPrompt: false,
+                        contentElement: responseElement,
+                        shortContent: shortenText(responseElement.textContent, 30),
+                    });
+                    // Set tabindex
+                    responseElement.setAttribute("tabindex", "-1");
+                    // Set 'element ref attribute' if not available to the element
+                    if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
                 }
-                chatUnits.push({
-                    isYourPrompt: false,
-                    contentElement: responseElement,
-                    shortContent: shortenText(responseElement.textContent, 30),
-                });
-                // Set tabindex
-                responseElement.setAttribute("tabindex", "-1");
-                // Set 'element ref attribute' if not available to the element
-                if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
             });
-
             this.chatUnits = chatUnits;
 
             // Remove the ref to the timeout 
