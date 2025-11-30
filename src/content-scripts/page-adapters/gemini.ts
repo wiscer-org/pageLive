@@ -1148,14 +1148,18 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 // The response element (the same level with prompt element) is `RESPONSE_ELEMENT_NAME` including non-message response element. The real message is in the `RESPONSE_CONTENT_ELEMENT_NAME`
                 let responseElement = el.querySelector(RESPONSE_CONTENT_ELEMENT_NAME) as HTMLElement;
                 if (responseElement === null) {
-                    prodWarn("[ContentMap] Failed to find response element inside below element - 842");
+                    prodWarn(`[ContentMap] Failed to find element "${RESPONSE_CONTENT_ELEMENT_NAME}" inside below element - 842`);
+                    // Still under investigation: Sometimes the `responseElement` is null. Logs below is to help investigation when it happens.
+                    console.error(el);
+                    console.log(promptResponseElements);
+                    promptResponseElements.forEach(el => console.log(el));
 
                     // try to use the parent selector
                     responseElement = el.querySelector(RESPONSE_ELEMENT_NAME) as HTMLElement; // This will include the llm-model-related element
                 }
                 // Check again
                 if (responseElement === null) {
-                    prodWarn("[ContentMap] Still failed to find response element inside below element - 612");
+                    prodWarn(`[ContentMap] Still failed to find element "${RESPONSE_ELEMENT_NAME}" inside below element - 612`);
                     // Still under investigation: Sometimes the `responseElement` is null. Logs below is to help investigation when it happens.
                     console.error(el);
                     console.log(promptResponseElements);

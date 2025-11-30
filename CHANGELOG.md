@@ -1,16 +1,17 @@
 # Changelog
 
-## v3.2.0 (not released)
+## v3.1.1 (not released)
 
--
+- Add console log in `ContentMapper` to investigate on failure to find response element.
 
 ### On Progresss
 
--
+- Fix: `.katex-html` not yet revealed (still has `aria-hidden=true`).
 
 ### Planned
 
 - Fix: Content Map does not change the text 'Latest response' on the previous response when a new response is received.
+- Fix: Chat title not updated in the case of long delay with the side nav.
 - Replace the use of `lodash` for smaller built.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
