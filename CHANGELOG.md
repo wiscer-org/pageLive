@@ -15,6 +15,7 @@
 ### Planned
 
 - Fix: Content Map does not change the text 'Latest response' on the previous response when a new response is received.
+- Replace the use of `lodash` for smaller built.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
