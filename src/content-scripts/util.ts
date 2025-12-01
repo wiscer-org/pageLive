@@ -43,13 +43,12 @@ export async function untilElementIdle(el: HTMLElement, delay = 300,
     return new Promise((resolve) => {
         // Schedule to resolve
         const scheduleToResolve = (observer: MutationObserver) => {
-            resolveTimeout = setTimeout(() => {
-                // Cancel the timeout, if has been set
-                if (resolveTimeout) clearTimeout(resolveTimeout);
+            // Cancel the timeout, if has been set
+            if (resolveTimeout) clearTimeout(resolveTimeout);
 
+            resolveTimeout = setTimeout(() => {
                 // Disconnet observer
                 observer.disconnect();
-
                 resolve();
             }, delay);
         }
@@ -75,7 +74,7 @@ export async function untilElementIdle(el: HTMLElement, delay = 300,
  * Wait for an element. The wait time will be gradually increased until giving up
  * @param {string} selector The element selector
  * @param {number} maxWaitTime Maximum seconds to wait for the element to exist. Default: 60 seconds
- * @return {Promise <HTMLElement|null}  The element
+ * @return {Promise <HTMLElement|null>}  The element
  */
 export async function waitForAnElement(selector: string, maxWaitTime = 60e3): Promise<HTMLElement | null> {
     // The element 
@@ -97,6 +96,44 @@ export async function waitForAnElement(selector: string, maxWaitTime = 60e3): Pr
 
     if (element === null) {
         prodWarn(`Element with selector "${selector}" not found after waiting for ${maxWaitTime} ms.`);
+    }
+
+    return element;
+}
+
+/**
+ * Wait for an element that is a descendant of a container. The wait time will be gradually increased until giving up
+ * This function is an alternative form of `waitForAnElement` function.
+ * @param {HTMLElement} container The element container
+ * @param {string} selector The selector of the element
+ * @param {number} maxWaitTime Maximum seconds to wait for the element to exist. Default: 60 seconds
+ * @return {Promise <HTMLElement|null>}  The element
+ */
+export async function waitForAChildElement(container: HTMLElement | null, selector: string, maxWaitTime = 60e3): Promise<HTMLElement | null> {
+    if (container === null) {
+        prodWarn(`Container is null - 024`);
+        return null;
+    }
+
+    // The element 
+    let element: HTMLElement | null = null;
+
+    // Incremental interval
+    let interval = 200;
+    let waited = 0;
+
+    while (!element && waited < maxWaitTime) {
+        await new Promise(res => setTimeout(res, interval));
+        waited += interval;
+
+        // increase interval to reduce number of loops
+        interval = Math.min(interval + 100, 3000); // Cap the interval to a maximum of 3 seconds
+
+        element = container.querySelector(selector) as HTMLElement;
+    }
+
+    if (element === null) {
+        prodWarn(`Element with selector "${selector}" not found after waiting for ${maxWaitTime} ms - 983`);
     }
 
     return element;
