@@ -118,7 +118,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // Init the child objects
             chatAdapter.init();
             contentMapper.init(0);
-            contentRevealer.init(chatContainer);
+            await contentRevealer.init(chatContainer);
         }
 
         /**
@@ -849,12 +849,12 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 // Handle added nodes
                 if (mutation.type === 'childList') {
                     mutation.addedNodes.forEach((node) => {
-                        this.modifyToRevealContent(node);
+                        this.identifyElementsToReveal(node);
                     });
                 }
                 // Handle attribute changes
                 if (mutation.type === 'attributes') {
-                    this.modifyToRevealContent(mutation.target);
+                    this.identifyElementsToReveal(mutation.target);
                 }
             });
         });
@@ -865,12 +865,6 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             }
             this.chatContainer = chatContainer;
 
-            // Query all elements and inspect each one
-            const allElements = this.chatContainer.querySelectorAll(`.${ContentRevealer.KATEX_CLASS}`);
-            allElements.forEach((element) => {
-                this.modifyToRevealContent(element);
-            });
-
             this.observer.disconnect();
             this.observer.observe(this.chatContainer, {
                 childList: true,
@@ -878,17 +872,34 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 attributes: true,
                 attributeFilter: ['aria-hidden'],
             });
+
+            // Query all elements and inspect each one
+            // Put this after observer, to avoid race condition: chats are rendered before observer has been set up and after below parsing
+            const allElements = this.chatContainer.querySelectorAll(`.${ContentRevealer.KATEX_CLASS}`);
+            allElements.forEach((element) => {
+                this.identifyElementsToReveal(element);
+            });
         }
         /**
          * Modify the node so the text content accessible by SR
          */
-        private modifyToRevealContent(node: Node) {
+        private identifyElementsToReveal(node: Node) {
             if (!(node instanceof HTMLElement)) return;
-            if (!node.classList.contains(ContentRevealer.KATEX_CLASS)) return;
-            const ariaHidden = node.getAttribute('aria-hidden');
+
+            if (node.classList.contains(ContentRevealer.KATEX_CLASS)) {
+                this.modifyToRevealContent(node);
+            }
+            // Check the decendant elements
+            const descendant = node.querySelectorAll(`.${ContentRevealer.KATEX_CLASS}`);
+            for (let i = 0; i < descendant.length; i++) {
+                this.modifyToRevealContent(descendant[i] as HTMLElement);
+            };
+        }
+        private modifyToRevealContent(el: HTMLElement) {
+            const ariaHidden = el.getAttribute('aria-hidden');
             if (ariaHidden === 'true') {
-                node.setAttribute('pl-disabled-aria-hidden', 'true');
-                node.setAttribute('aria-hidden', 'false');
+                el.setAttribute('pl-disabled-aria-hidden', 'true');
+                el.setAttribute('aria-hidden', 'false');
             }
         }
     }
