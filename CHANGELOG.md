@@ -1,9 +1,6 @@
 # Changelog
 
-## v3.1.1 (not released)
-
-- Fixed: In Content Map, response element not found during slow connection.
-- Fixed: Set `aria-hidden` to `false` for `.katex-html` elements.
+## v3.1.2 (not released)
 
 ### On Progress
 
@@ -19,6 +16,11 @@
 ### Future
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v3.1.1
+
+- Fixed: In Content Map, response element not found during slow connection.
+- Fixed: Set `aria-hidden` to `false` for `.katex-html` elements.
 
 ## v3.1.0
 
