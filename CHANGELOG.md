@@ -3,10 +3,9 @@
 ## v3.1.1 (not released)
 
 - Fixed: In Content Map, response element not found during slow connection.
+- Fixed: Set `aria-hidden` to `false` for `.katex-html` elements.
 
 ### On Progress
-
-- Fix: `.katex-html` not yet revealed (still has `aria-hidden=true`).
 
 ### Planned
 
