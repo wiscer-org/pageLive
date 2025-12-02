@@ -2,9 +2,9 @@
 
 ## v3.1.1 (not released)
 
-- Add console log in `ContentMapper` to investigate on failure to find response element.
+- Fixed: In Content Map, response element not found during slow connection.
 
-### On Progresss
+### On Progress
 
 - Fix: `.katex-html` not yet revealed (still has `aria-hidden=true`).
 

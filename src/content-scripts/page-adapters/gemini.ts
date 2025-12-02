@@ -1,7 +1,7 @@
 // gemini.ts - Injected only on gemini.google.com
 import { spawn } from "child_process";
 import { Chat, ChatUnit } from "../page";
-import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber } from "../util";
+import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber, waitForAChildElement } from "../util";
 
 //IIEF to avoid symbol conflicts after bundling
 
@@ -1108,8 +1108,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         /**
          * Generate array of `ChatUnit` from the HTMLElement
          * @param {boolean} shouldRender Will automatically render to the dialog if set to true. Default value: true.
+         * @param {number} retry Number before stop retrying. This is useful in the case of slow network so the elements are still being updated.
          */
-        async generateChatUnits(shouldRender = true) {
+        async generateChatUnits(shouldRender = true, retry = 15) {
             // If the `chatUnitsParent` has been disconnected, due to Angular framework, re-initiate this class
             if (!this.promptResponseParent.isConnected) this.init(0);
 
@@ -1124,16 +1125,26 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             const RESPONSE_ELEMENT_NAME = "MODEL-RESPONSE";
             const RESPONSE_CONTENT_ELEMENT_NAME = "MESSAGE-CONTENT";
 
+            if (retry < 1) {
+                prodWarn(`Run out of retry - 209`);
+                return;
+            }
+
             // Parse `promptResponse` element (element that wraps a pair of 'prompt' and 'response' element)
             const promptResponseElements = document.querySelectorAll('.conversation-container');
             // Extract chatUnits
             const chatUnits: ChatUnit[] = [];
-            promptResponseElements.forEach((element) => {
-                const el = element as HTMLElement;
+            for (let i = 0; i < promptResponseElements.length; i++) {
+                const el = promptResponseElements[i] as HTMLElement;
                 // The prompt
                 const promptElement = el.querySelector(PROMPT_ELEMENT_NAME) as HTMLElement;
-                if (promptElement === null) prodWarn("[ContentMap] Failed to find prompt element - 429");
-                else {
+                if (promptElement === null) {
+                    prodWarn("[ContentMap] Failed to find prompt element - 429");
+                    // Element not yet found, wait and retry
+                    await new Promise(r => setTimeout(r, 500));
+                    this.generateChatUnits(true, retry - 1);
+                    return;
+                } else {
                     chatUnits.push({
                         isYourPrompt: true,
                         contentElement: promptElement,
@@ -1149,21 +1160,15 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 let responseElement = el.querySelector(RESPONSE_CONTENT_ELEMENT_NAME) as HTMLElement;
                 if (responseElement === null) {
                     prodWarn(`[ContentMap] Failed to find element "${RESPONSE_CONTENT_ELEMENT_NAME}" inside below element - 842`);
-                    // Still under investigation: Sometimes the `responseElement` is null. Logs below is to help investigation when it happens.
                     console.error(el);
-                    console.log(promptResponseElements);
+                    prodWarn(`element connected: ${el.isConnected}`);
                     promptResponseElements.forEach(el => console.log(el));
 
-                    // try to use the parent selector
-                    responseElement = el.querySelector(RESPONSE_ELEMENT_NAME) as HTMLElement; // This will include the llm-model-related element
-                }
-                // Check again
-                if (responseElement === null) {
-                    prodWarn(`[ContentMap] Still failed to find element "${RESPONSE_ELEMENT_NAME}" inside below element - 612`);
-                    // Still under investigation: Sometimes the `responseElement` is null. Logs below is to help investigation when it happens.
-                    console.error(el);
-                    console.log(promptResponseElements);
-                    promptResponseElements.forEach(el => console.log(el));
+                    // Element not yet found, retry
+                    await new Promise(r => setTimeout(r, 500));
+                    this.generateChatUnits(true, retry - 1);
+                    return;
+
                 } else {
                     chatUnits.push({
                         isYourPrompt: false,
@@ -1175,7 +1180,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     // Set 'element ref attribute' if not available to the element
                     if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
                 }
-            });
+            };
             this.chatUnits = chatUnits;
 
             // Remove the ref to the timeout 
