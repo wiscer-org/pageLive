@@ -18,6 +18,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         gemini: resolve(__dirname, 'src/content-scripts/page-adapters/gemini.ts'),
+        grok: resolve(__dirname, 'src/content-scripts/page-adapters/grok.ts'),
         background: resolve(__dirname, 'src/background.ts'),
       },
       output: {

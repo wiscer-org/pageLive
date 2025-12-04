@@ -1,12 +1,13 @@
 # Changelog
 
-## v3.1.2 (not released)
+## v3.2.0 (not released)
 
 - Bundled page adapters with PageLive libraries
 - Fix: Renumber responses in Content Map after render.
 
 ### On Progress
 
+- Init Grok page adapter
 
 ### Planned
 
