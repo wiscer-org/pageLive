@@ -1,6 +1,5 @@
 // gemini.ts - Injected only on gemini.google.com
-import { spawn } from "child_process";
-import { Chat, ChatUnit } from "../page";
+import { Chat, ChatUnit } from "../../types/chat";
 import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber, waitForAChildElement } from "../util";
 
 //IIEF to avoid symbol conflicts after bundling
@@ -24,6 +23,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         // Information about the current chat. This will be lazy loaded on one of several events, e.g. when side nav is opened, pageLive dialog is opened, etc.
         // Only attach to `window.pageLive.page` when have tried to parse the info.
         const EMPTY_CHAT: Chat = {
+            // const EMPTY_CHAT: typeof window.PageLiveStatics.= {
             id: "", // empty string means parsed but not found
             title: "",
             promptCount: 0,
