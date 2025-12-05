@@ -221,7 +221,8 @@ export default class KeybindManager {
             // Iterate through the registered keybinds and check if the pressed keys match any keybind
             for (const [keybind, keybindDetail] of this.keybinds.entries()) {
                 // if (util.isDeepStrictEqual(keybindDetail.keys, pressedKeys)) {
-                if (_.isEqual(keybindDetail.keys, pressedKeys)) {
+                // if (_.isEqual(keybindDetail.keys, pressedKeys)) {
+                if (this.areKeysEqual(keybindDetail.keys, pressedKeys)) {
                     event.preventDefault();
                     this.triggerKeybind(keybind);
                     break;
@@ -257,4 +258,13 @@ export default class KeybindManager {
             console.warn(`No action registered for key: ${keybind}`);
         }
     }
+    areKeysEqual(keys: KeybindDetailKeys, pressedKeys: KeybindDetailKeys) {
+        return keys.ctrlKey === pressedKeys.ctrlKey &&
+            keys.shiftKey === pressedKeys.shiftKey &&
+            keys.altKey === pressedKeys.altKey &&
+            keys.metaKey === pressedKeys.metaKey &&
+            keys.key.toLowerCase() === pressedKeys.key.toLowerCase(); // Case insensitive comparison for the actual key
+    }
 }
+
+
