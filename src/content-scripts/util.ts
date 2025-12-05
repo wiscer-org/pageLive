@@ -159,10 +159,11 @@ export function devLog(msg: string): void {
 /**
  * Print warnings used in production
  */
-export function prodWarn(msg: string) {
+export function prodWarn(msg: string | object) {
     // Warning! At one case, `console.log` in this function will cause name collision, e.g.: 'he' already difined.
     // For now we still use `console.log` but might be commented or altered.
-    console.warn(`[PageLive] ${msg}`);
+    const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+    console.warn(`[PageLive] ${msgStr}`);
 }
 
 /**
