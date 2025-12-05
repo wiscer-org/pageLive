@@ -1,10 +1,10 @@
 // gemini.ts - Injected only on gemini.google.com
 import { Chat, ChatUnit } from "../../types/chat";
-import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniqueNumber, waitForAChildElement } from "../util";
 
 //IIEF to avoid symbol conflicts after bundling
 
 (() => {
+
     // Define page adapter to be executed on DOMContentLoaded
     const geminiPageAdapter = async () => {
         // Selector for chat item container, per chat item, on the right side navigation
@@ -42,19 +42,19 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             let allFound = true;
 
             // Active chat container
-            chatContainer = await waitForAnElement("chat-window infinite-scroller.chat-history");
+            chatContainer = await window.pageLive.utils.waitForAnElement("chat-window infinite-scroller.chat-history");
             if (!chatContainer) {
                 allFound = false;
-                prodWarn("Failed to find chat container. Code u73");
+                window.pageLive.utils.prodWarn("Failed to find chat container. Code u73");
             }
 
             // Chat list container
-            chatListContainer = await waitForAnElement('.chat-history');
+            chatListContainer = await window.pageLive.utils.waitForAnElement('.chat-history');
             if (!chatListContainer) allFound = false;
 
             // Chat input
             const chatInputSelector = '.new-input-ui[role="textbox"]';
-            const temporaryChatInputElement = await waitForAnElement(chatInputSelector);
+            const temporaryChatInputElement = await window.pageLive.utils.waitForAnElement(chatInputSelector);
             if (temporaryChatInputElement === null) {
                 allFound = false;
             } else {
@@ -173,7 +173,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
         //     if (!chatListContainer) {
         //         const msg = "Chat list container not found";
-        //         prodWarn(msg);
+        //         window.pageLive.utils.prodWarn(msg);
         //         window.pageLive.announce({ msg });
         //         return false;
         //     }
@@ -192,7 +192,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             // If still not exist, notify
             if (!sideNavToogleButton) {
                 const msg = "Failed to find side nav toggle button";
-                prodWarn(msg);
+                window.pageLive.utils.prodWarn(msg);
                 window.pageLive.announce({ msg });
             }
             return sideNavToogleButton;
@@ -210,12 +210,12 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
          */
         async function focusChatInput() {
             if (!chatInputElement) {
-                prodWarn("Chat input element not found. Re-querying the element.");
+                window.pageLive.utils.prodWarn("Chat input element not found. Re-querying the element.");
                 chatInputElement = getChatInputElement();
             }
 
             if (!chatInputElement?.isConnected) {
-                prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
+                window.pageLive.utils.prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
                 window.pageLive.announce({ msg: "Chat input element not found." });
                 return;
             }
@@ -265,7 +265,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             if (chatActionsMenu === null) {
                 const msg = "Failed to find chat actions menu element";
-                prodWarn(`[PageLive][Gemini] ${msg}`);
+                window.pageLive.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
                 window.pageLive.announce({ msg });
             }
 
@@ -282,7 +282,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             const deleteButton = chatActionsMenu?.querySelector('[data-test-id="delete-button"]') as HTMLElement | null;
             if (deleteButton === null) {
                 const msg = "Failed to find delete button";
-                prodWarn(`[PageLive][Gemini] ${msg}`);
+                window.pageLive.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
                 window.pageLive.announce({ msg });
             }
 
@@ -427,7 +427,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             const isLoadingElement = chatListContainer.querySelector('.loading-history-spinner-container');
             if (!isLoadingElement) {
                 const msg = "Unable to find loading-history-spinner-container element";
-                prodWarn(msg);
+                window.pageLive.utils.prodWarn(msg);
                 window.pageLive.announce({ msg });
                 return;
             }
@@ -435,7 +435,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             const scrollerElement = chatListContainer.closest('infinite-scroller');
             if (!scrollerElement) {
                 const msg = "Failed to find the closest infinite-scroller element";
-                prodWarn(msg);
+                window.pageLive.utils.prodWarn(msg);
                 window.pageLive.announce({ msg });
                 return;
             }
@@ -619,7 +619,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             if (newChatButton === null) {
                 const msg = "Failed to find the new chat button";
-                prodWarn(msg);
+                window.pageLive.utils.prodWarn(msg);
                 window.pageLive.announce({ msg });
                 return;
             } else {
@@ -730,7 +730,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                         window.pageLive.announce({ msg: "Focus moved to side nav" });
                     } else {
                         const msg = "Failed to find active chat element in the chat list.";
-                        prodWarn(msg); window.pageLive.announce({ msg });
+                        window.pageLive.utils.prodWarn(msg); window.pageLive.announce({ msg });
                     }
                 } else {
                     // Force SR to browse mode by focus on non-form element first
@@ -738,9 +738,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     if (typeof dummyElement?.focus === 'function') {
                         dummyElement.focus();
                         await new Promise(r => setTimeout(r, 1e3));
-                    } else prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
+                    } else window.pageLive.utils.prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
                     if (typeof activeChatElement.focus === "function") activeChatElement.focus();
-                    else prodWarn('active chat element missing focus method - 81');
+                    else window.pageLive.utils.prodWarn('active chat element missing focus method - 81');
                 }
             }
 
@@ -860,7 +860,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         });
         async init(chatContainer: HTMLElement | null) {
             if (!chatContainer) {
-                prodWarn('[ContentRevealer] received chat container is null - j3d');
+                window.pageLive.utils.prodWarn('[ContentRevealer] received chat container is null - j3d');
                 return;
             }
             this.chatContainer = chatContainer;
@@ -950,7 +950,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     if (this.chatUnits.length > 0) {
                         const firstChatUnit = this.chatUnits[0];
                         firstChatUnit.contentElement.scrollIntoView({ behavior: "smooth", block: "start" });
-                        devLog('scrolling to the first chat unit');
+                        window.pageLive.utils.devLog('scrolling to the first chat unit');
                     }
                 }
             });
@@ -992,9 +992,9 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             //              model-response
 
             // `promptResponseParent` is mandatory. If not available, cancel the whole process.
-            const el = await waitForAnElement("infinite-scroller.chat-history");
+            const el = await window.pageLive.utils.waitForAnElement("infinite-scroller.chat-history");
             if (el === null) {
-                prodWarn("[ContentMap] chat units parent is N/A - 89");
+                window.pageLive.utils.prodWarn("[ContentMap] chat units parent is N/A - 89");
                 return;
             }
             this.promptResponseParent = el;
@@ -1137,7 +1137,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             const RESPONSE_CONTENT_ELEMENT_NAME = "MESSAGE-CONTENT";
 
             if (retry < 1) {
-                prodWarn(`Run out of retry - 209`);
+                window.pageLive.utils.prodWarn(`Run out of retry - 209`);
                 return;
             }
 
@@ -1150,7 +1150,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 // The prompt
                 const promptElement = el.querySelector(PROMPT_ELEMENT_NAME) as HTMLElement;
                 if (promptElement === null) {
-                    prodWarn("[ContentMap] Failed to find prompt element - 429");
+                    window.pageLive.utils.prodWarn("[ContentMap] Failed to find prompt element - 429");
                     // Element not yet found, wait and retry
                     await new Promise(r => setTimeout(r, 500));
                     this.generateChatUnits(true, retry - 1);
@@ -1159,20 +1159,20 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     chatUnits.push({
                         isYourPrompt: true,
                         contentElement: promptElement,
-                        shortContent: shortenText(promptElement.textContent),
+                        shortContent: window.pageLive.utils.shortenText(promptElement.textContent),
                     });
                     // Set tabindex
                     promptElement.setAttribute("tabindex", "-1");
                     // Set 'element ref attribute' if not available to the element
-                    if (!promptElement.getAttribute(ContentMapper.EL_REF_ATTR)) promptElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
+                    if (!promptElement.getAttribute(ContentMapper.EL_REF_ATTR)) promptElement.setAttribute(ContentMapper.EL_REF_ATTR, window.pageLive.utils.uniqueNumber() + "");
                 }
 
                 // The response element (the same level with prompt element) is `RESPONSE_ELEMENT_NAME` including non-message response element. The real message is in the `RESPONSE_CONTENT_ELEMENT_NAME`
                 let responseElement = el.querySelector(RESPONSE_CONTENT_ELEMENT_NAME) as HTMLElement;
                 if (responseElement === null) {
-                    prodWarn(`[ContentMap] Failed to find element "${RESPONSE_CONTENT_ELEMENT_NAME}" inside below element - 842`);
+                    window.pageLive.utils.prodWarn(`[ContentMap] Failed to find element "${RESPONSE_CONTENT_ELEMENT_NAME}" inside below element - 842`);
                     console.error(el);
-                    prodWarn(`element connected: ${el.isConnected}`);
+                    window.pageLive.utils.prodWarn(`element connected: ${el.isConnected}`);
                     promptResponseElements.forEach(el => console.log(el));
 
                     // Element not yet found, retry
@@ -1184,12 +1184,12 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     chatUnits.push({
                         isYourPrompt: false,
                         contentElement: responseElement,
-                        shortContent: shortenText(responseElement.textContent, 30),
+                        shortContent: window.pageLive.utils.shortenText(responseElement.textContent, 30),
                     });
                     // Set tabindex
                     responseElement.setAttribute("tabindex", "-1");
                     // Set 'element ref attribute' if not available to the element
-                    if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber() + "");
+                    if (!responseElement.getAttribute(ContentMapper.EL_REF_ATTR)) responseElement.setAttribute(ContentMapper.EL_REF_ATTR, window.pageLive.utils.uniqueNumber() + "");
                 }
             };
             this.chatUnits = chatUnits;
@@ -1255,7 +1255,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     const upperElRef = upperEl.getAttribute(ContentMapper.EL_REF_ATTR);
                     const chatUnitRef = chatUnit.contentElement.getAttribute(ContentMapper.EL_REF_ATTR);
                     if (!chatUnitRef) {
-                        prodWarn(`[ContentMapper] Chat unit has no ref attribute - 512`);
+                        window.pageLive.utils.prodWarn(`[ContentMapper] Chat unit has no ref attribute - 512`);
                         continue;
                     }
 
@@ -1287,7 +1287,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 const msg = `${newPromptResponseCount / 2} new responses${newPromptResponseCount !== 1 ? 's' : ''} has been added to Content Map.`;
                 this.announce({ msg });
             }
-            devLog(`[ContentMapper] Finished rendering ${cUnits.length} chat units.`);
+            window.pageLive.utils.devLog(`[ContentMapper] Finished rendering ${cUnits.length} chat units.`);
 
             // Note: On first load, Gemini doesn't load all prompts / responses, only the latest some (10 pairs).
             // When user scrolls up, more prompts / responses will be loaded.
@@ -1324,12 +1324,12 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             el.className = "pl-chat-unit";
             el.setAttribute('role', 'button');
             el.setAttribute("aria-atomic", "true");
-            el.setAttribute(ContentMapper.EL_REF_ATTR, uniqueNumber().toString());
+            el.setAttribute(ContentMapper.EL_REF_ATTR, window.pageLive.utils.uniqueNumber().toString());
             el.setAttribute("tabindex", "0");
 
             // Set attribute to ref the real element with the element in the ContentMapper dialog.
             const attrRefValue = chatUnit.contentElement.getAttribute(ContentMapper.EL_REF_ATTR);
-            if (!attrRefValue) prodWarn(`[ContentMapper] Failed to find attribute ${ContentMapper.EL_REF_ATTR} from real element - 4245`)
+            if (!attrRefValue) window.pageLive.utils.prodWarn(`[ContentMapper] Failed to find attribute ${ContentMapper.EL_REF_ATTR} from real element - 4245`)
             el.setAttribute(ContentMapper.EL_REF_ATTR, attrRefValue || "");
 
             // Set styling
@@ -1376,8 +1376,8 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     sourceElement.scrollIntoView({ behavior: "instant", block: "start" });
 
                     const dummyEl = window.pageLive.dummySpanElement;
-                    if (!dummyEl) prodWarn(`Missing dummy - k53`);
-                    else if (typeof dummyEl.focus !== "function") prodWarn("dummy not focusable - 7y4");
+                    if (!dummyEl) window.pageLive.utils.prodWarn(`Missing dummy - k53`);
+                    else if (typeof dummyEl.focus !== "function") window.pageLive.utils.prodWarn("dummy not focusable - 7y4");
                     else dummyEl.focus();
 
                     // Increased wait time to increase success rate to force SR change mode to 'Browse mode'
@@ -1451,7 +1451,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             }
 
             // Wait until the chat history has completely rendered with the previous chat
-            await untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds idle
+            await window.pageLive.utils.untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds idle
 
             // Notify user that PageLive is ready and about the loaded chat history if any
             this.notifyUserIfChatHistoryHasBeenLoaded();
@@ -1462,7 +1462,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
         }
 
         async getKeyElements() {
-            this.chatContainer = await waitForAnElement(GeminiAdapterChat.CHAT_CONTAINER_SELECTOR);
+            this.chatContainer = await window.pageLive.utils.waitForAnElement(GeminiAdapterChat.CHAT_CONTAINER_SELECTOR);
         }
 
         /**
@@ -1492,7 +1492,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                 // Not yet have responseContainer ?
                 if (!responseContainer || responseContainer.isConnected === false) {
                     if (responseContainer?.isConnected === false) {
-                        devLog("Previously found responseContainer is no longer connected. Resetting.");
+                        window.pageLive.utils.devLog("Previously found responseContainer is no longer connected. Resetting.");
                     }
 
                     // Try to catch the `responseContainer`
@@ -1502,7 +1502,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                                 const node = mutation.addedNodes.item(c) as HTMLElement;
                                 if (this.isResponseContainerElement(node)) {
                                     responseContainer = node;
-                                    devLog("Response container is found");
+                                    window.pageLive.utils.devLog("Response container is found");
                                     break;
                                 }
                             }
@@ -1514,7 +1514,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
                 // Try to query `responseElement` within the `responseContainer`
                 if (responseContainer) {
-                    devLog("Try to get responseElement within responseContainer");
+                    window.pageLive.utils.devLog("Try to get responseElement within responseContainer");
 
                     // Use selector, not by selecting on each of the `mutation.addedNodes` because the `responseElement` is a `div`without classes or id that can be used to identify.
                     // The selector : `message-content > div`
@@ -1522,7 +1522,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
                     // If `responseElement` is found, start observing the incoming response segments
                     if (responseElement) {
-                        devLog("Response element is found, start observing incoming response");
+                        window.pageLive.utils.devLog("Response element is found, start observing incoming response");
                         this.observeIncomingResponse(responseElement);
                         // Disconnect the 'response container' observer
                         observer.disconnect();
@@ -1532,7 +1532,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             //  Type check
             if (!this.chatContainer) {
-                prodWarn("Chat container element not exist - 3814");
+                window.pageLive.utils.prodWarn("Chat container element not exist - 3814");
                 return;
             }
 
@@ -1602,12 +1602,12 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
                     // So the last segment to be announced is the second last
                     const secondLastSegmentIndex = segmentsCount - 2; // -2 because this is an index of the second last
 
-                    devLog(`Segments increased from ${prevSegmentsCount} to ${segmentsCount}`);
+                    window.pageLive.utils.devLog(`Segments increased from ${prevSegmentsCount} to ${segmentsCount}`);
 
                     // announce the previous not yet announced segments
-                    devLog(`lastAnnouncedSegment before :${lastAnnouncedSegment}`);
+                    window.pageLive.utils.devLog(`lastAnnouncedSegment before :${lastAnnouncedSegment}`);
                     lastAnnouncedSegment = await this.announceSegments(responseElement, lastAnnouncedSegment, secondLastSegmentIndex);
-                    devLog(`lastAnnouncedSegment after :${lastAnnouncedSegment}`);
+                    window.pageLive.utils.devLog(`lastAnnouncedSegment after :${lastAnnouncedSegment}`);
 
                     // Schedule to announce the remaining not-yet-announced segments
                     remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, observer);
@@ -1619,7 +1619,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
             });
 
             // Observe
-            devLog("Start observe response element");
+            window.pageLive.utils.devLog("Start observe response element");
             newResponseObserver.observe(responseElement, {
                 childList: true,
             });
@@ -1640,7 +1640,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
 
             return setTimeout(() => {
                 const lastSegmentToAnnounce = responseElement.children.length - 1;
-                devLog(`Delayed announced, from segment index ${lastAnnouncedSegment + 1} to ${lastSegmentToAnnounce} `);
+                window.pageLive.utils.devLog(`Delayed announced, from segment index ${lastAnnouncedSegment + 1} to ${lastSegmentToAnnounce} `);
                 this.announceSegments(responseElement, lastAnnouncedSegment, lastSegmentToAnnounce);
 
                 // The incoming response has been completely received
@@ -1655,22 +1655,22 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
          * @param lastIndex The last index of the response segment elements to be announced 
          */
         async announceSegments(responseElement: HTMLElement, lastAnnouncedSegment: number, lastIndex: number) {
-            devLog("announce segment index from " + (lastAnnouncedSegment + 1) + " until " + lastIndex);
+            window.pageLive.utils.devLog("announce segment index from " + (lastAnnouncedSegment + 1) + " until " + lastIndex);
             for (let c: number = lastAnnouncedSegment + 1; c <= lastIndex; c++) {
                 // Type check
                 if (!responseElement.children[c]) {
-                    prodWarn(`Unable to find segment with index ${c}`);
-                    prodWarn(`response element: ${responseElement}`);
+                    window.pageLive.utils.prodWarn(`Unable to find segment with index ${c}`);
+                    window.pageLive.utils.prodWarn(`response element: ${responseElement}`);
                     return lastAnnouncedSegment;
                 }
                 const segmentElement = responseElement.children[c] as HTMLElement;
                 if (!segmentElement.outerHTML) {
-                    prodWarn("Segment element does not have property 'outerHTML' - 4720");
+                    window.pageLive.utils.prodWarn("Segment element does not have property 'outerHTML' - 4720");
                     return lastAnnouncedSegment;
                 }
 
-                devLog("announcing :");
-                devLog(segmentElement.textContent || '[empty segment]');
+                window.pageLive.utils.devLog("announcing :");
+                window.pageLive.utils.devLog(segmentElement.textContent || '[empty segment]');
                 window.pageLive.announce({
                     msg: segmentElement.outerHTML
                     , omitPreannounce: true
@@ -1722,7 +1722,7 @@ import { devLog, prodWarn, waitForAnElement, untilElementIdle, shortenText, uniq
          */
         getPromptResponseElements(): NodeListOf<Element> | null {
             if (!this.chatContainer) {
-                prodWarn("Chat container not found - 5821");
+                window.pageLive.utils.prodWarn("Chat container not found - 5821");
                 return null;
             }
             return this.chatContainer.querySelectorAll("div.conversation-container");

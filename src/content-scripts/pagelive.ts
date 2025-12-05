@@ -2,6 +2,7 @@
 import KeybindManager from "./keybind-manager";
 import { DialogManager } from "./dialog-manager";
 import Page from "./page";
+import * as utils from "./util";
 import * as dev from './general-dev';
 import * as devMock from './general-dev-mock';
 import './pagelive.css';
@@ -35,6 +36,7 @@ export default class PageLive {
     page!: Page;
     keybindManager!: KeybindManager;
     dialogManager!: DialogManager;
+    utils = utils;
 
     // This is to decide later whether this is dev or prod
     isDev = false;
