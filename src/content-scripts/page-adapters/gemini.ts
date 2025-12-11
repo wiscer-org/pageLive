@@ -1289,6 +1289,8 @@ class ContentMapper {
                 break;
             }
         }
+        this.renumberResponsePrefixes();
+
         // If dialog is open, notify users how many new prompts / responses added
         if (this.dialog.open && newPromptResponseCount > 0) {
             const msg = `${newPromptResponseCount / 2} new responses${newPromptResponseCount !== 1 ? 's' : ''} has been added to Content Map.`;
@@ -1344,27 +1346,38 @@ class ContentMapper {
         el.style.cursor = 'pointer';
         el.style.marginBottom = "16px";
 
-        let text = "";
+        let prefixText = "";
         let ariaLabel = "";
         if (chatUnit.isYourPrompt) {
-            text = "You prompted: ";
+            prefixText = "You prompted: ";
+            el.classList.add("prompt");
             el.style.textAlign = "right";
         } else {
             // Use text with `-number` to indicate the order of the response. The latest response considered as number 0
             if (promptCounter === 0) {
-                text = `Latest Response: `;
+                prefixText = `Latest Response: `;
                 // Append 'go up to read older..' to aria-label specific for the last response
                 ariaLabel = `Latest Response: ${chatUnit.shortContent}`;
-            } else text = `Response ${promptCounter}: `;
+            } else prefixText = `Response ${promptCounter}: `;
+            el.classList.add("response");
             el.style.textAlign = "left";
         }
+
         // Append the text content
         const contentElement = document.createElement("div") as HTMLElement;
         // Use `.textContent` instead of `.innerHTML` to escape HTML entities
-        contentElement.textContent = text + chatUnit.shortContent || "";
+        contentElement.textContent = chatUnit.shortContent || "";
+        // contentElement.textContent = text + chatUnit.shortContent || "";
         // contentElement.ariaLabel = text + chatUnit.shortContent;
         el.appendChild(contentElement);
         if (ariaLabel) el.ariaLabel = ariaLabel;
+
+        // Add element for the prefix text, like: 'You prompted: ' or 'Response -number: '
+        // All response prefixes text will 'renumbered' after this whole rendering is done.
+        const prefixElement = document.createElement("strong") as HTMLElement;
+        contentElement.prepend(prefixElement);
+        prefixElement.textContent = prefixText;
+
 
         // Set click handler to focus on the source element
         // Goal: the handler will focus on the Gemini's source element in the SR 'browse mode'
@@ -1394,6 +1407,28 @@ class ContentMapper {
             else console.log("ERROR can not find target element");
         });
         return el;
+    }
+    /**
+     * Renumber the response prefixes in the dialog content
+     */
+    renumberResponsePrefixes(responseElementSel: string = ".response", prefixTextSel = "strong") {
+        const chatUnitElements = this.dialogContent.querySelectorAll(responseElementSel);
+        // Iterate from last to first
+        for (let i = chatUnitElements.length - 1; i >= 0; i--) {
+            const cuEl = chatUnitElements[i] as HTMLElement;
+            const prefixTextEl = cuEl.querySelector(prefixTextSel) as HTMLElement;
+            if (!prefixTextEl) {
+                this.pl.utils.prodWarn(`[ContentMapper] Failed to find prefix text element inside chat unit element: "${cuEl.textContent}" - 593`);
+                continue;
+            }
+            if (i == chatUnitElements.length - 1) {
+                // Latest response
+                prefixTextEl.textContent = `Latest Response: `;
+            } else {
+                const responseNumber = chatUnitElements.length - 1 - i;
+                prefixTextEl.textContent = `Response -${responseNumber}: `;
+            }
+        }
     }
     dialogElement() {
         return this.dialog;

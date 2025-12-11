@@ -3,14 +3,14 @@
 ## v3.1.2 (not released)
 
 - Bundled page adapters with PageLive libraries
+- Fix: Renumber responses in Content Map after render.
 
 ### On Progress
 
+
 ### Planned
 
-- Fix: Content Map does not change the text 'Latest response' on the previous response when a new response is received.
 - Fix: Chat title not updated in the case of long delay with the side nav.
-- Replace the use of `lodash` for smaller built.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
