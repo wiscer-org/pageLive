@@ -17,18 +17,18 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        pagelive: resolve(__dirname, 'src/content-scripts/pagelive.ts'),
         gemini: resolve(__dirname, 'src/content-scripts/page-adapters/gemini.ts'),
-        xai: resolve(__dirname, 'src/content-scripts/page-adapters/xai.ts'),
         background: resolve(__dirname, 'src/background.ts'),
       },
       output: {
+        format: 'es',
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.name === 'background') {
             return 'background.js'; // Output background script at dist/background.js
           }
           return 'content-scripts/[name].js'; // Content scripts in dist/content-scripts/
         },
+        chunkFileNames: 'content-scripts/[name]-[hash].js', // Shared chunks
       },
     },
     emptyOutDir: false,

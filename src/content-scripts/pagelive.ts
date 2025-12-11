@@ -215,8 +215,8 @@ export default class PageLive {
 document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize the PageLiveClass and attach it to the window object
-    (window as any).pageLive = new PageLive();
+    // (window as any).pageLive = new PageLive();
     // Initialize the PageLive class as a static property on the window object
-    (window as any).PageLiveStatics = PageLive;
+    // (window as any).PageLiveStatics = PageLive;
 
 });

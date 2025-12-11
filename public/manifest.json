@@ -13,7 +13,6 @@
         "https://gemini.google.com/app/*"
       ],
       "js": [
-        "content-scripts/pagelive.js",
         "content-scripts/gemini.js"
       ],
       "css": [

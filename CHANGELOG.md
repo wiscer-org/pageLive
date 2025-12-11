@@ -2,6 +2,8 @@
 
 ## v3.1.2 (not released)
 
+- Bundled page adapters with PageLive libraries
+
 ### On Progress
 
 ### Planned
