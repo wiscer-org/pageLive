@@ -1,6 +1,4 @@
 // This file manage all processes related to keybind, except the keybind handlers.
-import util from "node:util";
-import _ from "lodash";
 import PageLive from "./pagelive";
 
 // Type to list which keys are used in certain keybind
@@ -216,12 +214,8 @@ export default class KeybindManager {
                 key: event.key // The actual key pressed (e.g., 'a', 'Enter
             };
 
-            // console.log(`[PageLive] Key pressed: ${JSON.stringify(pressedKeys)}`);
-
             // Iterate through the registered keybinds and check if the pressed keys match any keybind
             for (const [keybind, keybindDetail] of this.keybinds.entries()) {
-                // if (util.isDeepStrictEqual(keybindDetail.keys, pressedKeys)) {
-                // if (_.isEqual(keybindDetail.keys, pressedKeys)) {
                 if (this.areKeysEqual(keybindDetail.keys, pressedKeys)) {
                     event.preventDefault();
                     this.triggerKeybind(keybind);
