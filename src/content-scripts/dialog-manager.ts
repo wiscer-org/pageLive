@@ -112,6 +112,7 @@ export class DialogManager {
     private initDialogElement() {
         const dialog = document.createElement('dialog');
         dialog.id = this.dialogId;
+        dialog.classList.add('pl-el');
         return dialog;
     }
 
