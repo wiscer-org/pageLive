@@ -4,10 +4,10 @@
 
 - Bundled page adapters with PageLive libraries
 - Fix: Renumber responses in Content Map after render.
+- Init Grok page adapter
 
 ### On Progress
 
-- Init Grok page adapter
 
 ### Planned
 
