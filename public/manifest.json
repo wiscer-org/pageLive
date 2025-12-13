@@ -20,7 +20,8 @@
         "assets/pl-1.css"
       ],
       "run_at": "document_start"
-    }, {
+    },
+    {
       "matches": [
         "https://grok.com/*"
       ],
