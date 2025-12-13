@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "vite",
     "build:watch": "NODE_ENV=development vite build --watch",
-    "build": "vite build",
-    "grok:build:watch": "NODE_ENV=development vite build --config vite.config.grok.ts --watch",
+    "build": "pnpm gemini:build && pnpm grok:build",
+    "gemini:build": "vite build --config config/vite.config.gemini.ts",
+    "gemini:build:watch": "NODE_ENV=development vite build --config config/vite.config.gemini.ts --watch",
+    "grok:build": "vite build --config config/vite.config.grok.ts ",
+    "grok:build:watch": "NODE_ENV=development vite build --config config/vite.config.grok.ts --watch",
     "watch:dist:wrap": "node ./scripts/watch-dist-wrap.js",
     "test": "tsx --test"
   },

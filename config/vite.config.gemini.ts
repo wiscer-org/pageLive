@@ -1,6 +1,6 @@
 import { defineConfig, mergeConfig } from 'vite';
 import { resolve } from 'path';
-import baseConfig from './vite.config';
+import baseConfig from '../vite.config';
 
 export default defineConfig({
     ...baseConfig,
@@ -9,9 +9,8 @@ export default defineConfig({
         rollupOptions: {
             ...baseConfig.build?.rollupOptions,
             input: {
-                pagelive: resolve(__dirname, 'src/content-scripts/pagelive.ts'),
-                grok: resolve(__dirname, 'src/content-scripts/page-adapters/grok.ts'),
-                background: resolve(__dirname, 'src/background.ts'),
+                gemini: resolve(__dirname, '../src/content-scripts/page-adapters/gemini.ts'),
+                background: resolve(__dirname, '../src/background.ts'),
             },
         },
     },
