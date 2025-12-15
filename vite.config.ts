@@ -30,6 +30,12 @@ export default defineConfig({
           return 'content-scripts/[name].js'; // Content scripts in dist/content-scripts/
         },
         chunkFileNames: 'content-scripts/[name]-[hash].js', // Shared chunks
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.names?.[0]?.endsWith('.css')) {
+            return 'assets/pagelive.css'; // Output CSS as pagelive.css
+          }
+          return 'assets/[name]-[hash][extname]'; // Other assets
+        },
       },
     },
     emptyOutDir: false,

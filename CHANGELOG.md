@@ -8,7 +8,6 @@
 
 ### On Progress
 
-
 ### Planned
 
 - Fix: Chat title not updated in the case of long delay with the side nav.

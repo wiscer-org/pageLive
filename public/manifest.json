@@ -17,7 +17,7 @@
         "content-scripts/gemini.js"
       ],
       "css": [
-        "assets/pl-1.css"
+        "assets/pagelive.css"
       ],
       "run_at": "document_start"
     },
@@ -29,7 +29,7 @@
         "content-scripts/grok.js"
       ],
       "css": [
-        "assets/pl-1.css"
+        "assets/pagelive.css"
       ],
       "run_at": "document_start"
     }
