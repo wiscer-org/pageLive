@@ -6,6 +6,7 @@
 - Fix: Renumber responses in Content Map after render.
 - Init Grok page adapter
 - Change keybind `Ctrl + /` to `Alt + /` to avoid collission with default existing keybind.
+- Grok: Add keybind to focus on chat input.
 
 ### On Progress
 

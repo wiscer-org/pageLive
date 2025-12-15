@@ -1,3 +1,4 @@
+import { Keybinds } from "../keybind-manager";
 import PageLive from "../pagelive";
 
 const grokAdapter = async () => {
@@ -11,6 +12,9 @@ const grokAdapter = async () => {
 
         pl.initialAnnounceInfo.push("grok");
 
+        // Add keyboard shortcuts
+        pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, focusChatInput);
+
         // Add callback to be executed the next time dialog is shown
         pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen;
 
@@ -20,7 +24,14 @@ const grokAdapter = async () => {
     const onDialogOpen = async () => {
         pl.utils.devLog("Dialog opened on grok");
     }
-
+    const focusChatInput = async () => {
+        const chatInput = document.querySelector(".\\@container form div[contenteditable='true']") as HTMLElement;
+        if (!chatInput) {
+            pl.utils.prodWarn("Could not find chat input");
+            return;
+        }
+        chatInput.focus();
+    }
     construct();
 }
 
