@@ -109,7 +109,7 @@ const geminiPageAdapter = async () => {
         )
 
         // Add callback to be executed the next time dialog is shown
-        pageLive.dialogManager.onEveryOpenCallback = onDialogOpen
+        pageLive.pageInfoDialog.onEveryOpenCallback = onDialogOpen
 
         // Notify PageLive that the page adapter is fully loaded
         pageLive.page.ready();
@@ -223,7 +223,7 @@ const geminiPageAdapter = async () => {
 
         if (chatInputElement) {
             // Close any dialogs / modals first
-            pageLive.dialogManager.close();
+            pageLive.pageInfoDialog.close();
             contentMapper.close();
 
             // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
@@ -708,7 +708,7 @@ const geminiPageAdapter = async () => {
                 if (remainder === 0) snapshotInfos = [`This chat has ${activeChat.promptCount} or more responses.`];
                 else snapshotInfos = [`This chat has ${activeChat.promptCount} responses.`];
             }
-            pageLive.dialogManager.setSnapshotInfos(snapshotInfos);
+            pageLive.pageInfoDialog.setSnapshotInfos(snapshotInfos);
         }
     }
 
@@ -767,7 +767,7 @@ const geminiPageAdapter = async () => {
         }
 
         // Update the dialog
-        pageLive.dialogManager.setTitle(title, attributes);
+        pageLive.pageInfoDialog.setTitle(title, attributes);
     }
     /**
      * Update the active chat info. 
@@ -809,7 +809,7 @@ const geminiPageAdapter = async () => {
     }
 
     async function closeAllDialogsAndModals(): Promise<void> {
-        pageLive.dialogManager.close();
+        pageLive.pageInfoDialog.close();
         contentMapper.close();
         pageLive.announce({ msg: "all modals has been closed" });
     }
@@ -1442,7 +1442,7 @@ class ContentMapper {
         if (this.generationTimeout !== null) await this.scheduleGenerateChatUnits(0);
 
         // Close PageLive main dialog if opened
-        this.pl.dialogManager.close();
+        this.pl.pageInfoDialog.close();
 
         this.dialog.showModal();
 

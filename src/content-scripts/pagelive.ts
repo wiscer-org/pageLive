@@ -1,6 +1,5 @@
-
 import KeybindManager from "./keybind-manager";
-import { DialogManager } from "./dialog-manager";
+import { PageInfoDialog } from "./page-info";
 import Page from "./page";
 import * as utils from "./util";
 import * as dev from './general-dev';
@@ -35,7 +34,7 @@ export default class PageLive {
     // Declare the property with the definite assignment assertion (!)
     page!: Page;
     keybindManager!: KeybindManager;
-    dialogManager!: DialogManager;
+    pageInfoDialog!: PageInfoDialog;
     utils = utils;
 
     // This is to decide later whether this is dev or prod
@@ -63,7 +62,7 @@ export default class PageLive {
         // Initiliaze the definite assignment assertion (!)
         this.page = new Page(this);
         this.keybindManager = new KeybindManager(this);
-        this.dialogManager = new DialogManager(this);
+        this.pageInfoDialog = new PageInfoDialog(this);
 
         this.init();
     }

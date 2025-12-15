@@ -5,6 +5,7 @@
 - Bundled page adapters with PageLive libraries
 - Fix: Renumber responses in Content Map after render.
 - Init Grok page adapter
+- Change keybind `Ctrl + /` to `Alt + /` to avoid collission with default existing keybind.
 
 ### On Progress
 

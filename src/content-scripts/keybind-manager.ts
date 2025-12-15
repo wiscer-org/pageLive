@@ -20,7 +20,7 @@ type KeybindDetail = {
  * List of predefined keybinds, to keep keybind list persistent accros PageAdapters
  */
 export enum Keybinds {
-    ModalToggle = ' Ctrl + /', // Toggle the modal
+    PageInfoToggle = 'Alt + /', // Toggle the Page Info modal
     ChatCurrentDelete = 'Ctrl + Shift + Backspace', // Delete current chat
     FocusChatInput = 'Shift + Esc', // Focus the chat input
     AnnounceLastResponse = 'Ctrl + Shift + Enter', // Announce the last response
@@ -44,14 +44,14 @@ const createKeybindDetail = (
     let keybindDetail: KeybindDetail;
 
     switch (keybind) {
-        case Keybinds.ModalToggle:
+        case Keybinds.PageInfoToggle:
             keybindDetail = {
-                description: description || 'Toggle the modal',
+                description: description || 'Toggle the Page Info modal',
                 action: action,
                 keys: {
-                    ctrlKey: true,
+                    ctrlKey: false,
                     key: '/',
-                    altKey: false,
+                    altKey: true,
                     shiftKey: false,
                     metaKey: false,
                 }
@@ -173,10 +173,10 @@ export default class KeybindManager {
         // Initialize default keybinds here
 
         // Registering the predefined keybinds with their actions
-        this.registerKeybind(Keybinds.ModalToggle, async () => {
-            // Toggle the modal dialog
-            this.pageLive.dialogManager.toggleModal();
-        }, 'Toogle PageLive modal');
+        this.registerKeybind(Keybinds.PageInfoToggle, async () => {
+            // Toggle the Page Info dialog
+            this.pageLive.pageInfoDialog.togglePageInfo();
+        }, 'Toogle the Page Info');
     }
 
     /**
@@ -189,9 +189,9 @@ export default class KeybindManager {
         this.keybinds.set(keybind, createKeybindDetail(keybind, action, description));
 
         // Update the keybinds list in the dialog manager
-        if (this.pageLive.dialogManager) {
+        if (this.pageLive.pageInfoDialog) {
             // Dialog manager might not be initialized yet, so check if it exists. 
-            this.pageLive.dialogManager.renderKeybindsInfo();
+            this.pageLive.pageInfoDialog.renderKeybindsInfo();
         } else {
             // Dialog manager not yet initialized is not a error. It happens when the keybind registration during this class initialization.
             console.log("[PageLive] Dialog manager is not initialized yet, skipping re-rendering keybinds info.");
@@ -236,6 +236,7 @@ export default class KeybindManager {
             // Modify the action based on the `Keybinds` type
             switch (keybind) {
                 case Keybinds.FocusChatInput:
+                    // Announce here to have unified announcement style between page adapters
                     this.pageLive.announce({
                         msg: "Chat input",
                         omitPreannounce: true, // User triggered, no need to preannounce

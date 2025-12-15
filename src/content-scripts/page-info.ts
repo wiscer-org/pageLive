@@ -8,7 +8,7 @@ import PageLive from "./pagelive"
  * - Rendering a snapshot info about the current page.
  * - Rendering a list of available keybinds / shortcuts.
  */
-export class DialogManager {
+export class PageInfoDialog {
     private pageLive: PageLive;
     private dialogId: string = 'dialog2a2b';
     private dialog: HTMLDialogElement;
@@ -246,7 +246,7 @@ export class DialogManager {
      * This function will toggle the dialog visibility.
      * If the dialog is open, it will close it. If it is closed, it will open it.
      */
-    async toggleModal() {
+    async togglePageInfo() {
         if (this.dialog.open) {
             await this.close();
         } else {

@@ -12,7 +12,7 @@ const grokAdapter = async () => {
         pl.initialAnnounceInfo.push("grok");
 
         // Add callback to be executed the next time dialog is shown
-        pl.dialogManager.onEveryOpenCallback = onDialogOpen;
+        pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen;
 
 
         await pl.page.ready();
