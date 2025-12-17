@@ -60,8 +60,7 @@ const grokAdapter = async () => {
      * 
      */
     const getChatUnitElements = (): NodeListOf<Element> => {
-        // return chatContainer.querySelectorAll('div[id^="response-"] > div.message-buble > div.relative > div.response-content-markdown');
-        return chatContainer.querySelectorAll('div[id^="response-"] ');
+        return chatContainer.querySelectorAll('div[id^="response-"] > div.message-bubble > div.relative > div.response-content-markdown');
     }
     /**
      * Announce the last response in the chat container
