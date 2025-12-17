@@ -56,7 +56,7 @@ export default class PageLive {
 
         this.initialAnnounceInfo = [
             "PageLive is ready.",
-            "Ctrl + / for more info.",
+            "Press Alt + / for more info.",
         ]
 
         // Initiliaze the definite assignment assertion (!)
@@ -207,6 +207,32 @@ export default class PageLive {
         } else {
             console.warn('[PageLive] Announce container not found. Cannot announce message.');
         }
+    }
+
+    /**
+     * This function will announce the last response.
+     */
+    async announceLastResponse(responseElement: HTMLElement | null) {
+        this.utils.devLog('Announcing last response');
+
+        // A bit of notification that the last response is goig to be announced.
+        // This seems to be useful while waiting to find the last response element (if needed).
+        this.announce({
+            msg: "Reading last response.",
+            // No need to preannounce, since this is a user triggered action.
+            omitPreannounce: true
+        });
+
+        // Get the last response element        // Prepare the message to be announced.
+        let toBeAnnounced = "No response element is found.";
+        if (responseElement) {
+            toBeAnnounced = responseElement.innerHTML || '';
+        }
+
+        // Announce
+        this.announce({
+            msg: toBeAnnounced, omitPreannounce: true,
+        });
     }
 }
 
