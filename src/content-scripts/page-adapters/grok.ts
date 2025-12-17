@@ -86,10 +86,10 @@ const grokAdapter = async () => {
         const totalResponses = chatUnits.length / 2;
 
         if (totalResponses > 0) {
-            let msg = `${totalResponses} responses loaded - 682`;
+            let msg = `${totalResponses} responses loaded from previous chats`;
             pl.utils.devLog(msg);
             pl.announce({ msg, omitPreannounce: true });
-        } else pl.utils.devLog("No previous responses loaded - 937");
+        } else pl.utils.devLog("No previous responses loaded.");
     }
 
     construct();
