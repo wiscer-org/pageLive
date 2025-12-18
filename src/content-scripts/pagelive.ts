@@ -105,7 +105,7 @@ export default class PageLive {
         // Announce all initial info as a single message, to avoid screen reader read non-PageLive messages in between these initial infos.
         this.announce({
             msg: this.initialAnnounceInfo.join(' '),
-            omitPreannounce: true
+            o: true
         });
     }
 
@@ -181,7 +181,7 @@ export default class PageLive {
         // Message to be announced
         msg: string
         // Optional: If true, will not pre-announce the message. The pre-announce message is 'PageLive', which will help users to identify messages from PageLive.
-        , omitPreannounce?: boolean,
+        , o?: boolean,
     }) {
         this.ensurePageLiveContainer();
 
@@ -189,8 +189,8 @@ export default class PageLive {
         if (announceDiv) {
 
             // If `isPrependMsg` is true, announce 'PageLive' first
-            if (!announceObj.omitPreannounce) {
-                this.announce({ msg: 'PageLive', omitPreannounce: true });
+            if (!announceObj.o) {
+                this.announce({ msg: 'PageLive', o: true });
             }
 
             // Announce the message
@@ -220,7 +220,7 @@ export default class PageLive {
         this.announce({
             msg: "Reading last response.",
             // No need to preannounce, since this is a user triggered action.
-            omitPreannounce: true
+            o: true
         });
 
         // Get the last response element        // Prepare the message to be announced.
@@ -231,7 +231,7 @@ export default class PageLive {
 
         // Announce
         this.announce({
-            msg: toBeAnnounced, omitPreannounce: true,
+            msg: toBeAnnounced, o: true,
         });
     }
 }

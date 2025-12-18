@@ -325,7 +325,7 @@ export default class ChatObserver {
             this.pl.utils.devLog(segmentElement.textContent || '[empty segment]');
             this.pl.announce({
                 msg: segmentElement.outerHTML
-                , omitPreannounce: true
+                , o: true
             });
 
             // Increase the `lastAnnouncedSegment`
@@ -346,7 +346,7 @@ export default class ChatObserver {
 
         // Notify user that response is completed
         this.pl.utils.devLog("[ChatObserver] End of response received");
-        this.pl.announce({ msg: "End of response.", omitPreannounce: true });
+        this.pl.announce({ msg: "End of response.", o: true });
 
         // Observe chat container again
         this.observeIncomingResponseContainer();

@@ -239,7 +239,7 @@ export default class KeybindManager {
                     // Announce here to have unified announcement style between page adapters
                     this.pageLive.announce({
                         msg: "Chat input",
-                        omitPreannounce: true, // User triggered, no need to preannounce
+                        o: true, // User triggered, no need to preannounce
                     });
                     break;
                 default:

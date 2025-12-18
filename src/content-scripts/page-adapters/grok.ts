@@ -120,9 +120,9 @@ const grokAdapter = async () => {
         } else pl.utils.prodWarn("Latest response element does not contain message-bubble - 982");
 
         pl.utils.devLog("Reading last response");
-        pl.announce({ msg: "Reading last response.", omitPreannounce: true });
-        pl.announce({ msg: toBeAnnounced, omitPreannounce: true });
-        pl.announce({ msg: "End of last response.", omitPreannounce: true });
+        pl.announce({ msg: "Reading last response.", o: true });
+        pl.announce({ msg: toBeAnnounced, o: true });
+        pl.announce({ msg: "End of last response.", o: true });
     }
     /**
      * Test whether the node, added when receiving incoming response, is the response container
@@ -171,7 +171,7 @@ const grokAdapter = async () => {
         if (totalResponses > 0) {
             let msg = `${totalResponses} responses loaded from previous chats`;
             pl.utils.devLog(msg);
-            pl.announce({ msg, omitPreannounce: true });
+            pl.announce({ msg, o: true });
         } else pl.utils.devLog("No previous responses loaded.");
     }
     construct();

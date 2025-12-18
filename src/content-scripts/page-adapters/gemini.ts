@@ -602,7 +602,7 @@ const geminiPageAdapter = async () => {
      * Start new chat, by clicking a button on side nav.
      */
     async function startNewChat() {
-        pageLive.announce({ msg: "Start new chat", omitPreannounce: true });
+        pageLive.announce({ msg: "Start new chat", o: true });
 
         // Make sure side nav is opened
         const isSideNavOpened = await checkIsSideNavOpened();
@@ -1717,7 +1717,7 @@ class GeminiAdapterChat {
             this.pl.utils.devLog(segmentElement.textContent || '[empty segment]');
             this.pl.announce({
                 msg: segmentElement.outerHTML
-                , omitPreannounce: true
+                , o: true
             });
 
             // Increase the `lastAnnouncedSegment`
@@ -1754,7 +1754,7 @@ class GeminiAdapterChat {
             if (total > 0) {
                 let msg = `${total} responses loaded`;
                 this.pl.announce({
-                    msg, omitPreannounce: true
+                    msg, o: true
                 });
             }
         }
@@ -1798,7 +1798,7 @@ class GeminiAdapterChat {
         this.pl.announce({
             msg: "Reading last response.",
             // No need to preannounce, since this is a user triggered action.
-            omitPreannounce: true
+            o: true
         });
 
         const lastGeminiResponseElement = this.getLastResponseElement();
@@ -1813,7 +1813,7 @@ class GeminiAdapterChat {
         this.pl.announce({
             msg: toBeAnnounced
             // User triggered action, no need to preannounce
-            , omitPreannounce: true,
+            , o: true,
         });
     }
 }
