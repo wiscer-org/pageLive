@@ -12,10 +12,16 @@ import PageLive from "./pagelive"
 */
 export default class ChatObserver {
     pl !: PageLive;
-    // Ref to the chat container: containing all prompts and responses 
+    // Ref to the chat container: containing all prompts and responses.
+    // By default chat container is the direct parent of all prompt and response container elements.
     chatContainerX: HTMLElement | null = null;
     chatContainer !: HTMLElement
-    chatContainerObserver: MutationObserver | null = null;
+    newResponseContObserver: MutationObserver | null = null;
+    // There are cases, like in Grok, the incoming response in not rendered to the same element as other previous responses.
+    // In grok, when a new response received, the last new response is moved to the chat container like any other previous responses.
+    // In this case, we need a specific ref to the last response container element. By default this should be the direct parent of each prompt / response elements.
+    lastReplayContainer: HTMLElement | null = null;
+
     // Selector to the chat container
     // static CHAT_CONTAINER_SELECTOR = "#chat-history";
     // Selector to a response container
@@ -28,19 +34,25 @@ export default class ChatObserver {
     parseResponseElement: (el: HTMLElement) => HTMLElement | null;
     // Callback to be executed after the initial previous chat has been rendered
     postInitialRender: () => Promise<void>;
+    // Options for observing chat container. Default not to observe subtree for performance reason.
+    subtree: boolean = false;
 
     constructor(
         pl: PageLive
         , chatContainer: HTMLElement
         , isResponseContainer: (n: Node) => boolean
         , parseResponseElement: (el: HTMLElement) => HTMLElement | null
-        , postinitialRender: () => Promise<void>
+        , postInitialRender: () => Promise<void>
+        , lastReplayContainer: HTMLElement | null = null
+        , subtree: boolean = false
     ) {
         this.pl = pl;
         this.chatContainer = chatContainer;
         this.isResponseContainer = isResponseContainer;
         this.parseResponseElement = parseResponseElement;
-        this.postInitialRender = postinitialRender;
+        this.postInitialRender = postInitialRender;
+        this.lastReplayContainer = lastReplayContainer;
+        this.subtree = subtree;
     }
 
     /**
@@ -67,9 +79,8 @@ export default class ChatObserver {
         this.postInitialRender();
         this.pl.utils.devLog("[ChatObserver] Notified user if chat history has been loaded.");
 
-        // TODO: uncomment below
         // Attach observer to chat container to detect incoming response
-        // await this.observeChatContainer();
+        await this.observeIncomingResponseContainer();
     }
 
     // async getKeyElements() {
@@ -84,20 +95,22 @@ export default class ChatObserver {
         // Re-observe chat container
         await this.init();
     }
-    observeChatContainer() {
+    /**
+     * Observe a container for incoming response element addition.
+     * Later the new response container, will be observed by `observeIncomingResponse` function to detect incoming response segments.
+     */
+    observeIncomingResponseContainer() {
         // Container of response element that we are trying to catch on mutations
         let responseContainer: HTMLElement | null = null;
 
-        // Note: .gpi-static-text-loader is the class for the loading text 'Just a sec..'
-
         // Stop observing the previous observer if any
-        if (this.chatContainerObserver) {
-            this.chatContainerObserver.disconnect();
-            this.chatContainerObserver = null;
+        if (this.newResponseContObserver) {
+            this.newResponseContObserver.disconnect();
+            this.newResponseContObserver = null;
         }
 
         // Observer to 'catch' the `responseElement` that will be added during receving new response
-        this.chatContainerObserver = new MutationObserver(async (mutationList, observer) => {
+        this.newResponseContObserver = new MutationObserver(async (mutationList, observer) => {
 
             // Set to null if previously found `responseContainer` is no longer connected
             if (!responseContainer?.isConnected) responseContainer = null;
@@ -113,7 +126,8 @@ export default class ChatObserver {
                     if (mutation.type === "childList") {
                         for (let c = 0; c < mutation.addedNodes.length; c++) {
                             const node = mutation.addedNodes.item(c) as HTMLElement;
-                            if (this.isResponseContainerElementX(node)) {
+                            // if (this.isResponseContainerElementX(node)) {
+                            if (this.isResponseContainer(node)) {
                                 responseContainer = node;
                                 this.pl.utils.devLog("Response container is found");
                                 break;
@@ -127,34 +141,49 @@ export default class ChatObserver {
 
             // Try to query `responseElement` within the `responseContainer`
             if (responseContainer) {
-                this.pl.utils.devLog("Try to get responseElement within responseContainer");
+                this.pl.utils.devLog("[ChatObserver] Try to get responseElement within responseContainer");
 
                 // Use selector, not by selecting on each of the `mutation.addedNodes` because the `responseElement` is a `div`without classes or id that can be used to identify.
                 // The selector : `message-content > div`
-                let responseElement = responseContainer.querySelector('message-content > div') as HTMLElement;
+                // let responseElement = responseContainer.querySelector('message-content > div') as HTMLElement;
+                let responseElement = this.parseResponseElement(responseContainer);
+                this.pl.utils.devLog("[ChatObserver] Response element parsed:");
+                console.log(responseElement);
 
-                // If `responseElement` is found, start observing the incoming response segments
+                // If `responseElement` is found, start observing the new response segments
                 if (responseElement) {
-                    this.pl.utils.devLog("Response element is found, start observing incoming response");
-                    this.observeIncomingResponse(responseElement);
+                    this.pl.utils.devLog("[ChatObserver] Response element is found, start observing new response");
+                    console.log("responseElement outerHTML");
+                    console.log(responseElement.outerHTML);
+
+                    this.observeNewResponseSegments(responseElement);
                     // Disconnect the 'response container' observer
-                    observer.disconnect();
+                    observer.disconnect();  // To consider: if response container is disconnected, then this observer shouldn't be disconnected?
                 }
             }
         })
 
         //  Type check
-        if (!this.chatContainerX) {
+        if (!this.chatContainer) {
             this.pl.utils.prodWarn("Chat container element not exist - 3814");
             return;
         }
 
-        // Observe elements addition of subtree of chat container
-        this.chatContainerObserver.observe(this.chatContainerX, {
-            childList: true,
-            subtree: true,
-            characterData: true,
+        // Which element to be observed ?
+        let container = this.chatContainer
+        if (this.lastReplayContainer) {
+            this.pl.utils.devLog("[ChatObserver] Using last replay container to observe incoming response.");
+            if (!this.lastReplayContainer.isConnected) this.pl.utils.prodWarn("[ChatObserver] Last replay container is not connected - 9284");
+            else container = this.lastReplayContainer;
+        }
 
+        console.log("[ChatObserver] Observing container: ", container);
+
+        // Observe elements addition of subtree of chat container
+        this.newResponseContObserver.observe(container, {
+            childList: true,
+            subtree: this.subtree,
+            characterData: true,
         });
     }
 
@@ -190,15 +219,18 @@ export default class ChatObserver {
      * This function is used to detect and announce of the incoming response segments.    
      * @param {HTMLElement} responseElement The Element containing response segment elements.
      */
-    async observeIncomingResponse(responseElement: HTMLElement) {
+    async observeNewResponseSegments(responseElement: HTMLElement) {
         // The previous total of segments, before added in the mutation callback
-        let prevSegmentsCount = 0;
+        // let prevSegmentsCount = 0;
+        let prevSegmentsCount = responseElement.children.length;
         // The index of the last announced response segment
         let lastAnnouncedSegment = -1;
         // The timeout id to announce the last remaining response segments
-        let remainingTimeoutId: ReturnType<typeof setTimeout>;
+        // let remainingTimeoutId: ReturnType<typeof setTimeout>;
+        let remainingTimeoutId: ReturnType<typeof setTimeout> | undefined = undefined;
 
         /**
+         * 
          * Observer to handle response segment addition / update.
          * Everytime a response segment is added, 2 things will happen:
          * 1. Announce all segments before the last one, that has not been announced.
@@ -231,8 +263,15 @@ export default class ChatObserver {
 
         });
 
+        // Handle existing segments before observing new segments
+        if (prevSegmentsCount > 0) {
+            this.pl.utils.devLog(`[ChatObserver] Response element has ${prevSegmentsCount} existing segments before observing new segments. Announcing them first.`);
+            // Schedule to announce the existing segments
+            remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, newResponseObserver);
+        }
+
         // Observe
-        this.pl.utils.devLog("Start observe response element");
+        this.pl.utils.devLog("[ChatObserver] Start observe response element");
         newResponseObserver.observe(responseElement, {
             childList: true,
         });
@@ -245,7 +284,7 @@ export default class ChatObserver {
      * @param {MutationObserver} observer The mutation observer to disconnect at the end of receiving response
      */
     delayAnnounceRemainingSegments(responseElement: HTMLElement, lastAnnouncedSegment: number
-        , announceTimeout: ReturnType<typeof setTimeout>
+        , announceTimeout: ReturnType<typeof setTimeout> | undefined
         , observer: MutationObserver) {
 
         // Cancel the timeout id if exist
@@ -306,7 +345,7 @@ export default class ChatObserver {
         newResponseObserver.disconnect();
 
         // Observe chat container again
-        this.observeChatContainer();
+        this.observeIncomingResponseContainer();
     }
 
 

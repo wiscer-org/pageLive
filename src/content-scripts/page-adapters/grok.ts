@@ -19,15 +19,32 @@ const grokAdapter = async () => {
     const init = async () => {
         pl.utils.devLog("Initializing..");
         await ensureChatContainer();
+        await ensureLastReplayContainer();
 
         pl.initialAnnounceInfo.push("grok");
+
+        // new response will be added to the 2nd div under the `lastReplyContainer`
+        if (lastReplayContainer === null) return;
+        let newResponseContParent = lastReplayContainer?.children[1] as HTMLElement | null;
+        console.log(lastReplayContainer);
+        console.log(lastReplayContainer?.children);
+        console.log(lastReplayContainer.children.length);
+        console.log(lastReplayContainer.children.item(0));
+        console.log(lastReplayContainer.children.item(1));
+        console.log(lastReplayContainer.querySelectorAll('[id^="response-"]'));
+        if (!newResponseContParent) {
+            pl.utils.prodWarn("Could not find new response container parent - 836");
+            newResponseContParent = null; // Will make ChatObserver not fully functional, but avoid crash
+        }
+        newResponseContParent = lastReplayContainer;
 
         chatObserver = new ChatObserver(
             pl
             , chatContainer
-            , (n: Node) => false // dummy
-            , (el: HTMLElement) => null // dummy
+            , isResponseContainer
+            , parseResponseElement
             , postInitialRender
+            , newResponseContParent
         );
         await chatObserver.init();
 
@@ -53,6 +70,15 @@ const grokAdapter = async () => {
         }
         chatContainer = element as HTMLElement;
     }
+    const ensureLastReplayContainer = async () => {
+        if (!lastReplayContainer || !lastReplayContainer.isConnected) {
+            lastReplayContainer = chatContainer.querySelector('#last-reply-container') as HTMLElement;
+
+            if (lastReplayContainer === null)
+                pl.utils.prodWarn("Could not find last replay container - 946");
+        }
+        return lastReplayContainer;
+    }
     const focusChatInput = async () => {
         const chatInput = document.querySelector(".\\@container form div[contenteditable='true']") as HTMLElement;
         if (!chatInput) {
@@ -72,12 +98,10 @@ const grokAdapter = async () => {
      */
     const announceLastResponse = async () => {
         // Ensure we have the lastReplayContainer
-        if (!lastReplayContainer || !lastReplayContainer.isConnected) {
-            lastReplayContainer = chatContainer.querySelector('#last-reply-container') as HTMLElement;
-            if (lastReplayContainer === null) {
-                pl.utils.prodWarn("Could not find last replay container - 9823");
-                return
-            }
+        await ensureLastReplayContainer();
+        if (!lastReplayContainer) {
+            pl.utils.prodWarn("No last replay container found - 970");
+            return;
         }
 
         // Prompt and response are both inside lastReplayContainer
@@ -99,6 +123,42 @@ const grokAdapter = async () => {
         pl.announce({ msg: "Reading last response.", omitPreannounce: true });
         pl.announce({ msg: toBeAnnounced, omitPreannounce: true });
         pl.announce({ msg: "End of last response.", omitPreannounce: true });
+    }
+    /**
+     * Test whether the node, added when receiving incoming response, is the response container
+     * @param {Node} node Node to be tested
+     * @returns boolean
+     */
+    const isResponseContainer = (node: Node): boolean => {
+        console.log("isResponseContainer test node:", node);
+        if (!(node instanceof HTMLElement)) return false;
+        // Check if the node matches the expected structure of response container
+        // For Grok, we assume the response container has a specific class or structure
+        // Here we use a placeholder condition; replace it with actual logic as needed
+        if (node.tagName.toLowerCase() === 'div' &&
+            node.id?.startsWith('response-') &&
+            node.classList.contains('items-start')) {
+            pl.utils.devLog("Node is a response container, has id ^='response-'");
+            return true;
+        }
+        if (node.querySelector('.items-start')) {
+            pl.utils.devLog("Node is a response container via items-start class");
+            return true;
+        }
+        console.log("Node is NOT a response container:", node);
+        return false;
+    }
+    /**
+     * Parse the response element from the response container.
+     * @param responseContainer 
+     * @returns 
+     */
+    const parseResponseElement = (responseContainer: HTMLElement): HTMLElement | null => {
+        if (!(responseContainer instanceof HTMLElement)) {
+            pl.utils.prodWarn("Response container is not an HTMLElement - 1053");
+            return null;
+        }
+        return responseContainer.querySelector('div.message-bubble > div > div.response-content-markdown') as HTMLElement;
     }
     /**
      * After the initial previous chat has been rendered

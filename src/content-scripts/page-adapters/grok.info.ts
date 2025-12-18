@@ -16,3 +16,20 @@
 //                      div.message-bubble
 //                          div.relative
 //                              div.response-content-markdown
+//                  div#last-reply-container 
+//                      div.items-center    <!-- last prompt -->
+//                          div.message-bubble
+//                              div.relative
+//                                  div.response-content-markdown 
+//                      div.items-center    <!-- last response -->
+//                          div.message-bubble
+//                              div.relative
+//                                  div.response-content-markdown 
+// 
+// 
+// 
+// 
+// 
+// 
+// 
+
