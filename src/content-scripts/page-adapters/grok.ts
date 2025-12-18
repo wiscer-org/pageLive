@@ -5,6 +5,10 @@ import { Chat } from "../../types/chat";
 
 const grokAdapter = async () => {
     const pl = new PageLive();
+    // Grok specific ref to the last replay container, containing the latest prompt and response
+    let lastReplayContainer: HTMLElement | null = null;
+
+    // Observer to handle incoming responses
     let chatObserver !: ChatObserver;
     let chatContainer!: HTMLElement
 
@@ -41,7 +45,8 @@ const grokAdapter = async () => {
         pl.utils.devLog("Dialog opened on grok");
     }
     const ensureChatContainer = async () => {
-        let element = await pl.utils.waitForAnElement('main.\\@container');
+        // let element = await pl.utils.waitForAnElement('main.\\@container');
+        let element = await pl.utils.waitForAnElement('.\\@container\\/chat >div > div.items-center');
         if (!element) {
             pl.utils.prodWarn("Could not find chat container - 924");
             return document.createElement("div"); // return dummy element to avoid whole thing crashed
@@ -66,16 +71,34 @@ const grokAdapter = async () => {
      * Announce the last response in the chat container
      */
     const announceLastResponse = async () => {
-        const chatUnitElements = getChatUnitElements();
-        let toBeAnnounced = "No last response is found.";
-        if (chatUnitElements.length > 0) {
-            const lastResponseElement = chatUnitElements[chatUnitElements.length - 1] as HTMLElement;
-            toBeAnnounced = lastResponseElement.innerHTML || '';
-
-            pl.announce({ msg: "Reading last response.", omitPreannounce: true });
-            pl.utils.devLog("Reading last response");
+        // Ensure we have the lastReplayContainer
+        if (!lastReplayContainer || !lastReplayContainer.isConnected) {
+            lastReplayContainer = chatContainer.querySelector('#last-reply-container') as HTMLElement;
+            if (lastReplayContainer === null) {
+                pl.utils.prodWarn("Could not find last replay container - 9823");
+                return
+            }
         }
+
+        // Prompt and response are both inside lastReplayContainer
+        if (!lastReplayContainer.children || lastReplayContainer.children.length < 2) {
+            pl.utils.prodWarn("Last replay container does not have enough children - 9832");
+            pl.utils.prodWarn("Last replay container children:");
+            console.log(lastReplayContainer.children);
+            return;
+        }
+
+        const lastResponseContainer = lastReplayContainer.children[1] as HTMLElement;
+        let toBeAnnounced = "No last response is found.";
+        const messageBubble = lastResponseContainer.querySelector('div.message-bubble');
+        if (messageBubble) {
+            toBeAnnounced = messageBubble.innerHTML || '';
+        } else pl.utils.prodWarn("Latest response element does not contain message-bubble - 982");
+
+        pl.utils.devLog("Reading last response");
+        pl.announce({ msg: "Reading last response.", omitPreannounce: true });
         pl.announce({ msg: toBeAnnounced, omitPreannounce: true });
+        pl.announce({ msg: "End of last response.", omitPreannounce: true });
     }
     /**
      * After the initial previous chat has been rendered
@@ -91,7 +114,6 @@ const grokAdapter = async () => {
             pl.announce({ msg, omitPreannounce: true });
         } else pl.utils.devLog("No previous responses loaded.");
     }
-
     construct();
 }
 
@@ -99,3 +121,4 @@ const grokAdapter = async () => {
 document.addEventListener('DOMContentLoaded', () => {
     grokAdapter();
 });
+
