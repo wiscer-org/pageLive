@@ -344,6 +344,10 @@ export default class ChatObserver {
         // Disconnect 'new response observer'
         newResponseObserver.disconnect();
 
+        // Notify user that response is completed
+        this.pl.utils.devLog("[ChatObserver] End of response received");
+        this.pl.announce({ msg: "End of response.", omitPreannounce: true });
+
         // Observe chat container again
         this.observeIncomingResponseContainer();
     }
