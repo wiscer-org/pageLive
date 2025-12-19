@@ -264,10 +264,12 @@ export default class ChatObserver {
         });
 
         // Handle existing segments before observing new segments
+        this.pl.utils.devLog(`[ChatObserver] Response element has ${prevSegmentsCount} existing segments before observing new segments.`);
         if (prevSegmentsCount > 0) {
-            this.pl.utils.devLog(`[ChatObserver] Response element has ${prevSegmentsCount} existing segments before observing new segments. Announcing them first.`);
-            // Schedule to announce the existing segments
-            remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, newResponseObserver);
+            // Announce now all segments excluding the last one
+            this.announceSegments(responseElement, lastAnnouncedSegment, prevSegmentsCount - 2);
+            // Schedule to announce the last segment.
+            remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, prevSegmentsCount - 2, remainingTimeoutId, newResponseObserver);
         }
 
         // Observe
@@ -307,7 +309,7 @@ export default class ChatObserver {
      * @param lastIndex The last index of the response segment elements to be announced 
      */
     async announceSegments(responseElement: HTMLElement, lastAnnouncedSegment: number, lastIndex: number) {
-        this.pl.utils.devLog("announce segment index from " + (lastAnnouncedSegment + 1) + " until " + lastIndex);
+        this.pl.utils.devLog("[ChatObserver] announce segment index from " + (lastAnnouncedSegment + 1) + " until " + lastIndex);
         for (let c: number = lastAnnouncedSegment + 1; c <= lastIndex; c++) {
             // Type check
             if (!responseElement.children[c]) {
@@ -346,7 +348,7 @@ export default class ChatObserver {
 
         // Notify user that response is completed
         this.pl.utils.devLog("[ChatObserver] End of response received");
-        this.pl.announce({ msg: "End of response.", o: true });
+        // this.pl.announce({ msg: "End of response.", o: true });
 
         // Observe chat container again
         this.observeIncomingResponseContainer();
