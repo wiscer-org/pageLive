@@ -208,7 +208,27 @@ export default class PageLive {
             console.warn('[PageLive] Announce container not found. Cannot announce message.');
         }
     }
+    async focusChatInput(chatInput: HTMLElement | null) {
+        if (!chatInput || !chatInput.isConnected) {
+            this.announce({ msg: "Chat input not found", o: false })
+            return;
+        }
+        if (chatInput) {
+            // Close any dialogs / modals first
+            this.pageInfoDialog?.close();
+            // contentMapper.close();
 
+            // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
+            // By change focus to other element first, before change focus to the input, will force the SR change to Form/Input mode. Thus, user can type right away without having to change SR mode.
+            this.dummySpanElement.focus();
+
+            // Wait very very quick
+            await new Promise(r => setTimeout(r, 50));
+
+            chatInput.focus();
+            // No need to announce, since screen reader will read the focused element automatically.
+        }
+    }
     /**
      * This function will announce the last response.
      */

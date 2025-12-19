@@ -5,12 +5,14 @@ import { Chat } from "../../types/chat";
 
 const grokAdapter = async () => {
     const pl = new PageLive();
-    // Grok specific ref to the last replay container, containing the latest prompt and response
-    let lastReplayContainer: HTMLElement | null = null;
 
     // Observer to handle incoming responses
     let chatObserver !: ChatObserver;
+    // Direct parent element of each previous chat units
     let chatContainer!: HTMLElement
+    // Grok specific ref to the last replay container, containing the latest prompt and response
+    let lastReplayContainer: HTMLElement | null = null;
+    let chatInput: HTMLElement | null = null;
 
     const construct = () => {
         pl.page.name = "grok";
@@ -79,13 +81,22 @@ const grokAdapter = async () => {
         }
         return lastReplayContainer;
     }
-    const focusChatInput = async () => {
-        const chatInput = document.querySelector(".\\@container form div[contenteditable='true']") as HTMLElement;
-        if (!chatInput) {
-            pl.utils.prodWarn("Could not find chat input");
-            return;
+    // A collection to ensure various elements
+    const ensure = {
+        chatInput: () => {
+            if (!chatInput || !chatInput.isConnected) {
+                pl.utils.prodWarn("Chat input is null or not connected - 204");
+                chatInput = document.querySelector(".\\@container form div[contenteditable='true']") as HTMLElement;
+            }
+            if (!chatInput) {
+                pl.utils.prodWarn("Could not find chat input - 964");
+            }
+            return chatInput;
         }
-        chatInput.focus();
+    }
+    const focusChatInput = async () => {
+        await ensure.chatInput();
+        pl.focusChatInput(chatInput);
     }
     /**
      * 
