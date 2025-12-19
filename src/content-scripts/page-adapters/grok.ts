@@ -124,16 +124,18 @@ const grokAdapter = async () => {
         }
 
         const lastResponseContainer = lastReplayContainer.children[1] as HTMLElement;
-        let toBeAnnounced = "No last response is found.";
         const messageBubble = lastResponseContainer.querySelector('div.message-bubble');
         if (messageBubble) {
-            toBeAnnounced = messageBubble.innerHTML || '';
-        } else pl.utils.prodWarn("Latest response element does not contain message-bubble - 982");
+            let msg = messageBubble.innerHTML || '';
+            pl.utils.devLog("Reading last response");
+            pl.announce({ msg: "Reading last response.", o: true });
+            pl.announce({ msg, o: true });
+            pl.announce({ msg: "End of last response.", o: true });
+        } else {
+            pl.announce({ msg: "No last response is found.", o: true });
+            pl.utils.prodWarn("Latest response element does not contain message-bubble - 982");
+        }
 
-        pl.utils.devLog("Reading last response");
-        pl.announce({ msg: "Reading last response.", o: true });
-        pl.announce({ msg: toBeAnnounced, o: true });
-        pl.announce({ msg: "End of last response.", o: true });
     }
     /**
      * Test whether the node, added when receiving incoming response, is the response container
