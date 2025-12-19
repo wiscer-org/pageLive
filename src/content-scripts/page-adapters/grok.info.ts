@@ -4,7 +4,7 @@
 // Hierarchy subset on the chat container:
 //  main.@container
 //      .@container/nav
-//      .@container/chat
+//      .@container/chat    // This element not exist on empty chat page
 //          div
 //          div
 //              div.w-full.h-full.items-center
