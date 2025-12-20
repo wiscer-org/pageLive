@@ -6,8 +6,8 @@ import PageLive from "./pagelive"
 * Note: A new response will not be rendered all at once, but received in streams. The UI will add / update the response segment elements.
 * Below is the key terms used in this class:
 * - chat container: The element that directly wraps all prompts and responses of the current active chat.
-* - response container: The element that wraps a response element. Response container will also include buttons and other components that is not  part of the response text. This element is used to identify when a new response is incoming.
-* - response element: The direct parent that wraps all the response text.
+* - response container: The element that wraps a response element. Response container could also include buttons and other components that is not  part of the response text. This element is used to identify when a new response is received.
+* - response element: The direct parent that wraps all the response segments.
 * - response segment : The element that contains a part of the response text. A response can have multiple segments, like `p`, `ul`, or etc. These segments are all on the same document hierarchy level.
 */
 export default class ChatObserver {
@@ -16,6 +16,7 @@ export default class ChatObserver {
     // By default chat container is the direct parent of all prompt and response container elements.
     chatContainer: HTMLElement | null = null;
     newResponseContObserver: MutationObserver | null = null;
+    responseSegmentsObserver: MutationObserver | null = null;
     // There are cases, like in Grok, the incoming response in not rendered to the same element as other previous responses.
     // In grok, when a new response received, the last new response is moved to the chat container like any other previous responses.
     // In this case, we need a specific ref to the last response container element. By default this should be the direct parent of each prompt / response elements.
@@ -38,53 +39,72 @@ export default class ChatObserver {
 
     constructor(
         pl: PageLive
-        , chatContainer: HTMLElement | null
         , isResponseContainer: (n: Node) => boolean
         , parseResponseElement: (el: HTMLElement) => HTMLElement | null
         , postInitialRender: () => Promise<void>
-        , lastReplayContainer: HTMLElement | null = null
         , subtree: boolean = false
     ) {
         this.pl = pl;
-        this.chatContainer = chatContainer;
         this.isResponseContainer = isResponseContainer;
         this.parseResponseElement = parseResponseElement;
         this.postInitialRender = postInitialRender;
-        this.lastReplayContainer = lastReplayContainer;
         this.subtree = subtree;
     }
 
     /**
-     * Init, or re-init the chat observer
+     * Connect, or re-connect the chat observer
+     * @param chatContainer Closest parent of all previous prompts and responses, in some cases excluding the newest prompt/response
+     * @param lastReplayContainer In some cases, the newest prompt/response is rendered to a different container than the previous prompts/responses. This parameter is the closest parent of the newest prompt/response.
      * @returns {Promise<void>}
      */
-    async init(): Promise<void> {
+    async connect(
+        chatContainer: HTMLElement | null
+        , lastReplayContainer: HTMLElement | null
+    ): Promise<void> {
+        this.chatContainer = chatContainer;
+        this.lastReplayContainer = lastReplayContainer;
+
         // Validate element ref
         if (!this.chatContainer) {
-            this.pl.utils.prodWarn("[ChatObserver] Cannot find chat container element. Now exiting - 31873");
+            this.pl.utils.prodWarn("[ChatObserver] Cannot find chat container element. Now exiting - 823");
             return;
         }
         if (this.chatContainer.isConnected === false) {
             this.pl.utils.prodWarn("[ChatObserver] Chat container element is not connected to document. Now exiting - 374");
             return;
         }
-        this.pl.utils.devLog("[ChatObserver] Initializing..");
+        // If last replay container is provided, validate it 
+        if (this.lastReplayContainer && !this.lastReplayContainer.isConnected) {
+            this.pl.utils.prodWarn("[ChatObserver] Last replay container element is not connected to document. - 925");
+            return;
+        }
+        this.pl.utils.devLog("[ChatObserver] Connecting..");
 
         // Wait until the chat history has completely rendered with the previous chat
         await this.pl.utils.untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds of idle time
-        this.pl.utils.devLog("[ChatObserver] Chat container element is now idle.");
+        this.pl.utils.devLog("[ChatObserver] Chat container is now idle.");
 
-        // Notify user that PageLive is ready and about the loaded chat history if any
+        // Execute post initial render callback
         this.postInitialRender();
 
         // Attach observer to chat container to detect incoming response
-        await this.observeIncomingResponseContainer();
+        await this.observeNewResponseContainer();
+    }
+    /**
+    * Stop all observers and other processes. 
+    * This function is used when ref to chat container is no longer valid.
+    */
+    disconnect() {
+        this.chatContainer = null;
+        this.lastReplayContainer = null;
+        this.newResponseContObserver?.disconnect();
+        this.responseSegmentsObserver?.disconnect();
     }
     /**
      * Observe a container for incoming response element addition.
      * Later the new response container, will be observed by `observeIncomingResponse` function to detect incoming response segments.
      */
-    observeIncomingResponseContainer() {
+    observeNewResponseContainer() {
         // Container of response element that we are trying to catch on mutations
         let responseContainer: HTMLElement | null = null;
 
@@ -96,6 +116,13 @@ export default class ChatObserver {
 
         // Observer to 'catch' the `responseElement` that will be added during receving new response
         this.newResponseContObserver = new MutationObserver(async (mutationList, observer) => {
+            // Validate key elements
+            if (!this.validate().all()) {
+                this.pl.utils.prodWarn("[ChatObserver] Key elements are no longer connected. Stopping observing incoming response container - 9282");
+                this.disconnect();
+                return;
+            }
+
 
             // Set to null if previously found `responseContainer` is no longer connected
             if (!responseContainer?.isConnected) responseContainer = null;
@@ -151,7 +178,7 @@ export default class ChatObserver {
 
         // In Grok case, the new prompt & response is rendered under the specific element - not directly under the chat container.
         // If provided, observe that specific element instead of the chat container.
-        let container = this.chatContainer
+        let container = this.chatContainer;
         if (this.lastReplayContainer) {
             this.pl.utils.devLog("[ChatObserver] Using element, that is not chat container, to observe incoming response.");
             if (!this.lastReplayContainer.isConnected) this.pl.utils.prodWarn("[ChatObserver] Last replay container is not connected - 9284");
@@ -186,10 +213,16 @@ export default class ChatObserver {
          * 1. Announce all segments before the last one, that has not been announced.
          * 2. Set timeout to announce the remaining of the response segments, that has not been announced.
          */
-        const newResponseObserver = new MutationObserver(async (mutationList, observer) => {
-            const segmentsCount = responseElement.children.length;
+        this.responseSegmentsObserver = new MutationObserver(async (mutationList, responseSegmentsObserver) => {
+            // Validate response element
+            if (!responseElement.isConnected) {
+                this.pl.utils.prodWarn("[ChatObserver] Response element is no longer connected. Stopping observing new response segments - 9283");
+                this.onResponseComplete(responseSegmentsObserver);
+                return;
+            }
 
             // Is total segments increased ?
+            const segmentsCount = responseElement.children.length;
             if (prevSegmentsCount < segmentsCount) {
                 // Note: Number of segments can increase more than 1 on 1 callback. On a found case 2 segments added at once.
                 // Assuming the Single Page App only updating the last segment, we can announce right away the n-1 segments.
@@ -205,7 +238,7 @@ export default class ChatObserver {
                 this.pl.utils.devLog(`[ChatObserver] lastAnnouncedSegment after :${lastAnnouncedSegment}`);
 
                 // Schedule to announce the remaining not-yet-announced segments
-                remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, observer);
+                remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, responseSegmentsObserver);
 
                 // Current count will be the prev count for next process
                 prevSegmentsCount = segmentsCount;
@@ -218,12 +251,12 @@ export default class ChatObserver {
             // Announce now all segments excluding the last one
             this.announceSegments(responseElement, lastAnnouncedSegment, prevSegmentsCount - 2);
             // Schedule to announce the last segment.
-            remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, prevSegmentsCount - 2, remainingTimeoutId, newResponseObserver);
+            remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, prevSegmentsCount - 2, remainingTimeoutId, this.responseSegmentsObserver);
         }
 
         // Observe
         this.pl.utils.devLog("[ChatObserver] Start observe response element");
-        newResponseObserver.observe(responseElement, {
+        this.responseSegmentsObserver.observe(responseElement, {
             childList: true,
         });
     }
@@ -232,11 +265,11 @@ export default class ChatObserver {
      * Schedule to announce the remaining not-yet-announced response segments
      * @param {HTMLElement} responseElement The direct parent of the response segment elements
      * @param {number} lastAnnouncedSegment The index of the last announced segment
-     * @param {MutationObserver} observer The mutation observer to disconnect at the end of receiving response
+     * @param {MutationObserver} responseSegmentsObserver The mutation observer to disconnect at the end of receiving response
      */
     delayAnnounceRemainingSegments(responseElement: HTMLElement, lastAnnouncedSegment: number
         , announceTimeout: ReturnType<typeof setTimeout> | undefined
-        , observer: MutationObserver) {
+        , responseSegmentsObserver: MutationObserver) {
 
         // Cancel the timeout id if exist
         if (announceTimeout) clearTimeout(announceTimeout);
@@ -247,7 +280,7 @@ export default class ChatObserver {
             this.announceSegments(responseElement, lastAnnouncedSegment, lastSegmentToAnnounce);
 
             // The incoming response has been completely received
-            this.onResponseComplete(observer);
+            this.onResponseComplete(responseSegmentsObserver);
         }, ChatObserver.SEGMENT_WAIT_SECONDS);
     }
 
@@ -287,19 +320,45 @@ export default class ChatObserver {
     }
     /**
      * Handler when a response is completely received
-     * @param {MutationObserver} newResponseObserver The observer for the incoming new response
+     * @param {MutationObserver} responseSegmentsObserver The observer for the incoming new response
      */
-    async onResponseComplete(newResponseObserver: MutationObserver) {
+    async onResponseComplete(responseSegmentsObserver: MutationObserver) {
         // Are there variables need to be reset ?
 
         // Disconnect 'new response observer'
-        newResponseObserver.disconnect();
+        responseSegmentsObserver.disconnect();
 
         // Notify user that response is completed
         this.pl.utils.devLog("[ChatObserver] End of response received");
         // this.pl.announce({ msg: "End of response.", o: true });
 
         // Observe chat container again
-        this.observeIncomingResponseContainer();
+        this.observeNewResponseContainer();
     }
+    /**
+     * Validate elements
+     */
+    validate() {
+        return {
+            chatContainer: () => {
+                if (!this.chatContainer || !this.chatContainer.isConnected) {
+                    this.pl.utils.prodWarn("[ChatObserver] Chat container is null or not connected - 283");
+                    this.disconnect();
+                    return false;
+                }
+                return true;
+            },
+            lastReplayContainer: () => {
+                if (this.lastReplayContainer && !this.lastReplayContainer.isConnected) {
+                    this.pl.utils.prodWarn("[ChatObserver] Last replay container is no longer connected - 9285");
+                    return false;
+                }
+                return true;
+            },
+            all: () => {
+                return this.validate().chatContainer() && this.validate().lastReplayContainer();
+            }
+        }
+    }
+
 }
