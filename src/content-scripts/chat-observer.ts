@@ -64,21 +64,25 @@ export default class ChatObserver {
         this.chatContainer = chatContainer;
         this.lastReplayContainer = lastReplayContainer;
 
+        this.pl.utils.devLog("[ChatObserver] Connecting...");
+
         // Validate element ref
         if (!this.chatContainer) {
-            this.pl.utils.prodWarn("[ChatObserver] Cannot find chat container element. Now exiting - 823");
+            this.pl.utils.prodWarn("[ChatObserver] Cannot find chat container element. Connection failed - 823");
+            this.disconnect();
             return;
         }
         if (this.chatContainer.isConnected === false) {
-            this.pl.utils.prodWarn("[ChatObserver] Chat container element is not connected to document. Now exiting - 374");
+            this.pl.utils.prodWarn("[ChatObserver] Chat container element is not connected to document. Connection failed - 374");
+            this.disconnect();
             return;
         }
         // If last replay container is provided, validate it 
         if (this.lastReplayContainer && !this.lastReplayContainer.isConnected) {
             this.pl.utils.prodWarn("[ChatObserver] Last replay container element is not connected to document. - 925");
+            this.disconnect();
             return;
         }
-        this.pl.utils.devLog("[ChatObserver] Connecting..");
 
         // Wait until the chat history has completely rendered with the previous chat
         await this.pl.utils.untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds of idle time
@@ -89,16 +93,22 @@ export default class ChatObserver {
 
         // Attach observer to chat container to detect incoming response
         await this.observeNewResponseContainer();
+
+        this.pl.utils.devLog("[ChatObserver] Connected to chat container successfully.");
     }
     /**
     * Stop all observers and other processes. 
     * This function is used when ref to chat container is no longer valid.
     */
     disconnect() {
+        this.pl.utils.devLog("[ChatObserver] Disconnecting...");
         this.chatContainer = null;
         this.lastReplayContainer = null;
         this.newResponseContObserver?.disconnect();
         this.responseSegmentsObserver?.disconnect();
+    }
+    isConnected() {
+        return this.chatContainer !== null;
     }
     /**
      * Observe a container for incoming response element addition.
