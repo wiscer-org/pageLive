@@ -9,6 +9,13 @@ import PageLive from "./pagelive"
 * - response container: The element that wraps a response element. Response container could also include buttons and other components that is not  part of the response text. This element is used to identify when a new response is received.
 * - response element: The direct parent that wraps all the response segments.
 * - response segment : The element that contains a part of the response text. A response can have multiple segments, like `p`, `ul`, or etc. These segments are all on the same document hierarchy level.
+* 
+* Note about `initialRender`: 
+* When the chat page is loaded, there could be previous chat history rendered. This class will wait until the chat container is idle (no more DOM updates) before executing `postInitialRender` callback.
+* `initialRender` is useul when the page adapter using this class needs to process or announce the previous chat history.
+* We need to consider when user change between different chats, the chat container will be updated with the new chat history. 
+* We should be able to detect this change and execute `connect` function again to do process from beginning.
+* We do not need to consider when switching to or from empty chat, since empty chat should executed `disconnect` function.
 */
 export default class ChatObserver {
     pl !: PageLive;
@@ -88,13 +95,61 @@ export default class ChatObserver {
         await this.pl.utils.untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds of idle time
         this.pl.utils.devLog("[ChatObserver] Chat container is now idle.");
 
-        // Execute post initial render callback
-        this.postInitialRender();
+        await this.waitForInitialRender();
 
         // Attach observer to chat container to detect incoming response
         await this.observeNewResponseContainer();
 
         this.pl.utils.devLog("[ChatObserver] Connected to chat container successfully.");
+    }
+    /**
+     * Detect initial render of previous chat history. If detected, wait until finish rendering.
+     * Few chat switch that may happen:
+     * - From empty chat to chat with previous history
+     * - From chat with previous history to empty chat
+     * - From chat with previous history to another chat with different previous history
+     * Initial render is detected when there are nodes added and removed in the chat container.
+     */
+    async detectInitialRender() {
+        let anyNodesAdded = false;
+        let anyNodesRemoved = false;
+
+        const initialRenderObserver = new MutationObserver((mutations, observer) => {
+            for (const mutation of mutations) {
+                if (mutation.type === "childList") {
+                    if (mutation.addedNodes.length > 0) anyNodesAdded = true;
+                    if (mutation.removedNodes.length > 0) anyNodesRemoved = true;
+                }
+                // If any nodes added and removed, that means there is an initial render
+                if (anyNodesAdded && anyNodesRemoved) {
+                    this.pl.utils.devLog("[ChatObserver] Initial render detected.");
+                    // Stop observing
+                    observer.disconnect();
+                    // Wait until finish rendering
+                    this.waitForInitialRender();
+                    break;
+                }
+            }
+        });
+        this.chatContainer && initialRenderObserver.observe(this.chatContainer, {
+            childList: true,
+            subtree: this.subtree,
+        });
+    }
+    /**
+     * Wait until finish rendering previous chat history
+     */
+    async waitForInitialRender() {
+        this.pl.utils.devLog("[ChatObserver] Waiting for initial render to complete...");
+        // Wait until chat container is idle
+        if (this.chatContainer) {
+            await this.pl.utils.untilElementIdle(this.chatContainer, 2e3); // Wait for 3 seconds of idle time
+        }
+        this.pl.utils.devLog("[ChatObserver] Initial render completed.");
+        // Execute post initial render callback
+        this.postInitialRender();
+        // Start detecting for next initial render
+        this.detectInitialRender();
     }
     /**
     * Stop all observers and other processes. 
@@ -126,13 +181,21 @@ export default class ChatObserver {
 
         // Observer to 'catch' the `responseElement` that will be added during receving new response
         this.newResponseContObserver = new MutationObserver(async (mutationList, observer) => {
+            console.log("[ChatObserver] Mutation detected for new response container.");
+            console.log(`[ChatObserver] number of children :`, this.chatContainer?.children.length);
+            for (const mutation of mutationList) {
+                if (mutation.type === "childList") {
+                    console.log(`[ChatObserver] Added nodes:`, mutation.addedNodes.length);
+                    console.log(`[ChatObserver] Removed nodes:`, mutation.removedNodes.length);
+                }
+            }
+
             // Validate key elements
             if (!this.validate().all()) {
                 this.pl.utils.prodWarn("[ChatObserver] Key elements are no longer connected. Stopping observing incoming response container - 9282");
                 this.disconnect();
                 return;
             }
-
 
             // Set to null if previously found `responseContainer` is no longer connected
             if (!responseContainer?.isConnected) responseContainer = null;
@@ -361,6 +424,7 @@ export default class ChatObserver {
             lastReplayContainer: () => {
                 if (this.lastReplayContainer && !this.lastReplayContainer.isConnected) {
                     this.pl.utils.prodWarn("[ChatObserver] Last replay container is no longer connected - 9285");
+                    // Do not disconnect, since last replay container is optional
                     return false;
                 }
                 return true;

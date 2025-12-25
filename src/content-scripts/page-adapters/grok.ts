@@ -310,7 +310,6 @@ const grokAdapter = async () => {
         }
         const totalResponses = chatUnits.length / 2;
 
-
         if (totalResponses > 0) {
             let msg = `${totalResponses} responses loaded from previous chats`;
             pl.utils.devLog(msg);
