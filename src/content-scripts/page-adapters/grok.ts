@@ -225,7 +225,7 @@ const grokAdapter = async () => {
     const getChatUnitElements = async (): Promise<NodeListOf<Element> | undefined> => {
         await resolve.chatContainer();
         if (!chatContainer) pl.utils.prodWarn("Chat container is null when getting chat unit elements - 1073");
-        return chatContainer?.querySelectorAll('div[id^="response-"] > div.message-bubble > div.relative > div.response-content-markdown');
+        return chatContainer?.querySelectorAll('div[id^="response-"] > div.message-bubble > div.relative > div > div.response-content-markdown');
     }
     /**
      * Announce the last response in the chat container

@@ -181,8 +181,8 @@ export default class ChatObserver {
 
         // Observer to 'catch' the `responseElement` that will be added during receving new response
         this.newResponseContObserver = new MutationObserver(async (mutationList, observer) => {
-            console.log("[ChatObserver] Mutation detected for new response container.");
-            console.log(`[ChatObserver] number of children :`, this.chatContainer?.children.length);
+            // console.log("[ChatObserver] Mutation detected for new response container.");
+            // console.log(`[ChatObserver] number of children :`, this.chatContainer?.children.length);
             for (const mutation of mutationList) {
                 if (mutation.type === "childList") {
                     console.log(`[ChatObserver] Added nodes:`, mutation.addedNodes.length);
