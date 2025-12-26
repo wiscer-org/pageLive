@@ -103,11 +103,7 @@ export default class ChatObserver {
         this.pl.utils.devLog("[ChatObserver] Connected to chat container successfully.");
     }
     /**
-     * Detect initial render of previous chat history. If detected, wait until finish rendering.
-     * Few chat switch that may happen:
-     * - From empty chat to chat with previous history
-     * - From chat with previous history to empty chat
-     * - From chat with previous history to another chat with different previous history
+     * Detect initial render of previous chat history.
      * Initial render is detected when there are nodes added and removed in the chat container.
      */
     async detectInitialRender() {
@@ -135,9 +131,25 @@ export default class ChatObserver {
             childList: true,
             subtree: this.subtree,
         });
+        // If last replay container is provided, observe that as well
+        this.lastReplayContainer && initialRenderObserver.observe(this.lastReplayContainer, {
+            childList: true,
+            subtree: this.subtree,
+        });
     }
     /**
-     * Wait until finish rendering previous chat history
+     * Wait until the initial render of previous chat history is completed, then execute `postInitialRender` callback.
+     * 
+     * Initial render is the chat rendering when user first open the chat page with previous chat history,
+     * or switch between different chats with previous chat history.
+     * After initial render is completed, execute `postInitialRender` callback.
+     * Then start detecting for next initial render.
+     
+    * Few chat switch that may happen:
+     * - From empty chat to chat with previous history - `postInitialRender` is executed during `connect` function. 
+     * - From chat with previous history to empty chat - no intial render.
+     * - From chat with previous history to another chat with different previous history - initial render needs to be detected. 
+     * Initial render is detected when there are nodes added and removed in the chat container.
      */
     async waitForInitialRender() {
         this.pl.utils.devLog("[ChatObserver] Waiting for initial render to complete...");
