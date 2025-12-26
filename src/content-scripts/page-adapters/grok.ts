@@ -2,8 +2,6 @@ import { Keybinds } from "../keybind-manager";
 import PageLive from "../pagelive";
 import ChatObserver from "../chat-observer";
 import { Chat } from "../../types/chat";
-import { isArrayBuffer } from "util/types";
-import { platform } from "os";
 
 const grokAdapter = async () => {
     const pl = new PageLive();
@@ -18,6 +16,9 @@ const grokAdapter = async () => {
     // Grok specific ref to the last replay container, containing the latest prompt and response
     let lastReplayContainer: HTMLElement | null = null;
     let chatInput: HTMLElement | null = null;
+    // Side nav element
+    let sideNavElement: HTMLElement | null = null;
+    let newChatButton: HTMLElement | null = null;
 
     const construct = async () => {
         pl.page.name = "grok";
@@ -33,25 +34,12 @@ const grokAdapter = async () => {
 
         pl.initialAnnounceInfo.push("grok");
 
-        // new response will be added to the 2nd div under the `lastReplyContainer`
-        // if (lastReplayContainer === null) return;
-        // let newResponseContParent = lastReplayContainer?.children[1] as HTMLElement | null;
-        // console.log(lastReplayContainer);
-        // console.log(lastReplayContainer?.children);
-        // console.log(lastReplayContainer.children.length);
-        // console.log(lastReplayContainer.children.item(0));
-        // console.log(lastReplayContainer.children.item(1));
-        // console.log(lastReplayContainer.querySelectorAll('[id^="response-"]'));
-        // if (!newResponseContParent) {
-        //     pl.utils.prodWarn("Could not find new response container parent - 836");
-        //     newResponseContParent = null; // Will make ChatObserver not fully functional, but avoid crash
-        // }
-        // newResponseContParent = lastReplayContainer;
-
         // Add keyboard shortcuts
         pl.utils.devLog("Registering keybinds..");
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, focusChatInput);
         pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, announceLastResponse);
+        // Add keybind: New chat
+        if (newChatButton) pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
 
         // Add callback to be executed the next time dialog is shown
         pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen;
@@ -129,16 +117,25 @@ const grokAdapter = async () => {
             }
             return chatInput;
         },
+        sideNavElement: async () => {
+            sideNavElement = await pl.utils.waitForAnElement('div[data-sidebar="sidebar"]', 12e3) as HTMLElement;
+            if (!sideNavElement) {
+                throw new Error("Failed waiting for side nav element - 9287");
+            }
+            return sideNavElement;
+        },
         all: async () => {
             // !IMPORTANT!: The order matters here, chatContainerParent must be waited first
             return await waitFor.chatContainerParent()
                 && await waitFor.chatInput()
+                && await waitFor.sideNavElement();
         }
     }
 
     /**
-     * A collection to validate & requery various elements. 
-     * This is not meant to be used during initialization. Return false if element can not be resolved.
+     * A collection to validate & re-query various elements. 
+     * Return false if element can not be resolved. Note that some elements may be optional.
+     * Each of function is not mandatory - will not throw error when failed. 
      */
     const resolve = {
         chatContainerParent: async () => {
@@ -168,7 +165,7 @@ const grokAdapter = async () => {
             if (!chatContainer || !chatContainer.isConnected) {
                 if (chatContainer && !chatContainer.isConnected) pl.utils.devLog("Chat container is not connected - 923");
 
-                resolve.chatContainerParent();
+                await resolve.chatContainerParent();
                 if (!chatContainerParent) {
                     chatContainer = null;
                     return false;
@@ -207,11 +204,43 @@ const grokAdapter = async () => {
             }
             return true;
         },
+        sideNavElement: async () => {
+            if (!sideNavElement || !sideNavElement.isConnected) {
+                pl.utils.prodWarn("Side nav element is null or not connected - 2170");
+                sideNavElement = await waitFor.sideNavElement();
+            }
+            if (!sideNavElement) {
+                pl.utils.prodWarn("Could not find side nav element - 2126");
+                sideNavElement = null;
+                return false;
+            }
+            return true;
+        },
         all: async () => {
             return await resolve.chatContainerParent()
                 && await resolve.chatInput()
                 && await resolve.chatContainer()
-                && await resolve.lastReplayContainer();
+                && await resolve.lastReplayContainer()
+                && await resolve.sideNavElement()
+                && await resolve.newChatButton();
+        },
+        newChatButton: async () => {
+            await resolve.sideNavElement();
+            if (!sideNavElement) {
+                pl.utils.prodWarn("Side nav element is null when resolving new chat button - 5797");
+                return false;
+            }
+
+            if (!newChatButton || !newChatButton.isConnected) {
+                if (newChatButton && !newChatButton.isConnected) pl.utils.devLog("New chat button is not connected - 2881");
+                newChatButton = sideNavElement.querySelector('a[href="\/"]') as HTMLElement;
+            }
+            if (!newChatButton) {
+                pl.utils.prodWarn("Could not find new chat button - 9232");
+                newChatButton = null;
+                return false;
+            }
+            return true;
         }
     }
     const focusChatInput = async () => {
@@ -316,6 +345,29 @@ const grokAdapter = async () => {
             pl.announce({ msg, o: true });
         } else pl.utils.devLog("No previous responses loaded.");
     }
+    /**
+     * Start new chat, by clicking a button on side nav.
+     */
+    async function startNewChat() {
+        await resolve.newChatButton();
+        if (!newChatButton) {
+            const msg = "Failed to find the new chat button";
+            pl.utils.prodWarn(msg);
+            pl.announce({ msg, o: true });
+            return;
+        }
+
+        // Close all dialogs / modals first
+        await closeAllDialogsAndModals();
+        // Click the toogle button and wait a little
+        pl.announce({ msg: "Start new chat", o: true });
+        await new Promise(r => setTimeout(r, 250));
+        newChatButton.click();
+    }
+    async function closeAllDialogsAndModals() {
+        await pl.pageInfoDialog.close();
+    }
+
     await construct();
 }
 

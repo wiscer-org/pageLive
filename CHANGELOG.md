@@ -7,9 +7,11 @@
 - Change keybind `Ctrl + /` to `Alt + /` to avoid collission with default existing keybind.
 - Init Grok page adapter
 - Grok: Add keybind to focus on chat input.
+- Grok: Add keybind to start new chat.
 - Grok: Implement `ChatObserver` class.
 
 ### On Progress
+
 
 ### Planned
 
