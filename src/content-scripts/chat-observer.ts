@@ -1,3 +1,4 @@
+import { clear } from "console";
 import PageLive from "./pagelive"
 
 /**
@@ -39,16 +40,33 @@ export default class ChatObserver {
     isResponseContainer: (n: Node) => boolean;
     // Used to parse the response element from a response container element
     parseResponseElement: (el: HTMLElement) => HTMLElement | null;
-    // Callback to be executed after the initial previous chat has been rendered
-    postInitialRender: () => Promise<void>;
+    /**
+     * Performs post-initialization rendering tasks after the initial render is complete.
+     * Can be use to announce how many responses are rendered.
+     * 
+     * @param prevResponseConts - Array of HTML elements representing response containers before the initial render
+     * @param disconnectedResponseConts - Array of HTML elements representing response containers that have been disconnected from the DOM
+     * @param currentResponseConts - Array of HTML elements representing the currently active response containers in the DOM
+     * @returns A promise that resolves when the post-initial render operations are complete
+     */
+    postInitialRender: (
+        prevResponseConts: HTMLElement[]
+        , disconnectedResponseConts: HTMLElement[]
+        , currentResponseConts: HTMLElement[]) => Promise<void>;
     // Options for observing chat container. Default not to observe subtree for performance reason.
     subtree: boolean = false;
+    // Response containers mapped from existing chat history
+    responseContainers: HTMLElement[] = [];
 
     constructor(
         pl: PageLive
         , isResponseContainer: (n: Node) => boolean
         , parseResponseElement: (el: HTMLElement) => HTMLElement | null
-        , postInitialRender: () => Promise<void>
+        , postInitialRender: (
+            prevResponseConts: HTMLElement[]
+            , disconnectedResponseConts: HTMLElement[]
+            , currentResponseConts: HTMLElement[]
+        ) => Promise<void>
         , subtree: boolean = false
     ) {
         this.pl = pl;
@@ -95,6 +113,9 @@ export default class ChatObserver {
         await this.pl.utils.untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds of idle time
         this.pl.utils.devLog("[ChatObserver] Chat container is now idle.");
 
+        // Map existing response containers
+        this.responseContainers = [];
+        // No previous responses and no removed responses
         await this.waitForInitialRender();
 
         // Attach observer to chat container to detect incoming response
@@ -107,26 +128,33 @@ export default class ChatObserver {
      * Initial render is detected when there are nodes added and removed in the chat container.
      */
     async detectInitialRender() {
-        let anyNodesAdded = false;
-        let anyNodesRemoved = false;
 
-        const initialRenderObserver = new MutationObserver((mutations, observer) => {
-            for (const mutation of mutations) {
-                if (mutation.type === "childList") {
-                    if (mutation.addedNodes.length > 0) anyNodesAdded = true;
-                    if (mutation.removedNodes.length > 0) anyNodesRemoved = true;
-                }
-                // If any nodes added and removed, that means there is an initial render
-                if (anyNodesAdded && anyNodesRemoved) {
-                    this.pl.utils.devLog("[ChatObserver] Initial render detected.");
-                    // Stop observing
-                    observer.disconnect();
-                    // Wait until finish rendering
-                    this.waitForInitialRender();
-                    break;
-                }
+        const initialRenderObserver = new MutationObserver(async (mutations, observer) => {
+            const prevResponseConts = this.responseContainers.slice(); // Clone the array
+            const prevResponseContCount = this.responseContainers.length;
+            const disconnectedResponseConts = await this.removeDisconnectedResponseContainers();
+            // To check if all previous response containers are removed
+            const cleanedResponseContCount = this.responseContainers.length;
+            await this.mapResponseContainers();
+            const currentResponseContCount = this.responseContainers.length;
+            console.log(`>>> Response containers count: ${prevResponseContCount} -> ${cleanedResponseContCount} -> ${currentResponseContCount}`);
+
+            // Mark that user switched from one chat (removed) to another chat (added)
+            const isInitialRender = (prevResponseConts.length > 0 && cleanedResponseContCount === 0 && currentResponseContCount > 0);
+            // Not initial render, but when user scrolls up more previous chat history can be added (nodes added only)
+            // We can safely assume that this happens if there are no nodes removed and more than 2 responses are added. However this will not catch the situtation when user scrolls up and only 1 response is added.
+            const isPreviousChatAdded = (prevResponseConts.length === cleanedResponseContCount && (currentResponseContCount - cleanedResponseContCount) > 1);
+
+            if (isInitialRender || isPreviousChatAdded) {
+                this.pl.utils.devLog("[ChatObserver] All previous response containers are removed - initial render detected.");
+                // Stop observing
+                observer.disconnect();
+                // Wait until finish rendering
+                this.waitForInitialRender(prevResponseConts, disconnectedResponseConts);
+                return;
             }
         });
+
         this.chatContainer && initialRenderObserver.observe(this.chatContainer, {
             childList: true,
             subtree: this.subtree,
@@ -151,17 +179,47 @@ export default class ChatObserver {
      * - From chat with previous history to another chat with different previous history - initial render needs to be detected. 
      * Initial render is detected when there are nodes added and removed in the chat container.
      */
-    async waitForInitialRender() {
+    async waitForInitialRender(
+        prevResponseConts: HTMLElement[] = []
+        , disconnectedResponseConts: HTMLElement[] = []
+    ) {
         this.pl.utils.devLog("[ChatObserver] Waiting for initial render to complete...");
         // Wait until chat container is idle
         if (this.chatContainer) {
             await this.pl.utils.untilElementIdle(this.chatContainer, 2e3); // Wait for 3 seconds of idle time
         }
         this.pl.utils.devLog("[ChatObserver] Initial render completed.");
+
+        // Note: Only if mapResponseContainers === 0, that means this function is called directly from `connect` function.
+        if (this.responseContainers.length === 0) await this.mapResponseContainers();
+
         // Execute post initial render callback
-        this.postInitialRender();
+        this.postInitialRender(prevResponseConts, disconnectedResponseConts, this.responseContainers);
         // Start detecting for next initial render
         this.detectInitialRender();
+    }
+    async mapResponseContainers() {
+        this.pl.utils.devLog("[ChatObserver] Mapping existing response containers...");
+
+        if (!this.chatContainer) {
+            this.pl.utils.prodWarn("[ChatObserver] Can not map response container - Chat container is null - 9281");
+            return;
+        }
+
+        // Find all response container elements within chat container
+        this.responseContainers = Array.from(this.chatContainer.querySelectorAll("*")).filter(n => this.isResponseContainer(n)).map(n => n as HTMLElement);
+        this.pl.utils.devLog(`[ChatObserver] Map response container - Found ${this.responseContainers.length} response containers.`);
+    }
+    async removeDisconnectedResponseContainers() {
+        const disconnected: HTMLElement[] = [];
+        this.responseContainers = this.responseContainers.filter(rc => {
+            if (!rc.isConnected) {
+                disconnected.push(rc);
+                return false;
+            }
+            return true;
+        });
+        return disconnected;
     }
     /**
     * Stop all observers and other processes. 
@@ -194,11 +252,11 @@ export default class ChatObserver {
         // Observer to 'catch' the `responseElement` that will be added during receving new response
         this.newResponseContObserver = new MutationObserver(async (mutationList, observer) => {
             // console.log("[ChatObserver] Mutation detected for new response container.");
-            // console.log(`[ChatObserver] number of children :`, this.chatContainer?.children.length);
+            // console.log(`[ChatObserver] number of children : `, this.chatContainer?.children.length);
             for (const mutation of mutationList) {
                 if (mutation.type === "childList") {
-                    console.log(`[ChatObserver] Added nodes:`, mutation.addedNodes.length);
-                    console.log(`[ChatObserver] Removed nodes:`, mutation.removedNodes.length);
+                    // console.log(`[ChatObserver] Added nodes: `, mutation.addedNodes.length);
+                    // console.log(`[ChatObserver] Removed nodes: `, mutation.removedNodes.length);
                 }
             }
 
@@ -318,9 +376,9 @@ export default class ChatObserver {
                 this.pl.utils.devLog(`[ChatObserver] Segments increased from ${prevSegmentsCount} to ${segmentsCount}`);
 
                 // announce the previous not yet announced segments
-                this.pl.utils.devLog(`[ChatObserver] lastAnnouncedSegment before :${lastAnnouncedSegment}`);
+                this.pl.utils.devLog(`[ChatObserver] lastAnnouncedSegment before : ${lastAnnouncedSegment}`);
                 lastAnnouncedSegment = await this.announceSegments(responseElement, lastAnnouncedSegment, secondLastSegmentIndex);
-                this.pl.utils.devLog(`[ChatObserver] lastAnnouncedSegment after :${lastAnnouncedSegment}`);
+                this.pl.utils.devLog(`[ChatObserver] lastAnnouncedSegment after : ${lastAnnouncedSegment}`);
 
                 // Schedule to announce the remaining not-yet-announced segments
                 remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, lastAnnouncedSegment, remainingTimeoutId, responseSegmentsObserver);
@@ -380,8 +438,8 @@ export default class ChatObserver {
         for (let c: number = lastAnnouncedSegment + 1; c <= lastIndex; c++) {
             // Type check
             if (!responseElement.children[c]) {
-                this.pl.utils.prodWarn(`[ChatObserver] Unable to find segment with index ${c}`);
-                this.pl.utils.prodWarn(`[ChatObserver] response element: ${responseElement}`);
+                this.pl.utils.prodWarn(`[ChatObserver] Unable to find segment with index ${c} `);
+                this.pl.utils.prodWarn(`[ChatObserver] response element: ${responseElement} `);
                 return lastAnnouncedSegment;
             }
             const segmentElement = responseElement.children[c] as HTMLElement;

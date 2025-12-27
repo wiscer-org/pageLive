@@ -325,25 +325,66 @@ const grokAdapter = async () => {
     /**
      * After the initial previous chat has been rendered
      */
-    const postInitialRender = async () => {
+    const postInitialRender = async (
+        prevResponseConts: HTMLElement[]
+        , disconnectedResponseConts: HTMLElement[]
+        , currentResponseConts: HTMLElement[]
+    ) => {
+
         // get all `chatUnit` elements
-        const chatUnits = await getChatUnitElements();
-        if (!chatUnits) {
-            pl.utils.devLog("No previous chat units found.");
-            return;
+        // const chatUnits = await getChatUnitElements();
+        // if (!chatUnits) {
+        //     pl.utils.devLog("No previous chat units found.");
+        //     return;
+        // }
+
+        // if (chatUnits.length % 2 !== 0) {
+        //     pl.utils.prodWarn(`Expected even number of chat units (prompts and responses), but got ${chatUnits.length}`);
+        //     console.log(chatUnits)
+        // }
+        // const totalResponses = chatUnits.length / 2;
+
+        // Possible scenarios:
+        // 1. Page load
+        // 2. User switched from one chat to another chat - all previous responses are removed, then new previous responses are added
+        // 3. User scrolled up to load more previous responses - only new previous responses are added
+        const isPageLoad = (prevResponseConts.length === 0
+            && disconnectedResponseConts.length === 0
+            && currentResponseConts.length > 0)
+            || false;
+        const isUserSwitched = (prevResponseConts.length > 0
+            && disconnectedResponseConts.length === prevResponseConts.length
+            && currentResponseConts.length > 0)
+            || false;
+        // The diff in length > 1 to avoid false positive when new response is added after user sent a prompt
+        const isUserScrolledUp = (disconnectedResponseConts.length === 0
+            && currentResponseConts.length - prevResponseConts.length > 1)
+            || false;
+
+        let msg = '';
+        if (isPageLoad || isUserSwitched)
+            msg = `${currentResponseConts.length} previous responses has been loaded`;
+        else if (isUserScrolledUp) {
+            const addedResponsesCount = currentResponseConts.length - prevResponseConts.length;
+            msg = `${addedResponsesCount} previous responses has been loaded by scrolling up`;
         }
 
-        if (chatUnits.length % 2 !== 0) {
-            pl.utils.prodWarn(`Expected even number of chat units (prompts and responses), but got ${chatUnits.length}`);
-            console.log(chatUnits)
-        }
-        const totalResponses = chatUnits.length / 2;
+        // console.log(">>> postInitialRender debug info:");
+        // console.log(`Previous responses count: ${prevResponseConts.length}`);
+        // console.log(`Disconnected responses count: ${disconnectedResponseConts.length}`);
+        // console.log(`Current responses count: ${currentResponseConts.length}`);
 
-        if (totalResponses > 0) {
-            let msg = `${totalResponses} responses loaded from previous chats`;
+        if (msg !== '') {
             pl.utils.devLog(msg);
             pl.announce({ msg, o: true });
         } else pl.utils.devLog("No previous responses loaded.");
+
+        // if (addedResponsesCount !== 0) {
+        //     let msg = `${addedResponsesCount} responses loaded from previous chats`;
+        //     if (addedResponsesCount < 0) msg = `${addedResponsesCount} responses removed from chat history`;
+        //     pl.utils.devLog(msg);
+        //     pl.announce({ msg, o: true });
+        // } else pl.utils.devLog("No previous responses loaded.");
     }
     /**
      * Start new chat, by clicking a button on side nav.
