@@ -196,7 +196,7 @@ export default class ChatObserver {
         // Execute post initial render callback
         this.postInitialRender(prevResponseConts, disconnectedResponseConts, this.responseContainers);
         // Start detecting for next initial render
-        this.detectInitialRender();
+        // this.detectInitialRender();
     }
     async mapResponseContainers() {
         this.pl.utils.devLog("[ChatObserver] Mapping existing response containers...");
@@ -323,7 +323,8 @@ export default class ChatObserver {
         // If provided, observe that specific element instead of the chat container.
         let container = this.chatContainer;
         if (this.lastReplayContainer) {
-            this.pl.utils.devLog("[ChatObserver] Using element, that is not chat container, to observe incoming response.");
+            this.pl.utils.devLog("[ChatObserver] Using `lastReplayContainer`, instead of `chatContainer`, to observe incoming response.");
+            console.log(this.lastReplayContainer)
             if (!this.lastReplayContainer.isConnected) this.pl.utils.prodWarn("[ChatObserver] Last replay container is not connected - 9284");
             else container = this.lastReplayContainer;
         }

@@ -294,16 +294,28 @@ const grokAdapter = async () => {
      * @returns boolean
      */
     const isResponseContainer = (node: Node): boolean => {
-        if (!(node instanceof HTMLElement)) return false;
+        console.log("Testing node for response container:", node);
+        if (!(node instanceof HTMLElement)) {
+            pl.utils.devLog("Node is not an HTMLElement - 831");
+            return false;
+        }
         // Check if the node matches the expected structure of response container
         // For Grok, we assume the response container has a specific class or structure
         // Here we use a placeholder condition; replace it with actual logic as needed
-        if (node.tagName.toLowerCase() === 'div' &&
-            node.id?.startsWith('response-') &&
-            node.classList.contains('items-start')) {
+
+        // Node is a response container if has descendant with id starting with 'response-'
+        if (node.querySelector(".items-start[id^='response-']")) {
             pl.utils.devLog("Node is a response container, has id ^='response-'");
             return true;
         }
+
+        // if (node.tagName.toLowerCase() === 'div' &&
+        //     node.id?.startsWith('response-') &&
+        //     node.classList.contains('items-start')) {
+        //     pl.utils.devLog("Node is a response container, has id ^='response-'");
+        //     return true;
+        // }
+
         // if (node.querySelector('.items-start')) {
         //     pl.utils.devLog("Node is a response container via items-start class");
         //     return true;
@@ -320,7 +332,12 @@ const grokAdapter = async () => {
             pl.utils.prodWarn("Response container is not an HTMLElement - 1053");
             return null;
         }
-        return responseContainer.querySelector('div.message-bubble > div > div.response-content-markdown') as HTMLElement;
+        const el = responseContainer.querySelector('div.message-bubble > div > div > div.response-content-markdown') as HTMLElement;
+        if (!el) {
+            pl.utils.prodWarn("Could not find response content markdown element inside response container - 1060");
+            return null;
+        }
+        return el;
     }
     /**
      * After the initial previous chat has been rendered
