@@ -12,7 +12,7 @@ export type KeybindDetailKeys = {
 // Detail of keybinds, which will be used to register the keybinds
 type KeybindDetail = {
     description: string; // A brief description of the keybind's purpose
-    action: () => void; // The function to execute when the keybind is triggered
+    action: () =>  void; // The function to execute when the keybind is triggered
     keys: KeybindDetailKeys; // Optional: The keys used in the keybind, if applicable
 }
 
@@ -26,6 +26,7 @@ export enum Keybinds {
     AnnounceLastResponse = 'Ctrl + Shift + Enter', // Announce the last response
     NewChat = 'Ctrl + Alt + O', // Start new chat
     ContentMapToggle = "Ctrl + M", // Toggle content map
+    ToggleSidebar = "Ctrl + Shift + S", // Toggle sidebar
 }
 
 /**
@@ -118,6 +119,19 @@ const createKeybindDetail = (
                     ctrlKey: true,
                     shiftKey: false,
                     key: 'm',
+                    altKey: false,
+                    metaKey: false,
+                }
+            };
+            break;
+        case Keybinds.ToggleSidebar:
+            keybindDetail = {
+                description: description || 'Toggle Content Map',
+                action: action,
+                keys: {
+                    ctrlKey: true,
+                    shiftKey: true,
+                    key: 's',
                     altKey: false,
                     metaKey: false,
                 }

@@ -19,6 +19,7 @@ const grokAdapter = async () => {
     // Side nav element
     let sideNavElement: HTMLElement | null = null;
     let newChatButton: HTMLElement | null = null;
+    let toggleSidebarButton: HTMLElement | null = null;
 
     const construct = async () => {
         pl.page.name = "grok";
@@ -40,6 +41,8 @@ const grokAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, announceLastResponse);
         // Add keybind: New chat
         if (newChatButton) pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
+        // Add keybind: Toggle sidebar
+        pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toogleSidebar);
 
         // Add callback to be executed the next time dialog is shown
         pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen;
@@ -76,18 +79,18 @@ const grokAdapter = async () => {
             isChatContainerExistPrev = isChatContainerExistNow;
             await resolve.chatContainer();
             isChatContainerExistNow = chatContainer !== null;
-            
+
             // When chat container is added, connect the chatObserver
             if (isChatContainerExistPrev === false && isChatContainerExistNow === true) {
                 pl.utils.devLog("Chat container has been ADDED to the DOM");
                 resolve.lastReplayContainer();
-                await chatObserver.connect(chatContainer!, lastReplayContainer);     
+                await chatObserver.connect(chatContainer!, lastReplayContainer);
             }
             // When chat container is removed, chatObserver should disconnect automatically via ChatObserver logic
 
 
 
-            
+
             // // First, check all mutations to see if any directly affect @container/chat
             // let foundDirectMatch = false;
 
@@ -284,13 +287,16 @@ const grokAdapter = async () => {
             }
             return true;
         },
+
         all: async () => {
             return await resolve.chatContainerParent()
                 && await resolve.chatInput()
                 && await resolve.chatContainer()
                 && await resolve.lastReplayContainer()
                 && await resolve.sideNavElement()
-                && await resolve.newChatButton();
+                && await resolve.toggleSidebarButton()
+                && await resolve.newChatButton()
+                ;
         },
         newChatButton: async () => {
             await resolve.sideNavElement();
@@ -306,6 +312,23 @@ const grokAdapter = async () => {
             if (!newChatButton) {
                 pl.utils.prodWarn("Could not find new chat button - 9232");
                 newChatButton = null;
+                return false;
+            }
+            return true;
+        }
+        , toggleSidebarButton: async () => {
+            await resolve.sideNavElement();
+            if (!sideNavElement) {
+                pl.utils.prodWarn("Side nav element is null when resolving toggle sidebar button - 5797");
+                return false;
+            }
+            if (!toggleSidebarButton || !toggleSidebarButton.isConnected) {
+                pl.utils.prodWarn("Toggle sidebar button is null or not connected - 2830");
+                toggleSidebarButton = sideNavElement.querySelector('[data-sidebar="trigger"]');
+            }
+            if (!toggleSidebarButton) {
+                pl.utils.prodWarn("Could not find toggle sidebar button - 2126");
+                toggleSidebarButton = null;
                 return false;
             }
             return true;
@@ -493,6 +516,43 @@ const grokAdapter = async () => {
         pl.announce({ msg: "Start new chat", o: true });
         await new Promise(r => setTimeout(r, 250));
         newChatButton.click();
+    }
+    async function toogleSidebar() {
+        await resolve.sideNavElement();
+        await resolve.toggleSidebarButton();
+        if (!toggleSidebarButton) {
+            const msg = "Failed to find the toggle sidebar button";
+            pl.utils.prodWarn(msg);
+            pl.announce({ msg, o: true });
+            return;
+        }
+        // Close all dialogs / modals first
+        await closeAllDialogsAndModals();
+
+        // Click the toogle button and wait a little
+        await new Promise(r => setTimeout(r, 250));
+        toggleSidebarButton.click();
+
+        // We know if sidebar is expanded or collapsed by checking `data-state` attribute of the closest parent div
+        let msg = "Toggling sidebar";
+        const closestSidebarWrapper = toggleSidebarButton.closest('div[data-state]') as HTMLElement | null;
+        if (closestSidebarWrapper) {
+            const dataState = closestSidebarWrapper.getAttribute('data-state') || "empty data-state";
+            if (dataState === 'collapsed') msg = "Expanding sidebar";
+            else if (dataState === 'expanded') msg = "Collapsing sidebar";
+        }
+        pl.announce({ msg, o: true });
+
+        // If found, focus on the first anchor, button, or input inside the sidebar for better accessibility
+        if (sideNavElement) {
+            const focusableSelector = 'a, button, input, [tabindex]:not([tabindex="-1"])';
+            const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
+            // console.log("First focusable element in sidebar:", firstFocusable);
+            if (firstFocusable) {
+                firstFocusable.focus();
+                // console.log("Focused on the first focusable element in sidebar");
+            }
+        }
     }
     async function closeAllDialogsAndModals() {
         await pl.pageInfoDialog.close();
