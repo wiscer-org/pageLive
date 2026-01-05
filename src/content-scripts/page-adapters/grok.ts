@@ -387,9 +387,9 @@ const grokAdapter = async () => {
      * @returns boolean
      */
     const parseResponseContainer = (node: Node): HTMLElement | null => {
-        console.log("Testing node for response container:", node);
+        // console.log("Testing node for response container:", node);
         if (!(node instanceof HTMLElement)) {
-            pl.utils.devLog("Node is not an HTMLElement - 831");
+            // pl.utils.devLog("Node is not an HTMLElement - 831");
             return null;
         }
         // Check if the node matches the expected structure of response container
@@ -399,8 +399,8 @@ const grokAdapter = async () => {
         // When rendering new response: Node is a response container if has descendant with id starting with 'response-'
         const el = node.querySelector(".items-start[id^='response-']");
         if (el) {
-            pl.utils.devLog("Node is a response container, has id ^='response-'");
-            console.log(el);
+            // pl.utils.devLog("Node is a response container, has id ^='response-'");
+            // console.log(el);
             return el as HTMLElement;
         }
 
@@ -408,7 +408,7 @@ const grokAdapter = async () => {
         if (node.tagName.toLowerCase() === 'div' &&
             node.id?.startsWith('response-') &&
             node.classList.contains('items-start')) {
-            pl.utils.devLog("Node is a response container, has id ^='response-'");
+            // pl.utils.devLog("Node is a response container, has id ^='response-'");
             return node as HTMLElement;
         }
 

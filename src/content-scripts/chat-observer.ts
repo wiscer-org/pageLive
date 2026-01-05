@@ -387,7 +387,7 @@ export default class ChatObserver {
         this.responseSegmentsObserver = new MutationObserver(async (mutationList, responseSegmentsObserver) => {
             // Validate response element
             if (!responseElement.isConnected) {
-                this.pl.utils.prodWarn("[ChatObserver] Response element is no longer connected. Stopping observing new response segments - 9283");
+                this.pl.utils.devLog("[ChatObserver] Response element is no longer connected. Stopping observing new response segments - 9283");
                 this.onResponseComplete(responseSegmentsObserver);
                 return;
             }
@@ -510,7 +510,7 @@ export default class ChatObserver {
                 this.pl.announce({ msg: `Switch chat. Loaded ${this.responseContainers.length} previous responses.`, o: true });
 
             } else {
-                this.pl.announce({ msg: "Announcing response segments.", o: true });
+                this.pl.announce({ msg: "Grok replies :", o: true });
                 handleResponsesInMutation(mutationList, observer);
             }
             justStarted = false;
