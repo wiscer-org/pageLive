@@ -246,7 +246,7 @@ const grokAdapter = async () => {
                 chatContainer = chatContainerParent.querySelector('.\\@container\\/chat > div > div.items-center') as HTMLElement;
             }
             if (!chatContainer) {
-                // pl.utils.prodWarn("Could not find chat container - 961");
+                pl.utils.devLog("Could not find chat container - 961");
                 return false;
             }
             return true;
@@ -266,11 +266,11 @@ const grokAdapter = async () => {
         },
         chatInput: async () => {
             if (!chatInput || !chatInput.isConnected) {
-                pl.utils.prodWarn("Chat input is null or not connected - 204");
+                pl.utils.devLog("Chat input is null or not connected - 204");
                 chatInput = document.querySelector(".\\@container form div[contenteditable='true']") as HTMLElement;
             }
             if (!chatInput) {
-                pl.utils.prodWarn("Could not find chat input - 964");
+                pl.utils.devLog("Could not find chat input - 964");
                 chatInput = null;
                 return false;
             }
@@ -278,11 +278,11 @@ const grokAdapter = async () => {
         },
         sideNavElement: async () => {
             if (!sideNavElement || !sideNavElement.isConnected) {
-                pl.utils.prodWarn("Side nav element is null or not connected - 2170");
+                pl.utils.devLog("Side nav element is null or not connected - 2170");
                 sideNavElement = await waitFor.sideNavElement();
             }
             if (!sideNavElement) {
-                pl.utils.prodWarn("Could not find side nav element - 2126");
+                pl.utils.devLog("Could not find side nav element - 2126");
                 sideNavElement = null;
                 return false;
             }
@@ -302,7 +302,7 @@ const grokAdapter = async () => {
         newChatButton: async () => {
             await resolve.sideNavElement();
             if (!sideNavElement) {
-                pl.utils.prodWarn("Side nav element is null when resolving new chat button - 5797");
+                pl.utils.devLog("Side nav element is null when resolving new chat button - 5797");
                 return false;
             }
 
@@ -311,7 +311,7 @@ const grokAdapter = async () => {
                 newChatButton = sideNavElement.querySelector('a[href="\/"]') as HTMLElement;
             }
             if (!newChatButton) {
-                pl.utils.prodWarn("Could not find new chat button - 9232");
+                pl.utils.devLog("Could not find new chat button - 9232");
                 newChatButton = null;
                 return false;
             }
@@ -320,8 +320,8 @@ const grokAdapter = async () => {
         , toggleSidebarButton: async () => {
             await resolve.sideNavElement();
             if (!sideNavElement) {
-                // We use prodWarn here as this should not happen
-                pl.utils.prodWarn("Side nav element is null when resolving toggle sidebar button - 5797");
+                // No need to use prodWarn here as it is already warned in sideNavElement resolver
+                pl.utils.devLog("Side nav element is null when resolving toggle sidebar button - 5797");
                 return false;
             }
             if (!toggleSidebarButton || !toggleSidebarButton.isConnected) {
