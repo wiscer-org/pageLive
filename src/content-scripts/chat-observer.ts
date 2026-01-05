@@ -231,11 +231,11 @@ export default class ChatObserver {
             }
         }
 
-        this.pl.utils.devLog(`[ChatObserver] Map response container - Found ${this.responseContainers.length} response containers.`);
-        for (let i = 0; i < this.responseContainers.length; i++) {
-            const rc = this.responseContainers[i];
-            console.log(rc);
-        }
+        // this.pl.utils.devLog(`[ChatObserver] Map response container - Found ${this.responseContainers.length} response containers.`);
+        // for (let i = 0; i < this.responseContainers.length; i++) {
+        //     const rc = this.responseContainers[i];
+        //     console.log(rc);
+        // }
     }
     async removeDisconnectedResponseContainers() {
         const disconnected: HTMLElement[] = [];

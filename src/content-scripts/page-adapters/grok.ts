@@ -356,14 +356,18 @@ const grokAdapter = async () => {
         // Ensure we have the lastReplayContainer
         await resolve.lastReplayContainer();
         if (!lastReplayContainer) {
-            pl.utils.prodWarn("No last replay container found - 927");
+            pl.utils.devLog("No last replay container found - 927");
             return;
         }
 
+        if (!lastReplayContainer.children) {
+            pl.utils.devLog("Last replay container has no children - 4914");
+            return;
+        }
         // Prompt and response are both inside lastReplayContainer
-        if (!lastReplayContainer.children || lastReplayContainer.children.length < 2) {
-            pl.utils.prodWarn("Last replay container does not have enough children - 9832");
-            pl.utils.prodWarn("Last replay container children:");
+        if (lastReplayContainer.children.length < 2) {
+            pl.utils.devLog(`Last replay container children < 2, total: ${lastReplayContainer.children.length} - 3513`);
+            pl.utils.devLog("Last replay container children:");
             console.log(lastReplayContainer.children);
             return;
         }
