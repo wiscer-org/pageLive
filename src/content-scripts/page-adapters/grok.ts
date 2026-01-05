@@ -180,14 +180,14 @@ const grokAdapter = async () => {
             chatContainerParent = element as HTMLElement;
             return chatContainerParent;
         },
-        chatInput: async () => {
-            chatInput = await pl.utils.waitForAChildElement(chatContainerParent || document.body
-                , ".\\@container form div[contenteditable='true']");
-            if (!chatInput) {
-                throw new Error("Failed waiting for chat input - 307");
-            }
-            return chatInput;
-        },
+        // chatInput: async () => {
+        //     chatInput = await pl.utils.waitForAChildElement(chatContainerParent || document.body
+        //         , ".\\@container form div[contenteditable='true']");
+        //     if (!chatInput) {
+        //         throw new Error("Failed waiting for chat input - 307");
+        //     }
+        //     return chatInput;
+        // },
         sideNavElement: async () => {
             sideNavElement = await pl.utils.waitForAnElement('div[data-sidebar="sidebar"]', 12e3) as HTMLElement;
             if (!sideNavElement) {
@@ -198,7 +198,7 @@ const grokAdapter = async () => {
         all: async () => {
             // !IMPORTANT!: The order matters here, chatContainerParent must be waited first
             return await waitFor.chatContainerParent()
-                && await waitFor.chatInput()
+                // && await waitFor.chatInput()
                 && await waitFor.sideNavElement();
         }
     }
