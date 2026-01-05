@@ -40,7 +40,7 @@ const grokAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, focusChatInput);
         pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, announceLastResponse);
         // Add keybind: New chat
-        if (newChatButton) pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
+        pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
         // Add keybind: Toggle sidebar
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toogleSidebar);
 
