@@ -226,6 +226,7 @@ const grokAdapter = async () => {
                 //     , 'main.\\@container') as HTMLElement;
             }
             if (!chatContainerParent) {
+                // We use prodWarn here as this is critical
                 pl.utils.prodWarn("Could not find chat container parent - 948");
                 chatContainerParent = null;
                 return false;
@@ -257,7 +258,7 @@ const grokAdapter = async () => {
                 lastReplayContainer = chatContainerParent?.querySelector('#last-reply-container') as HTMLElement;
             }
             if (!lastReplayContainer) {
-                pl.utils.prodWarn("Could not find last replay container - 976");
+                pl.utils.devLog("Could not find last replay container - 976");
                 lastReplayContainer = null;
                 return false;
             }
@@ -319,15 +320,16 @@ const grokAdapter = async () => {
         , toggleSidebarButton: async () => {
             await resolve.sideNavElement();
             if (!sideNavElement) {
+                // We use prodWarn here as this should not happen
                 pl.utils.prodWarn("Side nav element is null when resolving toggle sidebar button - 5797");
                 return false;
             }
             if (!toggleSidebarButton || !toggleSidebarButton.isConnected) {
-                pl.utils.prodWarn("Toggle sidebar button is null or not connected - 2830");
+                pl.utils.devLog("Toggle sidebar button is null or not connected - 2830");
                 toggleSidebarButton = sideNavElement.querySelector('[data-sidebar="trigger"]');
             }
             if (!toggleSidebarButton) {
-                pl.utils.prodWarn("Could not find toggle sidebar button - 2126");
+                pl.utils.devLog("Could not find toggle sidebar button - 2126");
                 toggleSidebarButton = null;
                 return false;
             }
