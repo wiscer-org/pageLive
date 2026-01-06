@@ -420,7 +420,7 @@ const grokAdapter = async () => {
 
         // Sometimes grok gives 2 responses, asking users which one is better.
         // Each of the response will be inside a `div.@container/split-chat` element
-        el = node.querySelector('div.@container\\/split-chat');
+        el = node.querySelector('div.\\@container\\/split-chat');
         if (el) {
             pl.announce({ msg: "Detected multiple responses.", o: true });
             return el as HTMLElement;
