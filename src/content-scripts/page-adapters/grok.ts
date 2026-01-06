@@ -373,16 +373,18 @@ const grokAdapter = async () => {
         }
 
         const lastResponseContainer = lastReplayContainer.children[1] as HTMLElement;
-        const messageBubble = lastResponseContainer.querySelector('div.message-bubble');
-        if (messageBubble) {
-            let msg = messageBubble.innerHTML || '';
+        // Use `.response-content-markdown` directly as Grok does not use `.message-bubble` on multiple responses
+        // const messageBubble = lastResponseContainer.querySelector('div.message-bubble');
+        const responseContentMarkdown = lastResponseContainer.querySelector('div.response-content-markdown')
+        if (responseContentMarkdown) {
+            let msg = responseContentMarkdown.innerHTML || '';
             pl.utils.devLog("Reading last response");
             pl.announce({ msg: "Reading last response.", o: true });
             pl.announce({ msg, o: true });
             pl.announce({ msg: "End of last response.", o: true });
         } else {
             pl.announce({ msg: "No last response is found.", o: true });
-            pl.utils.prodWarn("Latest response element does not contain message-bubble - 982");
+            pl.utils.devLog("Latest response element does not contain response-content-markdown - 982");
         }
     }
     /**
@@ -401,7 +403,7 @@ const grokAdapter = async () => {
         // Here we use a placeholder condition; replace it with actual logic as needed
 
         // When rendering new response: Node is a response container if has descendant with id starting with 'response-'
-        const el = node.querySelector(".items-start[id^='response-']");
+        let el = node.querySelector(".items-start[id^='response-']");
         if (el) {
             // pl.utils.devLog("Node is a response container, has id ^='response-'");
             // console.log(el);
@@ -414,6 +416,14 @@ const grokAdapter = async () => {
             node.classList.contains('items-start')) {
             // pl.utils.devLog("Node is a response container, has id ^='response-'");
             return node as HTMLElement;
+        }
+
+        // Sometimes grok gives 2 responses, asking users which one is better.
+        // Each of the response will be inside a `div.@container/split-chat` element
+        el = node.querySelector('div.@container\\/split-chat');
+        if (el) {
+            pl.announce({ msg: "Detected multiple responses.", o: true });
+            return el as HTMLElement;
         }
 
         // if (node.querySelector('.items-start')) {
@@ -429,12 +439,14 @@ const grokAdapter = async () => {
      */
     const parseResponseElement = (responseContainer: HTMLElement): HTMLElement | null => {
         if (!(responseContainer instanceof HTMLElement)) {
-            pl.utils.prodWarn("Response container is not an HTMLElement - 1053");
+            pl.utils.devLog("Response container is not an HTMLElement - 1053");
             return null;
         }
-        const el = responseContainer.querySelector('div.message-bubble > div > div > div.response-content-markdown') as HTMLElement;
+        // We remove the `.message-bubble` part as Grok not using this class on multiple response (ask users for preference)
+        // const el = responseContainer.querySelector('div.message-bubble > div > div > div.response-content-markdown') as HTMLElement;
+        const el = responseContainer.querySelector('div > div.response-content-markdown') as HTMLElement;
         if (!el) {
-            pl.utils.prodWarn("Could not find response content markdown element inside response container - 1060");
+            pl.utils.devLog("Could not find response content markdown element inside response container - 1060");
             return null;
         }
         return el;
