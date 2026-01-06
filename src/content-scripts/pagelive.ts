@@ -208,6 +208,32 @@ export default class PageLive {
             console.warn('[PageLive] Announce container not found. Cannot announce message.');
         }
     }
+    /**
+     * A simplified function of `announce`
+     */
+    speak(msg: string) {
+        if (!this.announceContainer) {
+            this.utils.prodWarn('Announce container not found when calling speak().');
+            return;
+        }
+        if (this.announceContainer.isConnected === false) {
+            this.utils.prodWarn('Announce container is not connected when calling speak().');
+            return;
+        }
+
+        // Announce the message
+        const msgDiv = document.createElement('div');
+        msgDiv.innerHTML = msg;
+
+        this.announceContainer.appendChild(msgDiv);
+        setTimeout(() => {
+            this.announceContainer.removeChild(msgDiv);
+        }, this.announceItemTimeout);
+    }
+    /**
+     * Function to give consistency when focusing chat input element. 
+     * @param chatInput The chat input element to be focused.
+     */
     async focusChatInput(chatInput: HTMLElement | null) {
         if (!chatInput || !chatInput.isConnected) {
             this.announce({ msg: "Chat input not found", o: false })
