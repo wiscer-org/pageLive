@@ -419,10 +419,22 @@ export default class ChatObserver {
         // Handle existing segments before observing new segments
         this.pl.utils.devLog(`[ChatObserver] Response element has ${prevSegmentsCount} existing segments before observing new segments.`);
         if (prevSegmentsCount > 0) {
-            // Announce now all segments excluding the last one
-            this.announceSegments(responseElement, lastAnnouncedSegment, prevSegmentsCount - 2);
+            // To allow SR quickly read the existing segments, we announce the first segments right away
+            lastAnnouncedSegment = await this.announceSegments(responseElement, lastAnnouncedSegment, 0);
+            if (prevSegmentsCount > 1) {
+                await new Promise(r => setTimeout(r, 500));
+                // Announce now all segments excluding the last one
+                console.log("After announce first segment, lastAnnouncedSegment: ", lastAnnouncedSegment);
+                // this.announceSegments(responseElement, lastAnnouncedSegment, prevSegmentsCount - 2);
+                remainingTimeoutId = this.delayAnnounceRemainingSegments(
+                    responseElement,
+                    lastAnnouncedSegment,
+                    remainingTimeoutId,
+                    this.responseSegmentsObserver
+                );
+            }
             // Schedule to announce the last segment.
-            remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, prevSegmentsCount - 2, remainingTimeoutId, this.responseSegmentsObserver);
+            // remainingTimeoutId = this.delayAnnounceRemainingSegments(responseElement, prevSegmentsCount - 2, remainingTimeoutId, this.responseSegmentsObserver);
         }
 
         // Observe
@@ -517,7 +529,7 @@ export default class ChatObserver {
         }
 
         const handleResponsesInMutation = async (mutationList: MutationRecord[], observer: MutationObserver) => {
-            console.log("Start handling response containers in mutation...");
+            this.pl.utils.devLog("Start handling response containers in mutation...");
             for (const mutation of mutationList) {
                 if (mutation.type === "childList") {
                     for (let c = 0; c < mutation.addedNodes.length; c++) {
