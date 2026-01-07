@@ -89,6 +89,7 @@ export default class ChatObserver {
         this.lastReplayContainer = lastReplayContainer;
 
         this.pl.utils.devLog("[ChatObserver] Connecting...");
+        this.pl.announce({ msg: "ChatObserver connecting..." });
 
         // Validate element ref
         if (!this.chatContainer) {
@@ -139,7 +140,6 @@ export default class ChatObserver {
             const persistedPrevResponseContCount = this.responseContainers.length;
             await this.mapResponseContainers();
             const currentResponseContCount = this.responseContainers.length;
-            console.log(`>>> Response containers count: ${prevResponseContCount} -> ${persistedPrevResponseContCount} -> ${currentResponseContCount}`);
 
             // Mark that user switched from one chat (removed) to another chat (added)
             const isInitialRender = (prevResponseConts.length > 0 && persistedPrevResponseContCount === 0 && currentResponseContCount > 0);
@@ -230,12 +230,6 @@ export default class ChatObserver {
                 this.responseContainers.push(rc);
             }
         }
-
-        // this.pl.utils.devLog(`[ChatObserver] Map response container - Found ${this.responseContainers.length} response containers.`);
-        // for (let i = 0; i < this.responseContainers.length; i++) {
-        //     const rc = this.responseContainers[i];
-        //     console.log(rc);
-        // }
     }
     async removeDisconnectedResponseContainers() {
         const disconnected: HTMLElement[] = [];
@@ -278,14 +272,6 @@ export default class ChatObserver {
 
         // Observer to 'catch' the `responseElement` that will be added during receving new response
         this.newResponseContObserver = new MutationObserver(async (mutationList, observer) => {
-            // console.log("[ChatObserver] Mutation detected for new response container.");
-            // console.log(`[ChatObserver] number of children : `, this.chatContainer?.children.length);
-            for (const mutation of mutationList) {
-                if (mutation.type === "childList") {
-                    // console.log(`[ChatObserver] Added nodes: `, mutation.addedNodes.length);
-                    // console.log(`[ChatObserver] Removed nodes: `, mutation.removedNodes.length);
-                }
-            }
 
             // Validate key elements
             if (!this.validate().all()) {
@@ -326,8 +312,6 @@ export default class ChatObserver {
 
                 // Parse the response element. Note: responseElement is the direct parent of the response segments
                 let responseElement = this.parseResponseElement(responseContainer);
-                // this.pl.utils.devLog("[ChatObserver] Response element parsed:");
-                // console.log(responseElement);
 
                 // If `responseElement` is found, start observing the new response segments
                 if (responseElement) {
@@ -351,7 +335,6 @@ export default class ChatObserver {
         let container = this.chatContainer;
         if (this.lastReplayContainer) {
             this.pl.utils.devLog("[ChatObserver] Using `lastReplayContainer`, instead of `chatContainer`, to observe incoming response.");
-            console.log(this.lastReplayContainer)
             if (!this.lastReplayContainer.isConnected) this.pl.utils.prodWarn("[ChatObserver] Last replay container is not connected - 9284");
             else container = this.lastReplayContainer;
         }
@@ -424,7 +407,7 @@ export default class ChatObserver {
             if (prevSegmentsCount > 1) {
                 await new Promise(r => setTimeout(r, 500));
                 // Announce now all segments excluding the last one
-                console.log("After announce first segment, lastAnnouncedSegment: ", lastAnnouncedSegment);
+                // console.log("After announce first segment, lastAnnouncedSegment: ", lastAnnouncedSegment);
                 // this.announceSegments(responseElement, lastAnnouncedSegment, prevSegmentsCount - 2);
                 remainingTimeoutId = this.delayAnnounceRemainingSegments(
                     responseElement,

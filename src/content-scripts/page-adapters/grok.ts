@@ -68,16 +68,22 @@ const grokAdapter = async () => {
     const onDialogOpen = async () => {
         pl.utils.devLog("Dialog opened on grok");
     }
-
+    /**
+     * Detect if chat container is added, and connect the chatObserver
+     */
     const observeChatContainer = async () => {
-        resolve.chatContainer();
+        resolve.chatContainer("observeChatContainer init");
         let isChatContainerExistPrev = chatContainer !== null;
         let isChatContainerExistNow = isChatContainerExistPrev;
 
         const chatContainerObserver = new MutationObserver(async (mutations) => {
             // Note: The chat container will be added as descendant of `main.@container`
-            isChatContainerExistPrev = isChatContainerExistNow;
-            await resolve.chatContainer();
+
+            // If chat container has been disconnected, previous chat container existence is false
+            isChatContainerExistPrev = isChatContainerExistNow
+                && chatContainer !== null
+                && chatContainer?.isConnected;
+            await resolve.chatContainer("chatContainerObserver triggered");
             isChatContainerExistNow = chatContainer !== null;
 
             // When chat container is added, connect the chatObserver
@@ -85,71 +91,10 @@ const grokAdapter = async () => {
                 pl.utils.devLog("Chat container has been ADDED to the DOM");
                 resolve.lastReplayContainer();
                 await chatObserver.connect(chatContainer!, lastReplayContainer);
+            } else if (isChatContainerExistPrev === true && isChatContainerExistNow === false) {
+                // When chat container is removed, chatObserver should disconnect automatically via ChatObserver logic
+                pl.utils.devLog("Chat container has been REMOVED from the DOM");
             }
-            // When chat container is removed, chatObserver should disconnect automatically via ChatObserver logic
-
-
-
-
-            // // First, check all mutations to see if any directly affect @container/chat
-            // let foundDirectMatch = false;
-
-            // for (const mutation of mutations) {
-            //     // Debug: log all mutations to understand what's happening
-            //     if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-            //         for (const node of mutation.addedNodes) {
-            //             if (node instanceof HTMLElement) {
-            //                 // Direct match: the added node itself has @container/chat class
-            //                 if (node.classList.contains('@container/chat')) {
-            //                     pl.utils.devLog("+++++ FOUND: @container/chat ELEMENT directly added as childList mutation");
-            //                     console.log("Added node:", node);
-            //                     console.log("Parent of added node:", mutation.target);
-            //                     foundDirectMatch = true;
-            //                 }
-            //                 // Descendant match: the added node contains @container/chat
-            //                 const descendant = node.querySelector('.\\@container\\/chat');
-            //                 if (descendant) {
-            //                     pl.utils.devLog("+++++ FOUND: @container/chat found as DESCENDANT of added node");
-            //                     console.log("Added node containing @container/chat:", node);
-            //                     console.log("@container/chat descendant:", descendant);
-            //                     foundDirectMatch = true;
-            //                 }
-            //             }
-            //         }
-            //     }
-
-            //     // Check for class attribute mutations
-            //     if (mutation.type === "attributes" && mutation.attributeName === "class") {
-            //         const target = mutation.target as HTMLElement;
-            //         // FIX: Don't escape the class name in classList.contains()
-            //         if (target.classList.contains('@container/chat')) {
-            //             pl.utils.devLog("+++++ FOUND: @container/chat class added via attributes mutation");
-            //             console.log("Target with new @container/chat class:", target);
-            //             console.log("Old classes:", mutation.oldValue);
-            //             console.log("New classes:", target.getAttribute('class'));
-            //             foundDirectMatch = true;
-            //         }
-            //     }
-            // }
-
-            // // Now check if element exists via querySelector (as a final confirmation)
-            // let theElement = chatContainerParent?.querySelector('.\\@container\\/chat');
-            // isAtContainerChatExistPrev = isAtContainerChatExistNow;
-            // isAtContainerChatExistNow = theElement ? true : false;
-
-            // if (isAtContainerChatExistPrev === false && isAtContainerChatExistNow === true) {
-            //     pl.utils.devLog("+++++ TRANSITION: @container/chat has been ADDED to the DOM");
-            //     console.log("Current @container/chat element:", theElement);
-            //     if (foundDirectMatch) {
-            //         pl.utils.devLog("✓ Direct mutation match confirmed");
-            //     } else {
-            //         pl.utils.devLog("⚠ WARNING: Element exists but wasn't caught by mutation analysis");
-            //         pl.utils.devLog("This might mean the element was added before observer started or via timing issue");
-            //     }
-            // } else if (isAtContainerChatExistPrev === true && isAtContainerChatExistNow === false) {
-            //     pl.utils.devLog("+++++ TRANSITION: @container/chat has been REMOVED from the DOM");
-            // }
-
         });
 
         // const chatContainerParent = document.querySelector('[data-testid="drop-ui"]') as HTMLElement | null;
@@ -233,9 +178,13 @@ const grokAdapter = async () => {
             }
             return true;
         },
-        chatContainer: async () => {
+        /**
+         * @param intentMsg The message to display when chat container is null, not connected, or not found
+         */
+        chatContainer: async (intentMsg: string) => {
             if (!chatContainer || !chatContainer.isConnected) {
-                if (chatContainer && !chatContainer.isConnected) pl.utils.devLog("Chat container is not connected - 923");
+                if (!chatContainer) pl.utils.devLog(`Resolving chat container -7294. Intent: ${intentMsg}`);
+                if (chatContainer && !chatContainer.isConnected) pl.utils.devLog(`Chat container is not connected - 9233. Intent: ${intentMsg}`);
 
                 await resolve.chatContainerParent();
                 if (!chatContainerParent) {
@@ -246,7 +195,7 @@ const grokAdapter = async () => {
                 chatContainer = chatContainerParent.querySelector('.\\@container\\/chat > div > div.items-center') as HTMLElement;
             }
             if (!chatContainer) {
-                pl.utils.devLog("Could not find chat container - 961");
+                pl.utils.devLog(`Could not find chat container - 3961. Intent: ${intentMsg}`);
                 return false;
             }
             return true;
@@ -292,7 +241,7 @@ const grokAdapter = async () => {
         all: async () => {
             return await resolve.chatContainerParent()
                 && await resolve.chatInput()
-                && await resolve.chatContainer()
+                && await resolve.chatContainer("resolve all")
                 && await resolve.lastReplayContainer()
                 && await resolve.sideNavElement()
                 && await resolve.toggleSidebarButton()
@@ -345,7 +294,7 @@ const grokAdapter = async () => {
      * @returns NodeListOf<Element> | undefined
      */
     const getChatUnitElements = async (): Promise<NodeListOf<Element> | undefined> => {
-        await resolve.chatContainer();
+        await resolve.chatContainer("getChatUnitElements");
         if (!chatContainer) pl.utils.prodWarn("Chat container is null when getting chat unit elements - 1073");
         return chatContainer?.querySelectorAll('div[id^="response-"] > div.message-bubble > div.relative > div > div.response-content-markdown');
     }
