@@ -373,7 +373,11 @@ const grokAdapter = async () => {
         // Each of the response will be inside a `div.@container/split-chat` element
         el = node.querySelector('div.\\@container\\/split-chat');
         if (el) {
-            pl.announce({ msg: "Detected multiple responses.", o: true });
+            pl.speak("Detected multiple Grok responses.");
+            const responseElement = el.querySelector("div.response-content-markdown");
+            if(!responseElement) {
+                pl.utils.devLog("Could not find response content markdown in multiple responses container - 7450");
+            }
             return el as HTMLElement;
         }
 
