@@ -52,6 +52,7 @@ const grokAdapter = async () => {
             pl
             , parseResponseContainer
             , parseResponseElement
+            , beforeHandleResponsesInMutation
             , postInitialRender
         );
         if (chatContainer) {
@@ -399,6 +400,14 @@ const grokAdapter = async () => {
             return null;
         }
         return el;
+    }
+    const beforeHandleResponsesInMutation = async (
+        mutationList: MutationRecord[]
+        , observer: MutationObserver
+    ) => {
+        // Placeholder for any pre-processing before handling responses in mutation
+        // For example, logging or filtering mutations
+        pl.speak("Grok replies:");
     }
     /**
      * After the initial previous chat has been rendered

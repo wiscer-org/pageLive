@@ -39,7 +39,17 @@ export default class ChatObserver {
     // Used in MutationObserver callback to identify a response container element
     parseResponseContainer: (n: Node) => HTMLElement | null;
     // Used to parse the response element from a response container element
-    parseResponseElement: (el: HTMLElement) => HTMLElement | null;    /**
+    parseResponseElement: (el: HTMLElement) => HTMLElement | null;
+    // Function to be executed before new responses in mutation are handled
+    /**
+     * Performs pre-processing tasks before handling new responses detected in mutations.
+     * Can be used to announce, prepare or filter mutations before processing.
+     */
+    beforeHandleResponsesInMutation: (
+        mutationList: MutationRecord[]
+        , observer: MutationObserver
+    ) => Promise<void>;
+    /**
      * Performs post-initialization rendering tasks after the initial render is complete.
      * Can be use to announce how many responses are rendered.
      * 
@@ -51,7 +61,8 @@ export default class ChatObserver {
     postInitialRender: (
         prevResponseConts: HTMLElement[]
         , disconnectedResponseConts: HTMLElement[]
-        , currentResponseConts: HTMLElement[]) => Promise<void>;
+        , currentResponseConts: HTMLElement[]
+    ) => Promise<void>;
     // Options for observing chat container. Default not to observe subtree for performance reason.
     subtree: boolean = false;
     // Response containers mapped from existing chat history
@@ -61,6 +72,10 @@ export default class ChatObserver {
         pl: PageLive
         , parseResponseContainer: (n: Node) => HTMLElement | null
         , parseResponseElement: (el: HTMLElement) => HTMLElement | null
+        , beforeHandleResponsesInMutation: (
+            mutationList: MutationRecord[]
+            , observer: MutationObserver
+        ) => Promise<void>
         , postInitialRender: (
             prevResponseConts: HTMLElement[]
             , disconnectedResponseConts: HTMLElement[]
@@ -71,6 +86,7 @@ export default class ChatObserver {
         this.pl = pl;
         this.parseResponseContainer = parseResponseContainer;
         this.parseResponseElement = parseResponseElement;
+        this.beforeHandleResponsesInMutation = beforeHandleResponsesInMutation;
         this.postInitialRender = postInitialRender;
         this.subtree = subtree;
     }
@@ -503,7 +519,7 @@ export default class ChatObserver {
                 if (this.responseContainers.length > 0)
                     this.pl.announce({ msg: `Loaded ${this.responseContainers.length} previous responses.`, o: true });
             } else {
-                this.pl.announce({ msg: "Grok replies :", o: true });
+                await this.beforeHandleResponsesInMutation(mutationList, observer);
                 handleResponsesInMutation(mutationList, observer);
             }
             justStarted = false;
