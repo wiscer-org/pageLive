@@ -126,7 +126,7 @@ const createKeybindDetail = (
             break;
         case Keybinds.ToggleSidebar:
             keybindDetail = {
-                description: description || 'Toggle Content Map',
+                description: description || 'Toggle Sidebar',
                 action: action,
                 keys: {
                     ctrlKey: true,
