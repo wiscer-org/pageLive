@@ -114,7 +114,6 @@ export default class ChatObserver {
         this.lastReplayContainer = lastReplayContainer;
 
         this.pl.utils.devLog("[ChatObserver] Connecting...");
-        this.pl.announce({ msg: "ChatObserver connecting..." });
 
         // Validate element ref
         if (!this.chatContainer) {
@@ -137,17 +136,10 @@ export default class ChatObserver {
         // Observe for response container addition
         this.observeResponseContainersRender();
 
-        // Wait until the chat history has completely rendered with the previous chat
-        // await this.pl.utils.untilElementIdle(this.chatContainer, 3e3); // Wait for 3 seconds of idle time
-        // this.pl.utils.devLog("[ChatObserver] Chat container is now idle.");
-
         // Map existing response containers
         // this.responseContainers = [];
         // No previous responses and no removed responses
         // await this.waitForInitialRender();
-
-        // Attach observer to chat container to detect incoming response
-        // await this.observeNewResponseContainer();
 
         this.pl.utils.devLog("[ChatObserver] Connected to chat container successfully.");
     }
@@ -493,6 +485,9 @@ export default class ChatObserver {
             // Data gathering
             const prevResponseContainers = this.responseContainers.slice(); // Clone the array
             const allHasBeenDisconnected = prevResponseContainers.every(rc => !rc.isConnected);
+
+            //FIXME: Sometimes upon receiving the first response, it is mistakenly as 'previous response', so it would say "1 previous response loaded"
+            // The received response should be treated as new response instead of previous response.
 
             for (let i = 0; i < prevResponseContainers.length; i++) {
                 const rc = prevResponseContainers[i];
