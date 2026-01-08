@@ -499,11 +499,9 @@ export default class ChatObserver {
             // this.pl.announce({ msg: `allHasBeenDisconnected: ${allHasBeenDisconnected}.`, o: false });
 
 
-            if (justStarted) {
-                this.pl.announce({ msg: `Loaded ${this.responseContainers.length} previous responses.`, o: true });
-            } else if (justSwitchChat) {
-                this.pl.announce({ msg: `Switch chat. Loaded ${this.responseContainers.length} previous responses.`, o: true });
-
+            if (justStarted || justSwitchChat) {
+                if (this.responseContainers.length > 0)
+                    this.pl.announce({ msg: `Loaded ${this.responseContainers.length} previous responses.`, o: true });
             } else {
                 this.pl.announce({ msg: "Grok replies :", o: true });
                 handleResponsesInMutation(mutationList, observer);
