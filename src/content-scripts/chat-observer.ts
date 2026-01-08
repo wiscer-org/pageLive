@@ -40,7 +40,14 @@ export default class ChatObserver {
     parseResponseContainer: (n: Node) => HTMLElement | null;
     // Used to parse the response element from a response container element
     parseResponseElement: (el: HTMLElement) => HTMLElement | null;
-    // Function to be executed before new responses in mutation are handled
+    /**
+     * Handles the situation when the response element cannot be found within a newly added response container.
+     * This function can be used to log warnings, attempt alternative parsing strategies, or notify the user.
+     * 
+     * @param rc - The newly added response container HTMLElement where the response element was not found.
+     * @returns A promise that resolves when the handling is complete.
+     */
+    handleResponseElementNotFound: (rc: HTMLElement) => Promise<void>;
     /**
      * Performs pre-processing tasks before handling new responses detected in mutations.
      * Can be used to announce, prepare or filter mutations before processing.
@@ -72,6 +79,7 @@ export default class ChatObserver {
         pl: PageLive
         , parseResponseContainer: (n: Node) => HTMLElement | null
         , parseResponseElement: (el: HTMLElement) => HTMLElement | null
+        , handleResponseElementNotFound: (rc: HTMLElement) => Promise<void>
         , beforeHandleResponsesInMutation: (
             mutationList: MutationRecord[]
             , observer: MutationObserver
@@ -86,6 +94,7 @@ export default class ChatObserver {
         this.pl = pl;
         this.parseResponseContainer = parseResponseContainer;
         this.parseResponseElement = parseResponseElement;
+        this.handleResponseElementNotFound = handleResponseElementNotFound;
         this.beforeHandleResponsesInMutation = beforeHandleResponsesInMutation;
         this.postInitialRender = postInitialRender;
         this.subtree = subtree;
@@ -540,7 +549,10 @@ export default class ChatObserver {
                             if (responseElement) {
                                 this.pl.utils.devLog("[ChatObserver][ResponseElement] Announcing response segments within the new response container.");
                                 this.observeNewResponseSegments(responseElement);
-                            } else this.pl.utils.prodWarn("[ChatObserver][ResponseElement] Unable to parse response element from the new response container.");
+                            } else {
+                                this.pl.utils.prodWarn("[ChatObserver][ResponseElement] Unable to parse response element from the new response container.");
+                                if (this.handleResponseElementNotFound) await this.handleResponseElementNotFound(rc);
+                            }
                         }
                     }
                 }

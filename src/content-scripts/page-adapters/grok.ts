@@ -52,6 +52,7 @@ const grokAdapter = async () => {
             pl
             , parseResponseContainer
             , parseResponseElement
+            , handleResponseElementNotFound
             , beforeHandleResponsesInMutation
             , postInitialRender
         );
@@ -401,6 +402,18 @@ const grokAdapter = async () => {
         }
         return el;
     }
+    /**
+     * Handle the situation when the response element cannot be found within a newly added response container.
+     * @param rc 
+     */
+    const handleResponseElementNotFound = async (rc: HTMLElement) => {
+        // On error response element, .response-content-markdown will not exist
+        // In that case, just read the whole text content
+        if (rc.textContent) pl.speak(rc.textContent);
+    }
+    /**
+     * Handle mutation on chat container, which the added nodes maybe response containers
+     */
     const beforeHandleResponsesInMutation = async (
         mutationList: MutationRecord[]
         , observer: MutationObserver
