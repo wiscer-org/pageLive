@@ -74,6 +74,9 @@ export default class ChatObserver {
     subtree: boolean = false;
     // Response containers mapped from existing chat history
     responseContainers: HTMLElement[] = [];
+    // Whether expect previous responses to be rendered. If false, will treat all responses as new responses. 
+    // Set to true if the page just being loaded or user just switched between different chats.
+    expectPrevResponses: boolean = true;
 
     constructor(
         pl: PageLive
@@ -98,6 +101,9 @@ export default class ChatObserver {
         this.beforeHandleResponsesInMutation = beforeHandleResponsesInMutation;
         this.postInitialRender = postInitialRender;
         this.subtree = subtree;
+
+        // In 10 seconds after constructed, we no longer wait for previous responses to be rendered.
+        setTimeout(() => this.expectPrevResponses = false, 10e3);
     }
 
     /**
@@ -445,7 +451,10 @@ export default class ChatObserver {
     }
 
     /**
-     * Announce based on the event type of response container addition.
+     * Handle incoming response container.
+     * By default all incoming response containers are treated as new responses.
+     * However, when the page is first loaded or user just switched between different chats,
+     * we need to wait until all previous responses are rendered.
      */
     async observeResponseContainersRender() {
         let justStarted = true;
@@ -459,10 +468,49 @@ export default class ChatObserver {
                 return;
             }
 
-            timeout = scheduleAnnounceRendered(timeout, mutationList, observer)
-            return timeout
-        });
+            // timeout = scheduleAnnounceRendered(timeout, mutationList, observer)
+            // return timeout
 
+            // Decide if we need to wait for previous responses to be rendered
+            let needToWait = this.expectPrevResponses; // The case of just started the observer
+            if (this.expectPrevResponses) this.pl.speak("Page just loaded");
+            else this.pl.speak("PageLive: Not just loaded this page.");
+
+            // Now check if is this the case of user just switched between different chats
+            if (!needToWait) {
+                const prevRCs = this.responseContainers.slice(); // Clone the array
+                const isAllRCsDisconnected = prevRCs.every(rc => !rc.isConnected)
+
+                await this.mapResponseContainers();
+
+                // Check if chat has been switched. This is marked by all previous response containers are disconnected.
+                // In the situation of `lastReplayContainer` exist and prev chat has only 1 response, then user send prompt and received response,  all responses will be disconnected and. It similar with swith to a chat with previous chat count has only 1 and the loaded chat also only has 1 response.
+                const prevChatMinimumCount = this.lastReplayContainer ? 0 : 0;
+                // Below are the conditions to determine if user just switched chat
+                this.pl.speak(`Previous response containers: ${prevRCs.length}. Current response containers: ${this.responseContainers.length}.`);
+                this.pl.speak(`is all previous response containers disconnected: ${isAllRCsDisconnected}.`);
+                needToWait =
+                    prevRCs.length > prevChatMinimumCount
+                    && this.responseContainers.length > 0
+                    && isAllRCsDisconnected;
+
+                // Let user know if previous chat has been removed
+                if (isAllRCsDisconnected && prevRCs.length > 0)
+                    this.pl.speak(`Chat is cleared. Loading new chat..`);
+
+            }
+
+            if (needToWait) {
+                timeout = scheduleAnnounceRendered(timeout, mutationList, observer);
+            } else {
+                await this.beforeHandleResponsesInMutation(mutationList, observer);
+                handleResponsesInMutation(mutationList, observer);
+                // announceRendered(mutationList, observer);
+            }
+        });
+        /**
+         * Schedule to announce previous responses has been rendered
+         */
         const scheduleAnnounceRendered = (
             timeout: ReturnType<typeof setTimeout> | undefined
             , mutationList: MutationRecord[]
@@ -472,9 +520,12 @@ export default class ChatObserver {
                 clearTimeout(timeout);
                 timeout = undefined;
             }
-            timeout = setTimeout(() => {
-                announceRendered(mutationList, observer);
-            }, 2e3);
+            timeout = setTimeout(async () => {
+                // announceRendered(mutationList, observer);
+
+                await this.mapResponseContainers();
+                this.pl.speak(`${this.responseContainers.length} previous responses have been rendered.`);
+            }, 4e3);
             return timeout;
         };
 
@@ -512,12 +563,12 @@ export default class ChatObserver {
 
             // this.pl.announce({ msg: `Previous response containers: ${prevResponseContainers.length} after mutation.`, o: true });
             // this.pl.announce({ msg: `Current response containers: ${this.responseContainers.length} after mutation.`, o: true });
+            // this.pl.announce({ msg: `allHasBeenDisconnected: ${allHasBeenDisconnected}.`, o: false });
 
             // this.pl.announce({ msg: `justSwitchChat: ${justSwitchChat}.`, o: false });
             // this.pl.announce({ msg: `prevResponseContainers.length: ${prevResponseContainers.length}.`, o: false });
-            // this.pl.announce({ msg: `this.responseContainers.length: ${this.responseContainers.length}.`, o: false });
-            // this.pl.announce({ msg: `allHasBeenDisconnected: ${allHasBeenDisconnected}.`, o: false });
 
+            // this.pl.announce({ msg: `this.responseContainers.length: ${this.responseContainers.length}.`, o: false });
 
             if (justStarted || justSwitchChat) {
                 if (this.responseContainers.length > 0)
