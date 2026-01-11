@@ -139,6 +139,9 @@ export default class ChatObserver {
             return;
         }
 
+        // Reset 
+        this.responseContainers = [];
+
         // Observe for response container addition
         this.observeResponseContainersRender();
 
@@ -477,9 +480,11 @@ export default class ChatObserver {
             else this.pl.speak("PageLive: Not just loaded this page.");
 
             // Now check if is this the case of user just switched between different chats
+            const prevRCs = this.responseContainers.slice(); // Clone the array
             if (!needToWait) {
-                const prevRCs = this.responseContainers.slice(); // Clone the array
-                const isAllRCsDisconnected = prevRCs.every(rc => !rc.isConnected)
+                // Check if all previous response containers, > 0, are disconnected
+                let isAllRCsDisconnected = false;
+                if (prevRCs.length > 0) isAllRCsDisconnected = prevRCs.every(rc => !rc.isConnected)
 
                 await this.mapResponseContainers();
 
@@ -491,8 +496,13 @@ export default class ChatObserver {
                 this.pl.speak(`is all previous response containers disconnected: ${isAllRCsDisconnected}.`);
                 needToWait =
                     prevRCs.length > prevChatMinimumCount
-                    && this.responseContainers.length > 0
                     && isAllRCsDisconnected;
+
+                // Also will wait if added response containers count > 0
+                if (!needToWait) {
+                    const addedRCs = this.responseContainers.filter(rc => !prevRCs.includes(rc));
+                    if (addedRCs.length > 0) needToWait = true;
+                }
 
                 // Let user know if previous chat has been removed
                 if (isAllRCsDisconnected && prevRCs.length > 0)
@@ -501,6 +511,8 @@ export default class ChatObserver {
             }
 
             if (needToWait) {
+                // If waiting for all responses to be rendered, we need to revert back the response containers to previous state
+                this.responseContainers = prevRCs;
                 timeout = scheduleAnnounceRendered(timeout, mutationList, observer);
             } else {
                 await this.beforeHandleResponsesInMutation(mutationList, observer);
