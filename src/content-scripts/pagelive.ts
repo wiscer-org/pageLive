@@ -94,7 +94,8 @@ export default class PageLive {
     }
     prepareToastContainer() {
         this.toastContainer.classList.add('pl-toast-container');
-        this.toastContainer.setAttribute('aria-live', 'polite');
+        this.toastContainer.setAttribute('aria-live', 'assertive');
+        this.toastContainer.setAttribute('aria-atomic', 'true');
         this.container.appendChild(this.toastContainer);
     }
     prepareNonFormDummyElement() {
