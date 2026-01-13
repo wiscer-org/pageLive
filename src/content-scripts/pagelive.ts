@@ -24,6 +24,8 @@ export default class PageLive {
     // Announce container element
     ANNOUNCE_CONTAINER_ID!: string;
     announceContainer!: HTMLDivElement;
+    // Toast container element
+    toastContainer!: HTMLDivElement;
     // Dummy non-form element to force SR to switch to browse mode
     dummySpanElement!: HTMLSpanElement;
     // Infos to be announced after the PageLive is initialized
@@ -52,6 +54,7 @@ export default class PageLive {
 
         this.container = document.createElement('div');
         this.announceContainer = document.createElement('div');
+        this.toastContainer = document.createElement('div');
         this.dummySpanElement = document.createElement('span');
 
         this.initialAnnounceInfo = [
@@ -85,7 +88,14 @@ export default class PageLive {
         // Prepare and ensure the announce container
         this.prepareAnnounceContainer();
 
+        this.prepareToastContainer();
+
         this.prepareNonFormDummyElement();
+    }
+    prepareToastContainer() {
+        this.toastContainer.classList.add('pl-toast-container');
+        this.toastContainer.setAttribute('aria-live', 'polite');
+        this.container.appendChild(this.toastContainer);
     }
     prepareNonFormDummyElement() {
         this.dummySpanElement = document.createElement("span");
@@ -229,6 +239,35 @@ export default class PageLive {
         setTimeout(() => {
             this.announceContainer.removeChild(msgDiv);
         }, this.announceItemTimeout);
+    }
+    toast(msg: string,
+        ariaHidden: boolean = false,
+        duration: number = 9e3) {
+        if (!this.toastContainer) {
+            this.utils.prodWarn('Toast container not found when calling toast().');
+            return;
+        }
+        if (this.toastContainer.isConnected === false) {
+            this.utils.prodWarn('Toast container is not connected when calling toast().');
+            return;
+        }
+
+        // Create the toast element
+        const toastDiv = document.createElement('div');
+        toastDiv.classList.add('pl-toast');
+        toastDiv.innerHTML = msg;
+        if (ariaHidden) {
+            toastDiv.setAttribute('aria-hidden', 'true');
+        } else {
+            toastDiv.setAttribute('role', 'status');
+            toastDiv.setAttribute('aria-live', 'polite');
+        }
+        this.toastContainer.appendChild(toastDiv);
+
+        // Remove the toast after the specified duration
+        setTimeout(() => {
+            this.toastContainer.removeChild(toastDiv);
+        }, duration);
     }
     /**
      * Function to give consistency when focusing chat input element. 

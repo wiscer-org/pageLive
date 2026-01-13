@@ -65,3 +65,57 @@ dialog.pl-el > footer {
 dialog.pl-el h2 {
   font-size: 1.5rem;
 }
+
+/* Toast notification styles */
+.pl-toast-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+  max-width: 90vw;
+}
+
+.pl-toast {
+  background: #ffd700;
+  color: #000;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 250px;
+  max-width: 500px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  pointer-events: auto;
+  animation: pl-toast-in 0.3s ease-out;
+}
+
+.pl-toast.pl-toast-out {
+  animation: pl-toast-out 0.3s ease-in forwards;
+}
+
+@keyframes pl-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pl-toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
