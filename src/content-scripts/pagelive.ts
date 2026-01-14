@@ -184,7 +184,7 @@ export default class PageLive {
     prepareAnnounceContainer() {
         // Ensure the announce container is present in the DOM
         this.announceContainer.id = this.ANNOUNCE_CONTAINER_ID;
-        this.announceContainer.setAttribute('aria-live', 'polite');
+        this.announceContainer.setAttribute('aria-live', 'assertive');
         this.container.appendChild(this.announceContainer);
     }
 
