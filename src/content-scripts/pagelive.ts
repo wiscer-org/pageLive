@@ -241,6 +241,14 @@ export default class PageLive {
             this.announceContainer.removeChild(msgDiv);
         }, this.announceItemTimeout);
     }
+    /**
+     * Speak used for dev
+     */
+    devSpeak(msg: string) {
+        if (this.isDev) {
+            this.speak(msg);
+        }
+    }
     toast(msg: string,
         ariaHidden: boolean = false,
         duration: number = 9e3) {
