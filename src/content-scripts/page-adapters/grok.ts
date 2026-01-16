@@ -20,6 +20,8 @@ const grokAdapter = async () => {
     let sideNavElement: HTMLElement | null = null;
     let newChatButton: HTMLElement | null = null;
     let toggleSidebarButton: HTMLElement | null = null;
+    // 'More' button, to trigger pop up containing 'delete chat' button
+    let moreButton: HTMLElement | null = null;
 
     const construct = async () => {
         pl.page.name = "grok";
@@ -33,7 +35,9 @@ const grokAdapter = async () => {
         // Validate elements, useful to query elements that are not included in the `waitFor` functions
         await resolve.all();
 
-        pl.initialAnnounceInfo.push("grok");
+        // pl.initialAnnounceInfo.push("grok");
+
+        await setClickListeners();
 
         // Add keyboard shortcuts
         pl.utils.devLog("Registering keybinds..");
@@ -43,6 +47,7 @@ const grokAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
         // Add keybind: Toggle sidebar
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toogleSidebar);
+        pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
 
         // Add callback to be executed the next time dialog is shown
         pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen;
@@ -58,11 +63,12 @@ const grokAdapter = async () => {
         );
         if (chatContainer) {
             pl.utils.devLog("Connecting to chat container during initialization..");
+            // Connect chat observer, and observe previous response containers as well
             await chatObserver.connect(chatContainer, lastReplayContainer);
         }
 
         // Observe chat container being added or removed
-        await observeChatContainer();
+        await observeForChatContainer();
         // await observeChatContainerXX();
 
         await pl.page.ready();
@@ -73,7 +79,7 @@ const grokAdapter = async () => {
     /**
      * Detect if chat container is added, and connect the chatObserver
      */
-    const observeChatContainer = async () => {
+    const observeForChatContainer = async () => {
         resolve.chatContainer("observeChatContainer init");
         let isChatContainerExistPrev = chatContainer !== null;
         let isChatContainerExistNow = isChatContainerExistPrev;
@@ -92,6 +98,7 @@ const grokAdapter = async () => {
             if (isChatContainerExistPrev === false && isChatContainerExistNow === true) {
                 pl.utils.devLog("Chat container has been ADDED to the DOM");
                 resolve.lastReplayContainer();
+                // Connect chat observer
                 await chatObserver.connect(chatContainer!, lastReplayContainer);
             } else if (isChatContainerExistPrev === true && isChatContainerExistNow === false) {
                 // When chat container is removed, chatObserver should disconnect automatically via ChatObserver logic
@@ -286,6 +293,26 @@ const grokAdapter = async () => {
             }
             return true;
         }
+        , moreButton: async () => {
+            let isValid = true;
+            if (!moreButton) {
+                pl.utils.devLog("More button is null - 7467");
+                isValid = false;
+            }
+            if (isValid && !moreButton?.isConnected) {
+                pl.utils.devLog("More button is not connected - 7471");
+                isValid = false;
+            }
+
+            if (!isValid) moreButton = document.querySelector(".\\@container\\/nav button[aria-label='More']");
+
+            if (!moreButton) {
+                pl.utils.devLog("Could not find more button - 7487");
+                moreButton = null;
+                return false;
+            }
+            return true;
+        }
     }
     const focusChatInput = async () => {
         await resolve.chatInput();
@@ -375,7 +402,7 @@ const grokAdapter = async () => {
         if (el) {
             pl.speak("Detected multiple Grok responses.");
             const responseElement = el.querySelector("div.response-content-markdown");
-            if(!responseElement) {
+            if (!responseElement) {
                 pl.utils.devLog("Could not find response content markdown in multiple responses container - 7450");
             }
             return el as HTMLElement;
@@ -545,6 +572,142 @@ const grokAdapter = async () => {
                 firstFocusable.focus();
                 // console.log("Focused on the first focusable element in sidebar");
             }
+        }
+    }
+    async function chatCurrentDelete() {
+        // If this is an empty chat, do nothing
+        if (isPageEmptyChat()) {
+            pl.toast("This is an empty chat, nothing to delete.");
+            return;
+        }
+
+        // Show confirmation dialog
+        if (!confirm("Are you sure to delete the current chat?")) return;
+
+        await resolve.moreButton();
+        if (!moreButton) {
+            const msg = "Failed to find the 'More' button";
+            pl.utils.prodWarn(msg);
+            pl.toast(msg);
+            return;
+        }
+
+        // Observe added nodes to find the pop up containing 'Delete chat' button
+        let observer = new MutationObserver((mutations, obs) => {
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    // Find every added node or the children of added nodes to find the 'Delete chat' text content
+                    let deleteChatButton: HTMLElement | null = null;
+                    if (node instanceof HTMLElement) {
+                        // Check the node itself
+                        if (node.tagName.toLowerCase() === 'div'
+                            && node.textContent?.trim().toLowerCase() === 'delete chat') {
+                            deleteChatButton = node as HTMLElement;
+                        } else {
+                            // Check the children of the node
+                            const menuItems = node.querySelectorAll("div[role='menuitem']");
+                            for (let i = 1; i < menuItems.length; i++) {
+                                const button = menuItems[i];
+                                if (button && button.textContent?.trim().toLowerCase() === 'delete chat') {
+                                    deleteChatButton = button as HTMLElement;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (deleteChatButton) {
+                        deleteChatButton.click();
+                        obs.disconnect();
+                        // Close all dialogs / modals first
+                        closeAllDialogsAndModals();
+                        pl.toast("Current chat has been deleted.");
+                    }
+                }
+            }
+        });
+
+        // Start observing the body for added nodes (pop ups)
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Click the 'More' button to open the pop up
+        // Note: works on "pointerdown", not works on "click". Just to be safe, include all.
+        ["pointerdown", "pointerup", "click"].forEach(type => {
+            if (!moreButton) return;
+            moreButton.dispatchEvent(
+                new PointerEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    // isTrusted: true,           // almost never works anymore, but worth trying
+                    pointerType: "mouse",
+                    clientX: 100,              // fake position sometimes helps
+                    clientY: 100
+                })
+            );
+        });
+    }
+    function isPageEmptyChat(url?: string | undefined): boolean {
+        if (!url) url = window.location.href;
+        // If url is the base url, it is an empty chat
+        const baseUrlPattern = /^https:\/\/grok\.com\/?$/;
+        if (baseUrlPattern.test(url)) {
+            return true;
+        }
+        return false;
+    }
+    async function setClickListeners() {
+        document.addEventListener('click', async (event) => {
+            const target = event.target as HTMLElement;
+            if (!target) return;
+
+            // Is it chat link from side nav ?
+            if (isChatLinkFromSideNav(target) || isChatLinkFromPopUp(target)) {
+                // Close all dialogs / modals first
+                await closeAllDialogsAndModals();
+                // Switching chat
+                chatObserver.connect(chatContainer!, lastReplayContainer);
+            }
+        });
+
+        /**
+         * Check whether the clicked element is a chat link from side nav
+         * Hierarchy of the link: a.peer/menu-button > span
+         */
+        const isChatLinkFromSideNav = (target: HTMLElement): boolean => {
+            // Is it the `a` element ?
+            if (target.classList?.contains('peer/menu-button')) return true;
+
+            // Maybe `target`is the `span` ?
+            const parent = target.parentElement;
+            if (target.tagName.toLowerCase() === "span"
+                && parent
+                && parent.classList?.contains('peer/menu-button'))
+                return true;
+
+            return false;
+        }
+
+        /**
+         * Check whether the clicked element is a chat link from pop up menu
+         * Hierarchy of the link: div[cmdk-item] > a
+         */
+        const isChatLinkFromPopUp = (target: HTMLElement): boolean => {
+            // Is it the div element ?
+            if (target.tagName.toLowerCase() === "div"
+                && target.getAttribute('cmdk-item') !== null)
+                return true;
+
+            // Is it the `a` element ?
+            const parent = target.parentElement;
+            if (target.tagName.toLowerCase() === "a"
+                && parent
+                && parent.getAttribute('cmdk-item') !== null)
+                return true;
+
+            return false;
         }
     }
     async function closeAllDialogsAndModals() {

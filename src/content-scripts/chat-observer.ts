@@ -1,5 +1,6 @@
 import { clear } from "console";
 import PageLive from "./pagelive"
+import { setUncaughtExceptionCaptureCallback } from "process";
 
 /**
 * This class features interaction with the chat container element of progressive chat based page, like gemini or grok.
@@ -77,6 +78,9 @@ export default class ChatObserver {
     // Whether expect previous responses to be rendered. If false, will treat all responses as new responses. 
     // Set to true if the page just being loaded or user just switched between different chats.
     expectPrevResponses: boolean = true;
+    // New RC observer
+    newRCObserver: MutationObserver | null = null;
+    prevRCObserver: MutationObserver | null = null;
 
     constructor(
         pl: PageLive
@@ -103,7 +107,13 @@ export default class ChatObserver {
         this.subtree = subtree;
 
         // In 10 seconds after constructed, we no longer wait for previous responses to be rendered.
+        this.expectPrevResponses = true;
         setTimeout(() => this.expectPrevResponses = false, 10e3);
+
+        // Observe for previous responses to be rendered
+        // this.pl.speak("Calling function to observe previous RCs...");
+        // this.observePrevRCs();
+
     }
 
     /**
@@ -115,6 +125,7 @@ export default class ChatObserver {
     async connect(
         chatContainer: HTMLElement | null
         , lastReplayContainer: HTMLElement | null
+        , shouldObservePrevRCs: boolean = true
     ): Promise<void> {
         this.chatContainer = chatContainer;
         this.lastReplayContainer = lastReplayContainer;
@@ -140,10 +151,21 @@ export default class ChatObserver {
         }
 
         // Reset 
+        // TODO : Shouldn't count the existing response containers again ?
         this.responseContainers = [];
 
+        if (shouldObservePrevRCs) {
+            // Start observing previous response containers to be rendered
+            this.pl.speak("ChatObserver init: Calling function to observe previous RCs...");
+            this.observePrevRCs();
+        } else {
+            // Directly observe new response container addition
+            this.pl.speak("ChatObserver init: Directly observing new RC...");
+            this.observeNewRC();
+        }
+
         // Observe for response container addition
-        this.observeResponseContainersRender();
+        // this.observeResponseContainersRender();
 
         // Map existing response containers
         // this.responseContainers = [];
@@ -152,6 +174,158 @@ export default class ChatObserver {
 
         this.pl.utils.devLog("[ChatObserver] Connected to chat container successfully.");
     }
+    async observeNewRC() {
+        // If prev RCs observer is running, stop it
+        this.pl.speak("Observing new RC...");
+        this.pl.speak("Stopping previous RCs observer if any...");
+        if (this.prevRCObserver) {
+            this.pl.speak("Previous RCs observer is running.");
+        } else {
+            this.pl.speak("Prev RCs observer is not running. Repeat, no running.");
+        }
+        if (this.prevRCObserver) {
+            this.pl.utils.devLog("[ChatObserver] Stopping previous RCs observer before observing new RC.");
+            return;
+        }
+
+        // Stop previous observer if any
+        if (this.newRCObserver) {
+            this.newRCObserver.disconnect();
+            this.newRCObserver = null;
+        }
+
+        // Set the target to observe
+        const observerTarget = this.lastReplayContainer || this.chatContainer;
+        if (!observerTarget) {
+            this.pl.utils.prodWarn("[ChatObserver] Cannot observe new response container - observer target is null - 9280");
+            return;
+        }
+
+        let newRC: HTMLElement | null = null;
+        this.pl.speak("Setting new RC observer");
+        this.newRCObserver = new MutationObserver(async (mutations, observer) => {
+            for (const mutation of mutations) {
+                if (mutation.type === "childList") {
+                    for (let c = 0; c < mutation.addedNodes.length; c++) {
+                        const node = mutation.addedNodes.item(c) as HTMLElement;
+                        const rc = this.parseResponseContainer(node);
+
+                        if (rc) {
+                            if (newRC && newRC.isSameNode(rc)) {
+                                this.pl.utils.devLog("Same RC skipped");
+                                this.pl.speak("Skipping same RC");
+                            }
+                            if (newRC && !newRC.isConnected) {
+                                this.pl.utils.devLog("Previous RC disconnected");
+                                this.pl.speak("Previous RC disconnected");
+                            }
+                            newRC = rc;
+
+
+                            this.pl.speak("RC is found");
+                            this.pl.utils.devLog("[ChatObserver] New response container is added.");
+                            // Announce the response segments within the new response container
+                            const responseElement = this.parseResponseElement(rc);
+                            if (responseElement) {
+                                this.pl.speak("Response is found");
+                                this.pl.utils.devLog("[ChatObserver][ResponseElement] Announcing response segments within the new response container.");
+                                this.observeNewResponseSegments(responseElement);
+                            } else {
+                                this.pl.utils.prodWarn("[ChatObserver][ResponseElement] Unable to parse response element from the new response container.");
+                                if (this.handleResponseElementNotFound) await this.handleResponseElementNotFound(rc);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Observe
+        this.newRCObserver.observe(observerTarget, {
+            childList: true,
+            subtree: this.subtree,
+        });
+    }
+    async observePrevRCs() {
+        // Check key elements
+        if (!this.chatContainer) {
+            this.pl.utils.prodWarn("[ChatObserver] Cannot observe previous RCs - chat container is null - 3879");
+            this.pl.speak("Chat container not exist when about to observe previous RCs. Now exiting...");
+            return;
+        }
+
+        this.pl.speak("Observing previous RCs...");
+
+        // Stop previous  and new observers if any
+        if (this.newRCObserver) {
+            this.newRCObserver.disconnect();
+            this.newRCObserver = null;
+        }
+        if (this.prevRCObserver)
+            this.prevRCObserver.disconnect();
+
+        // Define observer
+        let newRCs: HTMLElement[] = [];
+        this.prevRCObserver = new MutationObserver(async (mutations, observer) => {
+            for (const mutation of mutations) {
+                if (mutation.type === "childList") {
+                    for (let c = 0; c < mutation.addedNodes.length; c++) {
+                        const node = mutation.addedNodes.item(c) as HTMLElement;
+                        const rc = this.parseResponseContainer(node);
+                        if (rc) newRCs.push(rc);
+                    }
+                }
+            }
+            scheduleAnnouncement();
+        });
+
+        // Schedule post action after elements are idle
+        let announcementTimeout: ReturnType<typeof setTimeout> | null = null;
+        const scheduleAnnouncement = async () => {
+            if (announcementTimeout) {
+                clearTimeout(announcementTimeout);
+                announcementTimeout = null;
+            }
+            announcementTimeout = setTimeout(announcePreviousRCs, 2e3);
+        };
+
+        // Actions after idle
+        const announcePreviousRCs = async () => {
+            this.pl.utils.devLog(`[ChatObserver] Previous RCs added: ${newRCs.length}`);
+            this.pl.speak("About to announce previous RCs..")
+            if (newRCs.length > 0) {
+                this.pl.speak(`${newRCs.length} previous responses loaded.`);
+                newRCs = [];
+            }
+            onObservePrevRCsComplete();
+        }
+
+        const onObservePrevRCsComplete = () => {
+            if (observePrevRCsTimeout) observePrevRCsTimeout = null;
+
+            if (this.prevRCObserver) {
+                this.prevRCObserver.disconnect();
+                this.prevRCObserver = null;
+                this.observeNewRC();
+            }
+        }
+
+        // Observe elements
+        this.prevRCObserver.observe(this.chatContainer, {
+            childList: true,
+            subtree: this.subtree,
+        });
+        if (this.lastReplayContainer) {
+            this.prevRCObserver.observe(this.lastReplayContainer, {
+                childList: true,
+                subtree: this.subtree,
+            });
+        }
+
+        // Schedule to cancel observing previous RCs, if still idle in 15 seconds
+        let observePrevRCsTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => onObservePrevRCsComplete, 15e3);
+    }
+
     /**
      * Detect initial render of previous chat history.
      * Initial render is detected when there are nodes added and removed in the chat container.
@@ -477,47 +651,54 @@ export default class ChatObserver {
             // Decide if we need to wait for previous responses to be rendered
             let needToWait = this.expectPrevResponses; // The case of just started the observer
             if (this.expectPrevResponses) this.pl.speak("Page just loaded");
-            else this.pl.speak("PageLive: Not just loaded this page.");
+            else this.pl.speak("Page just switch chat or waiting new response");
 
             // Now check if is this the case of user just switched between different chats
             const prevRCs = this.responseContainers.slice(); // Clone the array
+            let addedRCs = []; // Placeholder for added response containers
             if (!needToWait) {
                 // Check if all previous response containers, > 0, are disconnected
                 let isAllRCsDisconnected = false;
                 if (prevRCs.length > 0) isAllRCsDisconnected = prevRCs.every(rc => !rc.isConnected)
 
                 await this.mapResponseContainers();
+                addedRCs = this.responseContainers.filter(rc => !prevRCs.includes(rc));
 
                 // Check if chat has been switched. This is marked by all previous response containers are disconnected.
                 // In the situation of `lastReplayContainer` exist and prev chat has only 1 response, then user send prompt and received response,  all responses will be disconnected and. It similar with swith to a chat with previous chat count has only 1 and the loaded chat also only has 1 response.
                 const prevChatMinimumCount = this.lastReplayContainer ? 0 : 0;
                 // Below are the conditions to determine if user just switched chat
+                this.pl.utils.devLog("[ChatObserver] ==============");
                 this.pl.speak(`Previous response containers: ${prevRCs.length}. Current response containers: ${this.responseContainers.length}.`);
+                this.pl.utils.devLog(`Previous response containers: ${prevRCs.length}. Current response containers: ${this.responseContainers.length}.`);
                 this.pl.speak(`is all previous response containers disconnected: ${isAllRCsDisconnected}.`);
+                this.pl.utils.devLog(`is all previous response containers disconnected: ${isAllRCsDisconnected}.`);
+                this.pl.utils.devLog(`[ChatObserver] addedRCs.length: ${addedRCs.length}.`);
                 needToWait =
                     prevRCs.length > prevChatMinimumCount
                     && isAllRCsDisconnected;
 
-                // Also will wait if added response containers count > 0
-                if (!needToWait) {
-                    const addedRCs = this.responseContainers.filter(rc => !prevRCs.includes(rc));
-                    if (addedRCs.length > 0) needToWait = true;
-                }
+                // Also will wait if more than 1 new response containers are added
+                if (!needToWait && addedRCs.length > 1) needToWait = true;
 
                 // Let user know if previous chat has been removed
                 if (isAllRCsDisconnected && prevRCs.length > 0)
                     this.pl.speak(`Chat is cleared. Loading new chat..`);
-
             }
 
             if (needToWait) {
+                this.pl.utils.devLog("[ChatObserver] ** Waiting for previous responses to be rendered.");
                 // If waiting for all responses to be rendered, we need to revert back the response containers to previous state
                 this.responseContainers = prevRCs;
                 timeout = scheduleAnnounceRendered(timeout, mutationList, observer);
-            } else {
+            } else if (addedRCs.length > 0) {
+                this.pl.utils.devLog("[ChatObserver] ** No need to wait for previous responses to be rendered.");
+
                 await this.beforeHandleResponsesInMutation(mutationList, observer);
                 handleResponsesInMutation(mutationList, observer);
                 // announceRendered(mutationList, observer);
+            } else {
+                this.pl.utils.devLog("[ChatObserver] ** No new response containers added in this mutation.");
             }
         });
         /**
@@ -701,7 +882,7 @@ export default class ChatObserver {
         // this.pl.announce({ msg: "End of response.", o: true });
 
         // Observe chat container again
-        this.observeNewResponseContainer();
+        // this.observeNewResponseContainer();
     }
     /**
      * Validate elements
