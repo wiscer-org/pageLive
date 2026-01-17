@@ -17,6 +17,8 @@ export class PageInfoDialog {
     // Array also need definite assignment assertion
     private snapshotInfos!: string[];
     private snapshotInfosElement!: HTMLDivElement;
+    // Containing page info that will be rendered by page adapters
+    public pageInfoContainer!: HTMLDivElement;
     // The container of keybind list 
     private keybindsContainer!: HTMLDivElement;
 
@@ -74,6 +76,8 @@ export class PageInfoDialog {
         this.titleElement = document.createElement('h1');
         this.snapshotInfos = [];
         this.snapshotInfosElement = document.createElement('div');
+        // Containing page info that will be rendered by page adapters
+        this.pageInfoContainer = document.createElement('div');
         this.keybindsContainer = document.createElement('div');
 
         this.initDialogElement();
@@ -94,6 +98,7 @@ export class PageInfoDialog {
         // Create content for the dialog
         this.renderTitle();
         this.renderSnapshotInfo();
+        this.dialog.appendChild(this.pageInfoContainer);
         this.initKeybindsContainer();
         this.renderKeybindsInfo();
         this.renderPageLiveInfo();

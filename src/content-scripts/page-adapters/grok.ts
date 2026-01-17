@@ -1,7 +1,7 @@
 import { Keybinds } from "../keybind-manager";
 import PageLive from "../pagelive";
 import ChatObserver from "../chat-observer";
-import { Chat } from "../../types/chat";
+import ChatInfo from "../chat-info";
 
 const grokAdapter = async () => {
     const pl = new PageLive();
@@ -22,6 +22,8 @@ const grokAdapter = async () => {
     let toggleSidebarButton: HTMLElement | null = null;
     // 'More' button, to trigger pop up containing 'delete chat' button
     let moreButton: HTMLElement | null = null;
+    // The active chat info
+    let activeChat: ChatInfo = new ChatInfo();;
 
     const construct = async () => {
         pl.page.name = "grok";
@@ -67,14 +69,32 @@ const grokAdapter = async () => {
             await chatObserver.connect(chatContainer, lastReplayContainer);
         }
 
+        await updatePageInfo();
+
         // Observe chat container being added or removed
         await observeForChatContainer();
         // await observeChatContainerXX();
 
         await pl.page.ready();
     }
+    const updatePageInfo = async (shouldUpdateTitle = true) => {
+        if (!pl.page.activeChat) pl.page.activeChat = new ChatInfo();
+
+        // Update title
+        if (shouldUpdateTitle) {
+            // Parse title - remove from first '-' to end
+            const title = document.title.split('-')[0].trim();
+            pl.page.activeChat.title = title;
+            // Update UI
+            pl.pageInfoDialog.setTitle(title);
+        }
+
+        // TODO update number of responses
+    }
     const onDialogOpen = async () => {
-        pl.utils.devLog("Dialog opened on grok");
+        // For the moment, update page info when dialog is opened. 
+        // This method may be changed in future for performance consideration.
+        await updatePageInfo(true);
     }
     /**
      * Detect if chat container is added, and connect the chatObserver
