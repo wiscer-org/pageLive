@@ -1,6 +1,4 @@
-import { clear } from "console";
 import PageLive from "./pagelive"
-import { setUncaughtExceptionCaptureCallback } from "process";
 
 /**
 * This class features interaction with the chat container element of progressive chat based page, like gemini or grok.
@@ -12,12 +10,9 @@ import { setUncaughtExceptionCaptureCallback } from "process";
 * - response element: The direct parent that wraps all the response segments.
 * - response segment : The element that contains a part of the response text. A response can have multiple segments, like `p`, `ul`, or etc. These segments are all on the same document hierarchy level.
 * 
-* Note about `initialRender`: 
-* When the chat page is loaded, there could be previous chat history rendered. This class will wait until the chat container is idle (no more DOM updates) before executing `postInitialRender` callback.
-* `initialRender` is useul when the page adapter using this class needs to process or announce the previous chat history.
-* We need to consider when user change between different chats, the chat container will be updated with the new chat history. 
-* We should be able to detect this change and execute `connect` function again to do process from beginning.
-* We do not need to consider when switching to or from empty chat, since empty chat should executed `disconnect` function.
+* We need to consider when DOM ready or when user change between different chats, the chat container will be updated with the  previously saved chat. 
+* Those 2 events can be marked by calling the `connect` function with `expectPrevResponses` set to true.
+* We do not need to consider when switching to empty chat, since empty / new chat should executed `disconnect` function.
 */
 export default class ChatObserver {
     pl !: PageLive;
@@ -31,21 +26,18 @@ export default class ChatObserver {
     // In this case, we need a specific ref to the last response container element. By default this should be the direct parent of each prompt / response elements.
     lastReplayContainer: HTMLElement | null = null;
 
-    // Selector to the chat container
-    // static CHAT_CONTAINER_SELECTOR = "#chat-history";
-    // Selector to a response container
-    // static RESPONSE_ELEMENT_NAME = 'MESSAGE-CONTENT';
     // Wait time for a 'response segment' element to be considered as fully updated by Gemini
     static SEGMENT_WAIT_SECONDS: number = 4e3; // seconds
     // Used in MutationObserver callback to identify a response container element
     parseResponseContainer: (n: Node) => HTMLElement | null;
     // Used to parse the response element from a response container element
     parseResponseElement: (el: HTMLElement) => HTMLElement | null;
+
     /**
      * Handles the situation when the response element cannot be found within a newly added response container.
      * This function can be used to log warnings, attempt alternative parsing strategies, or notify the user.
      * 
-     * @param rc - The newly added response container HTMLElement where the response element was not found.
+     * @param rc - The newly added Response Container HTMLElement where the response element was not found.
      * @returns A promise that resolves when the handling is complete.
      */
     handleResponseElementNotFound: (rc: HTMLElement) => Promise<void>;
@@ -57,6 +49,7 @@ export default class ChatObserver {
         mutationList: MutationRecord[]
         , observer: MutationObserver
     ) => Promise<void>;
+    
     /**
      * Performs post-initialization rendering tasks after the initial render is complete.
      * Can be use to announce how many responses are rendered.
