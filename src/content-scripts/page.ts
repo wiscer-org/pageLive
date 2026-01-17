@@ -1,5 +1,5 @@
 import PageLive from "./pagelive";
-import { Chat } from "../types/chat";
+import ChatInfo from "./chat-info";
 
 /**
  * This class is used to represent the information about the page, as a result of the page adapter.
@@ -16,7 +16,7 @@ export default class Page {
     // The list of snapshot info about the page, e.g. '2 previous chats', 'starting a new chat', '4 new notifications', etc.
     private snapshotInfo: string[] = [];
     // The current active chat, if applicable
-    activeChat: Chat | null = null
+    activeChat: ChatInfo | null = null
 
     /**
      * Constructor
