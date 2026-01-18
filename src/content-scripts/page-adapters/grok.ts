@@ -2,6 +2,7 @@ import { Keybinds } from "../keybind-manager";
 import PageLive from "../pagelive";
 import ChatObserver from "../chat-observer";
 import ChatInfo from "../chat-info";
+import { disconnect } from "process";
 
 const grokAdapter = async () => {
     const pl = new PageLive();
@@ -22,9 +23,15 @@ const grokAdapter = async () => {
     let toggleSidebarButton: HTMLElement | null = null;
     // 'More' button, to trigger pop up containing 'delete chat' button
     let moreButton: HTMLElement | null = null;
+    // Button to pop up all chat list dialog
+    let allChatsPopper: HTMLElement | null = null;
     // The active chat info
-    let activeChat: ChatInfo = new ChatInfo();;
-
+    let activeChat: ChatInfo = new ChatInfo();
+    // Contain page info, will be placed inside PageInfoDialog.pageAdapterContainer.
+    let pageInfoContainer!: HTMLElement;
+    // Contain page's navigational elements , will be placed inside PageInfoDialog.pageAdapterContainer.
+    let pageNavContainer!: HTMLElement;
+    ``
     const construct = async () => {
         pl.page.name = "grok";
         await init();
@@ -69,6 +76,7 @@ const grokAdapter = async () => {
             await chatObserver.connect(chatContainer, lastReplayContainer);
         }
 
+        await renderPageAdapterContainer();
         await updatePageInfo();
 
         // Observe chat container being added or removed
@@ -77,19 +85,50 @@ const grokAdapter = async () => {
 
         await pl.page.ready();
     }
+    const renderPageAdapterContainer = async () => {
+        pageInfoContainer = document.createElement('div');
+        pl.pageInfoDialog.pageAdapterContainer.appendChild(pageInfoContainer);
+
+        pageNavContainer = document.createElement('div');
+        pl.pageInfoDialog.pageAdapterContainer.appendChild(pageNavContainer);
+
+        const chatListButton = document.createElement('button');
+        chatListButton.innerText = "Open All Chat List";
+        chatListButton.addEventListener('click', openAllChatsDialog);
+        pageNavContainer.appendChild(chatListButton);
+    }
     const updatePageInfo = async (shouldUpdateTitle = true) => {
         if (!pl.page.activeChat) pl.page.activeChat = new ChatInfo();
 
         // Update title
         if (shouldUpdateTitle) {
             // Parse title - remove from first '-' to end
-            const title = document.title.split('-')[0].trim();
+            let title = document.title.split('-')[0].trim();
+            // If the title is 'Grok', it is an empty chat
+            if (title.toLowerCase() === 'grok') title = "New Chat";
             pl.page.activeChat.title = title;
             // Update UI
             pl.pageInfoDialog.setTitle(title);
         }
 
-        // TODO update number of responses
+        // Update number of responses
+        let responseCount = 0;
+        if (chatContainer) {
+            for (let i = 0; i < chatContainer.children.length; i++) {
+                const child = chatContainer.children.item(i) as Node;
+                const rc = parseResponseContainer(child);
+                if (rc) responseCount++;
+            }
+        }
+        // Update active chat info
+        pl.page.activeChat.responsesCount = responseCount;
+        let responseCountText = `This chat has no responses yet.`;
+        if (responseCount === 1) {
+            responseCountText = `This chat has ${responseCount} response.`;
+        } else {
+            responseCountText = `This chat has ${responseCount} responses.`;
+        }
+        pageInfoContainer.innerHTML = responseCountText;
     }
     const onDialogOpen = async () => {
         // For the moment, update page info when dialog is opened. 
@@ -329,6 +368,35 @@ const grokAdapter = async () => {
             if (!moreButton) {
                 pl.utils.devLog("Could not find more button - 7487");
                 moreButton = null;
+                return false;
+            }
+            return true;
+        }
+        , allChatsPopper: async () => {
+            // The hierarchy from `sideNavElement`([data-sidebar='sidebar']):
+            // [data-sidebar='sidebar'] > [data-sidebar='content'] > [data-sidebar='group'] > ul[data-sidebar='menu'] > div > div > div > button(See all)
+            await resolve.sideNavElement();
+            if (!sideNavElement) {
+                pl.utils.devLog("Side nav element is null when resolving all chats poper - 8498");
+                return false;
+            }
+
+            let isValid = true;
+            if (!allChatsPopper) {
+                pl.utils.devLog("All chats popper is null - 8492");
+                isValid = false;
+            } else if (!allChatsPopper?.isConnected) {
+                pl.utils.devLog("All chats popper is not connected - 8496");
+                isValid = false;
+            }
+            if (!isValid) {
+                // Query for the "See all" button in the sidebar
+                // allChatsPopper = sideNavElement.querySelector("[data-sidebar='content'] > [data-sidebar='group'] > ul[data-sidebar='menu'] > div > div > div > button") as HTMLElement;
+                allChatsPopper = document.querySelector("[data-sidebar='content'] > [data-sidebar='group'] > ul[data-sidebar='menu'] > div > div > div > button") as HTMLElement;
+                // allChatsPopper = sideNavElement.querySelector(" ul[data-sidebar='menu'] div > button") as HTMLElement;
+            }
+            if (!allChatsPopper) {
+                pl.utils.devLog("Could not find all chats popper - 8500");
                 return false;
             }
             return true;
@@ -668,6 +736,58 @@ const grokAdapter = async () => {
                 })
             );
         });
+    }
+    async function openAllChatsDialog() {
+        closeAllDialogsAndModals();
+        await resolve.allChatsPopper();
+        if (!allChatsPopper) {
+            pl.toast("Failed to find button to open all chats dialog.");
+            pl.utils.prodWarn("All chats popper is null when opening all chats dialog - 2858");
+            return;
+        }
+        // Set up observer to detect when the all chats dialog is opened
+        const observer = new MutationObserver(async (mutations, obs) => {
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    console.log("Added node detected when opening all chats dialog:", node);
+
+                    // Is it the all chats dialog ?
+                    let dialogElement: HTMLElement | null = null;
+                    if (node instanceof HTMLElement) {
+                        // Check the node itself
+                        if (node.tagName.toLowerCase() === 'div'
+                            && node.getAttribute('role') === 'dialog') {
+                            dialogElement = node as HTMLElement;
+                        } // No need to check the children of the node
+                    }
+                    if (dialogElement) {
+                        // Await a little, because SR will read the dialog content after it is opened
+                        await new Promise(r => setTimeout(r, 2000)); // Wait a little for the dialog to settle   
+                        pl.speak("All chats dialog is opened.");
+                        disconnectObserver();
+                        return;
+                    }
+                }
+            }
+        });
+
+        // Disconnect observer
+        const disconnectObserver = () => {
+            observer.disconnect();
+            pl.utils.devLog("Disconnected all chats dialog observer after timeout.");
+        }
+
+        // Observe
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Click the popper button
+        allChatsPopper.click();
+
+        // Timeout to disconnect the observer if no dialog is shown
+        setTimeout(disconnectObserver, 5e3);
     }
     function isPageEmptyChat(url?: string | undefined): boolean {
         if (!url) url = window.location.href;
