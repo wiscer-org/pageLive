@@ -745,6 +745,7 @@ const grokAdapter = async () => {
             pl.utils.prodWarn("All chats popper is null when opening all chats dialog - 2858");
             return;
         }
+
         // We need notify users when dialog open and close
         let isDialogOpen = false;
         // Set up observer to detect when the all chats dialog is opened
@@ -754,7 +755,6 @@ const grokAdapter = async () => {
                     // Is it the all chats dialog ?
                     let dialogElement: HTMLElement | null = null;
                     if (node instanceof HTMLElement) {
-                        // Check the node itself
                         if (isNodeTheDialog(node)) {
                             dialogElement = node as HTMLElement;
                         } // No need to check the children of the node
@@ -763,14 +763,13 @@ const grokAdapter = async () => {
                         // Await a little, because SR will read the dialog content after it is opened
                         await new Promise(r => setTimeout(r, 2000)); // Wait a little for the dialog to settle   
                         isDialogOpen = true;
-                        pl.speak("Chat list dialog is opened.");
+                        pl.speak("Chat list dialog is opened. Press Escape to close.");
                         return;
                     }
                 }
                 // Check for removed nodes to detect dialog close
                 for (const node of mutation.removedNodes) {
                     if (node instanceof HTMLElement) {
-                        // Check the node itself
                         if (isDialogOpen && isNodeTheDialog(node)) {
                             isDialogOpen = false;
                             pl.speak("Chat list dialog is closed.");
@@ -796,13 +795,7 @@ const grokAdapter = async () => {
 
         // Disconnect observer only if `isDialogOpen` is false
         const disconnectObserver = () => {
-            if (!isDialogOpen) {
-                observer.disconnect();
-                pl.utils.devLog("Disconnected chat list dialog");
-                pl.speak(`Chat list dialog observer disconnected.`);
-            } else {
-                pl.speak("Chat list dialog is still open, will not disconnect observer")
-            }
+            if (!isDialogOpen) observer.disconnect();
         }
 
         // Observe
@@ -815,10 +808,7 @@ const grokAdapter = async () => {
         allChatsPopper.click();
 
         // Timeout to disconnect the observer if no dialog is shown
-        setTimeout(() => {
-            pl.speak("Timeout reached, disconnecting all chats dialog observer.");
-            disconnectObserver();
-        }, 5e3);
+        setTimeout(disconnectObserver, 5e3);
     }
     function isPageEmptyChat(url?: string | undefined): boolean {
         if (!url) url = window.location.href;
