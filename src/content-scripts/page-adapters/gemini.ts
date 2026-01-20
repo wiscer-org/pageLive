@@ -1,5 +1,6 @@
 // gemini.ts - Injected only on gemini.google.com
 import { Chat, ChatUnit } from "../../types/chat";
+import ChatInfo from "../chat-info";
 import PageLive from "../pagelive";
 
 
@@ -670,7 +671,14 @@ const geminiPageAdapter = async () => {
 
         // Attach to global var if `activeChat.id` is found and not yet attached to `pageLive.page.activeChat`:
         if (activeChat.id && pageLive.page.activeChat === null) {
-            pageLive.page.activeChat = activeChat;
+            // pageLive.page.activeChat = activeChat;
+            pageLive.page.activeChat = new ChatInfo(
+                activeChat.id
+                , activeChat.title
+                , activeChat.promptCount
+                , activeChat.id === "" ? true : false
+                , activeChat.promptCount === -2 ? true : false
+            );
         }
         return true;
     }
@@ -781,8 +789,16 @@ const geminiPageAdapter = async () => {
         };
 
         // Expose to global page if we have a valid id
-        if (activeChat.id)
-            pageLive.page.activeChat = activeChat;
+        if (activeChat.id) {
+            // pageLive.page.activeChat = activeChat;
+            pageLive.page.activeChat = new ChatInfo(
+                activeChat.id
+                , activeChat.title
+                , activeChat.promptCount
+                , activeChat.id === "" ? true : false
+                , activeChat.promptCount === -2 ? true : false
+            );
+        }
 
         updateDialogWithChatInfo(false);
     }
