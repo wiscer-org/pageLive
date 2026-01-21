@@ -9,6 +9,9 @@
 - Grok: Add keybind to focus on chat input.
 - Grok: Add keybind to start new chat.
 - Grok: Implement `ChatObserver` class.
+- Grok: Add keybind to delete current chat.
+- Grok: Add keybind to toggle sidebar.
+- Grok: Add button shortcut to open Grok's "all chat" dialog
 
 ### On Progress
 
