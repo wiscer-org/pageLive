@@ -615,7 +615,7 @@ const grokAdapter = async () => {
         }
 
         // Observe added nodes to find the pop up containing 'Delete chat' button
-        let observer = new MutationObserver((mutations, obs) => {
+        let observer = new MutationObserver(async (mutations, obs) => {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
                     // Find every added node or the children of added nodes to find the 'Delete chat' text content
@@ -643,7 +643,9 @@ const grokAdapter = async () => {
                         obs.disconnect();
                         // Close all dialogs / modals first
                         closeAllDialogsAndModals();
-                        pl.toast("Current chat has been deleted.");
+                        // Wait a little for things to complete
+                        await new Promise(r => setTimeout(r, 1e3));
+                        pl.toast("Chat has been deleted.");
                     }
                 }
             }
