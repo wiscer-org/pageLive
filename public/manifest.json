@@ -11,6 +11,7 @@
   "content_scripts": [
     {
       "matches": [
+        "https://gemini.google.com/",
         "https://gemini.google.com/app/*"
       ],
       "js": [

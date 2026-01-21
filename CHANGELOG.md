@@ -12,10 +12,11 @@
 - Grok: Add keybind to delete current chat.
 - Grok: Add keybind to toggle sidebar.
 - Grok: Add button shortcut to open Grok's "all chat" dialog
+- Gemini: Add URL `google.gemini.com/` for content script. This will fix bug of PageLive not running when user navigate to `google.gemini.com`.
 
 ### On Progress
 
--
+- 
 
 ### Planned
 
