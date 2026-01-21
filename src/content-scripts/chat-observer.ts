@@ -65,6 +65,7 @@ export default class ChatObserver {
     // Options for observing chat container. Default not to observe subtree for performance reason.
     subtree: boolean = false;
     // Response containers mapped from existing chat history
+    // Note: Currently not used
     responseContainers: HTMLElement[] = [];
 
     constructor(
@@ -124,11 +125,9 @@ export default class ChatObserver {
 
         if (shouldObservePrevRCs) {
             // Start observing previous response containers to be rendered
-            this.pl.speak("ChatObserver init: Calling function to observe previous RCs...");
             this.observePrevRCs();
         } else {
             // Directly observe new response container addition
-            this.pl.speak("ChatObserver init: Directly observing new RC...");
             this.observeNewRC();
         }
 
