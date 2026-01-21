@@ -66,10 +66,11 @@ const grokAdapter = async () => {
             pl
             , parseResponseContainer
             , parseResponseElement
+            , handleNewResponse
             , handleResponseElementNotFound
-            , beforeHandleResponsesInMutation
-            , postInitialRender
+            , false
         );
+
         if (chatContainer) {
             pl.utils.devLog("Connecting to chat container during initialization..");
             // Connect chat observer, and observe previous response containers as well
@@ -522,6 +523,14 @@ const grokAdapter = async () => {
         return el;
     }
     /**
+     * Handle new response received
+     * @param response
+     */
+    const handleNewResponse = async (response: HTMLElement) => {
+        // Notify users response is received
+        pl.speak("Grok replies...");
+    }
+    /**
      * Handle the situation when the response element cannot be found within a newly added response container.
      * @param rc 
      */
@@ -529,81 +538,6 @@ const grokAdapter = async () => {
         // On error response element, .response-content-markdown will not exist
         // In that case, just read the whole text content
         if (rc.textContent) pl.speak(rc.textContent);
-    }
-    /**
-     * Handle mutation on chat container, which the added nodes maybe response containers
-     */
-    const beforeHandleResponsesInMutation = async (
-        mutationList: MutationRecord[]
-        , observer: MutationObserver
-    ) => {
-        // Placeholder for any pre-processing before handling responses in mutation
-        // For example, logging or filtering mutations
-        pl.speak("Grok replies:");
-    }
-    /**
-     * After the initial previous chat has been rendered
-     */
-    const postInitialRender = async (
-        prevResponseConts: HTMLElement[]
-        , disconnectedResponseConts: HTMLElement[]
-        , currentResponseConts: HTMLElement[]
-    ) => {
-
-        // get all `chatUnit` elements
-        // const chatUnits = await getChatUnitElements();
-        // if (!chatUnits) {
-        //     pl.utils.devLog("No previous chat units found.");
-        //     return;
-        // }
-
-        // if (chatUnits.length % 2 !== 0) {
-        //     pl.utils.prodWarn(`Expected even number of chat units (prompts and responses), but got ${chatUnits.length}`);
-        //     console.log(chatUnits)
-        // }
-        // const totalResponses = chatUnits.length / 2;
-
-        // Possible scenarios:
-        // 1. Page load
-        // 2. User switched from one chat to another chat - all previous responses are removed, then new previous responses are added
-        // 3. User scrolled up to load more previous responses - only new previous responses are added
-        const isPageLoad = (prevResponseConts.length === 0
-            && disconnectedResponseConts.length === 0
-            && currentResponseConts.length > 0)
-            || false;
-        const isUserSwitched = (prevResponseConts.length > 0
-            && disconnectedResponseConts.length === prevResponseConts.length
-            && currentResponseConts.length > 0)
-            || false;
-        // The diff in length > 1 to avoid false positive when new response is added after user sent a prompt
-        const isUserScrolledUp = (disconnectedResponseConts.length === 0
-            && currentResponseConts.length - prevResponseConts.length > 1)
-            || false;
-
-        let msg = '';
-        if (isPageLoad || isUserSwitched)
-            msg = `${currentResponseConts.length} previous responses has been loaded`;
-        else if (isUserScrolledUp) {
-            const addedResponsesCount = currentResponseConts.length - prevResponseConts.length;
-            msg = `${addedResponsesCount} previous responses has been loaded by scrolling up`;
-        }
-
-        // console.log(">>> postInitialRender debug info:");
-        // console.log(`Previous responses count: ${prevResponseConts.length}`);
-        // console.log(`Disconnected responses count: ${disconnectedResponseConts.length}`);
-        // console.log(`Current responses count: ${currentResponseConts.length}`);
-
-        if (msg !== '') {
-            pl.utils.devLog(msg);
-            pl.announce({ msg, o: true });
-        } else pl.utils.devLog("No previous responses loaded.");
-
-        // if (addedResponsesCount !== 0) {
-        //     let msg = `${addedResponsesCount} responses loaded from previous chats`;
-        //     if (addedResponsesCount < 0) msg = `${addedResponsesCount} responses removed from chat history`;
-        //     pl.utils.devLog(msg);
-        //     pl.announce({ msg, o: true });
-        // } else pl.utils.devLog("No previous responses loaded.");
     }
 
     /**
