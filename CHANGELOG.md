@@ -1,6 +1,33 @@
 # Changelog
 
-## v3.2.0 (not released)
+## v3.4.0
+
+-
+
+### On Progress
+
+-
+
+### Planned
+
+- Add tests for page adapters' DOM hierarchy
+- Gemini: Fix: Chat title not updated in the case of long delay with the side nav.
+- When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
+- TODO: Play sound as sign that a response is being received.
+- TODO: New shortcut to copy the last response
+
+### Future
+
+- Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v3.3.0
+
+- Init Claude support
+- Claude: Add keybind to focus on chat input.
+- Claude: Add keybind to start new chat.
+- Fix: empty `content_scripts[0].matches[0]` in manifest.json
+
+## v3.2.0
 
 - Bundled page adapters with PageLive libraries
 - Fix: Renumber responses in Content Map after render.
@@ -12,22 +39,7 @@
 - Grok: Add keybind to delete current chat.
 - Grok: Add keybind to toggle sidebar.
 - Grok: Add button shortcut to open Grok's "all chat" dialog
-- Gemini: Add URL `google.gemini.com/` for content script. This will fix bug of PageLive not running when user navigate to `google.gemini.com`.
-
-### On Progress
-
-- 
-
-### Planned
-
-- Fix: Chat title not updated in the case of long delay with the side nav.
-- When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
-- TODO: Play sound as sign that a response is being received.
-- TODO: New shortcut to copy the last response
-
-### Future
-
-- Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+- Gemini: Fix: Add URL `google.gemini.com/` for content script due to user navigation.
 
 ## v3.1.1
 

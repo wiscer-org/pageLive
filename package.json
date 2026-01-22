@@ -1,7 +1,7 @@
 {
   "name": "pagelive",
-  "version": "3.1.1",
-  "description": "Screen reader companion for Gemini AI",
+  "version": "3.3.0",
+  "description": "Screen reader companion for Gemini, Grok, Claude",
   "scripts": {
     "dev": "vite",
     "build:watch": "NODE_ENV=development vite build --watch",
@@ -10,6 +10,8 @@
     "gemini:build:watch": "NODE_ENV=development vite build --config config/vite.config.gemini.ts --watch",
     "grok:build": "vite build --config config/vite.config.grok.ts ",
     "grok:build:watch": "NODE_ENV=development vite build --config config/vite.config.grok.ts --watch",
+    "claude:build": "vite build --config config/vite.config.claude.ts ",
+    "claude:build:watch": "NODE_ENV=development vite build --config config/vite.config.claude.ts --watch",
     "watch:dist:wrap": "node ./scripts/watch-dist-wrap.js",
     "test": "tsx --test"
   },
