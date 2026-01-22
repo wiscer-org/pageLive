@@ -2,7 +2,6 @@ import { Keybinds } from "../keybind-manager";
 import PageLive from "../pagelive";
 import ChatObserver from "../chat-observer";
 import ChatInfo from "../chat-info";
-import { disconnect } from "process";
 
 const grokAdapter = async () => {
     const pl = new PageLive();
@@ -31,7 +30,7 @@ const grokAdapter = async () => {
     let pageInfoContainer!: HTMLElement;
     // Contain page's navigational elements , will be placed inside PageInfoDialog.pageAdapterContainer.
     let pageNavContainer!: HTMLElement;
-    ``
+    
     const construct = async () => {
         pl.page.name = "grok";
         await init();
