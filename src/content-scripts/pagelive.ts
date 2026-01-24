@@ -279,6 +279,37 @@ export default class PageLive {
         }, duration);
     }
     /**
+    * Resolve element
+    */
+    async resolve(
+        el: HTMLElement | null
+        , selector: string
+        , elName: string
+        , intent: string
+        , elAncestor?: HTMLElement | null
+    ): Promise<HTMLElement | null> {
+
+        let resolved = true;
+        if (!el) {
+            resolved = false;
+        } else if (!el.isConnected) {
+            this.utils.prodWarn(`${elName} disconnected from DOM - 5293. Intent: ${intent}`);
+            resolved = false;
+        }
+
+        if (!resolved) {
+            const ancestor = elAncestor ?? document;
+            el = ancestor.querySelector(selector);
+        }
+
+        if (!el) {
+            this.utils.prodWarn(`${elName} still not can not be resolved - 3851. Intent: ${intent}`);
+            return null;
+        }
+        return el;
+    }
+
+    /**
      * Function to give consistency when focusing chat input element. 
      * @param chatInput The chat input element to be focused.
      */
