@@ -2,14 +2,17 @@
 
 ## v3.4.0
 
+- Claude: Add keybind to toggle sidebar
 -
 
 ### On Progress
 
--
 
 ### Planned
 
+- Claude: Implement Chat Observer
+- Claude: Notify users when Claude's shortcut dialog is open / close.
+- Claude: add `modal` attribute to Claude's shortcut dialog
 - Add tests for page adapters' DOM hierarchy
 - Gemini: Fix: Chat title not updated in the case of long delay with the side nav.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.

@@ -5,8 +5,10 @@ const claudeAdapter = async () => {
     const pl = new PageLive();
 
     // Element references
+    let sideNavElement: HTMLElement | null = null;
     let chatInput: HTMLElement | null = null;
     let newChatButton: HTMLElement | null = null;
+    let toggleSidebarButton: HTMLElement | null = null;
 
     const construct = async () => {
         pl.page.name = "Claude";
@@ -18,52 +20,55 @@ const claudeAdapter = async () => {
         pl.utils.devLog("Registering keybinds..");
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, focusChatInput);
         pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
+        pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toggleSidebar);
 
         pl.page.ready();
     }
     const resolve = {
-        chatInput: async (): Promise<HTMLElement | null> => {
-            let resolved = true;
-            if (!chatInput) {
-                resolved = false;
-            } else if (!chatInput.isConnected) {
-                pl.utils.prodWarn("Chat input disconnected from DOM - 2740");
-                resolved = false;
-            }
-
-            if (!resolved) {
-                const selector = 'div[data-testid="chat-input"]';
-                chatInput = document.querySelector(selector);
-            }
-
-            if (!chatInput) {
-                pl.utils.prodWarn("Chat input still not found - 2742");
-                return null;
-            }
-            return chatInput as HTMLTextAreaElement;
+        /**
+         * 
+         * @param intent Usually the function name that calls this function. Used for logging.
+         * @returns 
+         */
+        sideNavElement: async (intent: string): Promise<HTMLElement | null> => {
+            sideNavElement = await pl.resolve(
+                sideNavElement
+                , "nav[aria-label='Sidebar']"
+                , "Sidebar"
+                , intent
+            );
+            return sideNavElement;
+        }
+        , chatInput: async (intent: string): Promise<HTMLElement | null> => {
+            chatInput = await pl.resolve(
+                chatInput
+                , 'div[data-testid="chat-input"]'
+                , "Chat Input"
+                , intent
+            );
+            return chatInput;
         }
         , newChatButton: async (intent: string): Promise<HTMLElement | null> => {
-            let resolved = true;
-            if (!newChatButton) {
-                resolved = false;
-            } else if (!newChatButton.isConnected) {
-                pl.utils.prodWarn(`New chat button disconnected from DOM - 2749. Intent: ${intent}`);
-                resolved = false;
-            }
-            if (!resolved) {
-                const selector = 'a[href="/new"]';
-                newChatButton = document.querySelector(selector);
-            }
-
-            if (!newChatButton) {
-                pl.utils.prodWarn(`New chat button still not found - 2934. Intent: ${intent}`);
-                return null;
-            }
+            newChatButton = await pl.resolve(
+                newChatButton
+                , 'a[href="/new"]'
+                , "New Chat Button"
+                , intent
+            );
             return newChatButton;
+        }
+        , toggleSidebarButton: async (intent: string) => {
+            toggleSidebarButton = await pl.resolve(
+                toggleSidebarButton
+                , 'button[data-testid="pin-sidebar-toggle"]'
+                , "Toggle Sidebar Button"
+                , intent
+            );
+            return toggleSidebarButton;
         }
     }
     const focusChatInput = async () => {
-        await resolve.chatInput();
+        await resolve.chatInput("focusChatInput");
         pl.focusChatInput(chatInput);
     }
     /**
@@ -102,6 +107,48 @@ const claudeAdapter = async () => {
             return true;
         }
         return false;
+    }
+    async function toggleSidebar() {
+        await resolve.toggleSidebarButton("toogleSidebar");
+        if (!toggleSidebarButton) {
+            pl.toast("Failed to find the toggle sidebar button.");
+            return;
+        }
+        // Close all dialogs / modals first
+        await closeAllDialogsAndModals();
+        await new Promise(r => setTimeout(r, 50));
+
+        // Click the toogle button 
+        toggleSidebarButton.click();
+
+        // Inform users about the action
+        // The sidebar is expanded if the button has attribute `aria-pressed="true"`, else collapsed
+        let msg = "Toggling sidebar";
+        let isExpanded: boolean | undefined; // Used to inform users later
+        const ariaPressedAttribute = toggleSidebarButton.getAttribute('aria-pressed');
+        if (ariaPressedAttribute === 'true') {
+            msg = "Collapsing sidebar";
+            isExpanded = false;
+        } else if (ariaPressedAttribute === 'false') {
+            msg = "Expanding sidebar";
+            isExpanded = true;
+        }
+        pl.speak(msg)
+        await new Promise(r => setTimeout(r, 1e3)); // Wait for animation
+
+        // Focus on the 'Recent' button (h3)
+        await resolve.sideNavElement("toggleSidebar");
+        if (isExpanded && sideNavElement) {
+            const focusableSelector = 'h3[role="button"]';
+            const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
+            if (firstFocusable) {
+                firstFocusable.focus();
+                pl.toast("Focus moved to sidebar.");
+            }
+        } else if (!isExpanded) {
+            // Focus back to chat input. No need to announce, since SR will announce when focus on chat input
+            await focusChatInput();
+        }
     }
     function closeAllDialogsAndModals() {
         pl.pageInfoDialog.close();
