@@ -14,6 +14,8 @@ const claudeAdapter = async () => {
     let chatInput: HTMLElement | null = null;
     let newChatButton: HTMLElement | null = null;
     let toggleSidebarButton: HTMLElement | null = null;
+    // A button to open more options for the active chat, contains 'Delete chat' button
+    let chatMenuTrigger: HTMLElement | null = null;
 
     const construct = async () => {
         pl.page.name = "Claude";
@@ -26,6 +28,7 @@ const claudeAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, focusChatInput);
         pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toggleSidebar);
+        pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
 
         // Initialize chat observer
         chatObserver = new ChatObserver(
@@ -75,8 +78,7 @@ const claudeAdapter = async () => {
                 , intent
             );
             return sideNavElement;
-        }
-        , chatInput: async (intent: string): Promise<HTMLElement | null> => {
+        }, chatInput: async (intent: string): Promise<HTMLElement | null> => {
             chatInput = await pl.resolve(
                 chatInput
                 , 'div[data-testid="chat-input"]'
@@ -84,8 +86,7 @@ const claudeAdapter = async () => {
                 , intent
             );
             return chatInput;
-        }
-        , newChatButton: async (intent: string): Promise<HTMLElement | null> => {
+        }, newChatButton: async (intent: string): Promise<HTMLElement | null> => {
             newChatButton = await pl.resolve(
                 newChatButton
                 , 'a[href="/new"]'
@@ -93,8 +94,7 @@ const claudeAdapter = async () => {
                 , intent
             );
             return newChatButton;
-        }
-        , toggleSidebarButton: async (intent: string) => {
+        }, toggleSidebarButton: async (intent: string) => {
             toggleSidebarButton = await pl.resolve(
                 toggleSidebarButton
                 , 'button[data-testid="pin-sidebar-toggle"]'
@@ -102,6 +102,14 @@ const claudeAdapter = async () => {
                 , intent
             );
             return toggleSidebarButton;
+        }, chatMenuTrigger: async (intent: string) => {
+            chatMenuTrigger = await pl.resolve(
+                chatMenuTrigger
+                , 'button[data-testid="chat-menu-trigger"]'
+                , "Chat Menu Trigger Button"
+                , intent
+            );
+            return chatMenuTrigger;
         }
     }
 
@@ -294,6 +302,83 @@ const claudeAdapter = async () => {
             // Focus back to chat input. No need to announce, since SR will announce when focus on chat input
             await focusChatInput();
         }
+    }
+    async function chatCurrentDelete() {
+        // If this is an empty chat, do nothing
+        if (isPageEmptyChat()) {
+            pl.toast("This is an empty chat, nothing to delete.");
+            return;
+        }
+
+        // No need to confirm dialog, already provided by Claude UI
+
+        await resolve.chatMenuTrigger("chatCurrentDelete");
+        if (!chatMenuTrigger) {
+            const msg = "Failed to find the 'Chat Menu Trigger' button";
+            pl.utils.prodWarn(msg);
+            pl.toast(msg);
+            return;
+        }
+
+        // Observe added nodes to find the Chat-menu pop up, containing 'Delete' button
+        let observer = new MutationObserver(async (mutations, obs) => {
+            // Chat menu to find has [role="menu"]
+            let chatMenu: HTMLElement | null = null;
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    if (!(node instanceof HTMLElement)) continue;
+
+                    // Does this node is the chat menu?
+                    if (node.getAttribute('role') === 'menu') {
+                        chatMenu = node as HTMLElement;
+                        break;
+                    }
+
+                    // Does this node contain the chat menu?
+                    const menu = node.querySelector("div[role='menu']");
+                    if (menu) {
+                        chatMenu = menu as HTMLElement;
+                        break;
+                    }
+                }
+                if (chatMenu) break;
+            }
+
+            // If chat menu found, find and click the 'Delete' button
+            if (chatMenu) {
+                obs.disconnect(); // Stop observing
+                const deleteButton = chatMenu.querySelector("[data-testid='delete-chat-trigger']") as HTMLElement;
+                if (!deleteButton) {
+                    pl.toast("Failed to find the 'Delete' button in chat menu.");
+                    pl.utils.prodWarn("Failed to find the 'Delete' button in chat menu - 5735. Chat menu outerHTML: " + chatMenu.outerHTML);
+                    return;
+                }
+                // Click the 'Delete' button
+                deleteButton.click();
+                pl.speak("Please confirm to delete chat");
+            }
+        });
+
+        // Start observing the body for added nodes (pop ups)
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Click the 'chat menu' trigger / button to open the pop up
+        // Note: Use 3 events below to make sure it's working. On grok it works on "pointerdown", not works on "click".
+        ["pointerdown", "pointerup", "click"].forEach(type => {
+            if (!chatMenuTrigger) return;
+            chatMenuTrigger.dispatchEvent(
+                new PointerEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    pointerType: "mouse",
+                    clientX: 100,              // fake position sometimes helps
+                    clientY: 100
+                })
+            );
+        });
     }
     function closeAllDialogsAndModals() {
         pl.pageInfoDialog.close();
