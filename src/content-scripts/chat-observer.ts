@@ -38,9 +38,10 @@ export default class ChatObserver {
     parseResponseContainer: (n: Node) => HTMLElement | null;
     /**
     * Used in MutationObserver, to parse the response element within a response container element
+    * Returns a Promise that resolves to the response element, to allow asynchronous operations if needed.
     * @return {HTMLElement | null} The response element, or null if cannot be found
     */
-    parseResponseElement: (el: HTMLElement) => HTMLElement | null;
+    parseResponseElement: (el: HTMLElement) => Promise<HTMLElement | null>;
     /**
      * Function to be called before handling new response.
      * Can be used to announce to user, like: 'Grok replies'
@@ -71,7 +72,7 @@ export default class ChatObserver {
     constructor(
         pl: PageLive
         , parseResponseContainer: (n: Node) => HTMLElement | null
-        , parseResponseElement: (el: HTMLElement) => HTMLElement | null
+        , parseResponseElement: (el: HTMLElement) => Promise<HTMLElement | null>
         , handleNewResponse: (response: HTMLElement) => Promise<void>
         , handleResponseElementNotFound: (rc: HTMLElement) => Promise<void>
         , subtree: boolean = false
@@ -181,7 +182,7 @@ export default class ChatObserver {
 
                             this.pl.utils.devLog("[ChatObserver] New response container is added.");
                             // Announce the response segments within the new response container
-                            const responseElement = this.parseResponseElement(rc);
+                            const responseElement = await this.parseResponseElement(rc);
                             if (responseElement) {
                                 this.pl.utils.devLog("[ChatObserver][ResponseElement] Announcing response segments within the new response container.");
                                 await this.handleNewResponse(responseElement);

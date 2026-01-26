@@ -507,7 +507,7 @@ const grokAdapter = async () => {
      * @param responseContainer 
      * @returns 
      */
-    const parseResponseElement = (responseContainer: HTMLElement): HTMLElement | null => {
+    const parseResponseElement = async (responseContainer: HTMLElement): Promise<HTMLElement | null> => {
         if (!(responseContainer instanceof HTMLElement)) {
             pl.utils.devLog("Response container is not an HTMLElement - 1053");
             return null;
