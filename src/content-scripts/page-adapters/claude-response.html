@@ -1,0 +1,733 @@
+<!-- This is the simplied HTML structure of the Claude response page. -->
+
+<div id="main-content">
+    <div>
+        <div>
+            <header aria-hidden="false" data-testid="page-header">
+                <div> </div>
+                <div>
+                    <div>
+                        <div>
+                            <div>
+                                <button class="Button_ghost__BUAoh" type="button" data-testid="chat-title-button">
+                                    <div>
+                                        <div>Developing Accessible Modals for Screen
+                                            Readers</div>
+                                    </div>
+                                </button>
+                                <div></div>
+                                <button class="Button_ghost__BUAoh" type="button" data-testid="chat-menu-trigger"
+                                    id="radix-_r_7u_" aria-haspopup="menu" aria-expanded="false" data-state="closed">
+                                    <div>
+                                        <svg>...</svg>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            <!-- line below is most probably wrong -->
+                            <div data-testid="chat-actions"></div>
+                            <button class="Button_secondary__Teecd" type="button">Share</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div>
+                <div>
+                    <div>
+                        <div>
+                            <div data-test-render-count="2">
+                                <div>
+                                    <div>
+                                        <div>
+                                            <div>
+                                                <div>
+                                                    <div data-testid="user-message">
+                                                        <p>I am developing a web
+                                                            page. Explain briefly, without using any code, how to
+                                                            develop a modal that screen reader friendly: 1. Trap focus
+                                                            only inside the modal &amp; 2. Avoid screen reader read
+                                                            content outside the modal.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div role="group" aria-label="Message actions">
+                                            <div>
+                                                <div><span data-state="closed">Nov 27, 2024</span>
+                                                    <div>
+                                                        <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                                type="button" aria-label="Retry">
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button></div>
+                                                        <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                                type="button" aria-label="Edit">
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button></div>
+                                                    </div>
+                                                    <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                            type="button" data-testid="action-bar-copy"
+                                                            aria-label="Copy">
+                                                            <div>
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </div>
+                                                        </button></div>
+                                                    <div></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-test-render-count="2">
+                                <div>
+                                    <div>
+                                        <div data-is-streaming="false">
+                                            <div>
+                                                <div>
+                                                    <div class="standard-markdown standard-markdown">
+                                                        <p>
+                                                            To create a screen reader-friendly modal, you'll want to
+                                                            focus on two key accessibility principles:</p>
+                                                        <ol>
+                                                            <li>Focus
+                                                                Trapping:
+                                                                When the modal opens, you'll need to programmatically
+                                                                trap keyboard focus within the modal's content. This
+                                                                prevents users from tabbing outside the modal and
+                                                                accidentally interacting with background content. This
+                                                                is typically achieved by dynamically managing the tab
+                                                                index and adding event listeners that redirect focus
+                                                                back into the modal when a user tries to tab outside of
+                                                                it.</li>
+                                                            <li>Screen Reader
+                                                                Isolation:
+                                                                To prevent screen readers from reading content outside
+                                                                the modal, you'll use ARIA attributes and DOM
+                                                                manipulation. Specifically:</li>
+                                                        </ol>
+                                                        <ul>
+                                                            <li>Set the <code>aria-hidden="true"</code>
+                                                                attribute on all page content behind the modal</li>
+                                                            <li>Use <code>role="dialog"</code>
+                                                                or <code>role="modal"</code>
+                                                                on the modal container</li>
+                                                            <li>Add <code>aria-modal="true"</code>
+                                                                to clearly indicate it's a modal dialog</li>
+                                                            <li>Implement a
+                                                                proper focus management strategy where the modal
+                                                                receives focus when it opens</li>
+                                                            <li>Add an <code>aria-labelledby</code>
+                                                                attribute referencing the modal's title to provide
+                                                                context</li>
+                                                            <li>Ensure
+                                                                there's a clear way to close the modal (like an "X"
+                                                                button or escape key) that restores the previous state
+                                                            </li>
+                                                        </ul>
+                                                        <p>
+                                                            The key is creating a clear, contained experience where
+                                                            keyboard and screen reader users can fully interact with the
+                                                            modal without accidentally accessing background content.
+                                                            Proper ARIA attributes and JavaScript focus management are
+                                                            crucial to achieving this accessibility.</p>
+                                                        <p>
+                                                            Would you like me to elaborate on any of these points?</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div role="group" aria-label="Message actions">
+                                        <div>
+                                            <div>
+                                                <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                        type="button" data-testid="action-bar-copy" aria-label="Copy">
+                                                        <div>
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                        </div>
+                                                    </button></div>
+                                                <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                        type="button" aria-label="Give positive feedback">
+                                                        <div>
+                                                            <svg>...</svg>
+                                                        </div>
+                                                    </button></div>
+                                                <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                        type="button" aria-label="Give negative feedback">
+                                                        <div>
+                                                            <svg>...</svg>
+                                                        </div>
+                                                    </button></div>
+                                                <div>
+                                                    <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                            type="button" id="radix-_r_8i_" aria-haspopup="menu"
+                                                            aria-expanded="false" data-state="closed"
+                                                            aria-label="Retry">
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                        </button></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-test-render-count="2">
+                                <div>
+                                    <div>
+                                        <div>
+                                            <div>
+                                                <div>
+                                                    <div data-testid="user-message">
+                                                        <p>Is there any
+                                                            typescript package (npm) to do focus trap on modal ?</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div role="group" aria-label="Message actions">
+                                            <div>
+                                                <div><span data-state="closed">Nov 27, 2024</span>
+                                                    <div>
+                                                        <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                                type="button" aria-label="Retry">
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button></div>
+                                                        <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                                type="button" aria-label="Edit">
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button></div>
+                                                    </div>
+                                                    <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                            type="button" data-testid="action-bar-copy"
+                                                            aria-label="Copy">
+                                                            <div>
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </div>
+                                                        </button></div>
+                                                    <div></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-test-render-count="2">
+                                <div>
+                                    <div>
+                                        <div data-is-streaming="false">
+                                            <div>
+                                                <div>
+                                                    <div class="standard-markdown standard-markdown">
+                                                        <p>
+                                                            Yes, there are several popular npm packages for focus
+                                                            trapping in TypeScript/React projects:</p>
+                                                        <ol>
+                                                            <li><code>focus-trap-react</code>:
+                                                                <ul>
+                                                                    <li>
+                                                                        Widely used React-specific package</li>
+                                                                    <li>
+                                                                        Developed by the creators of the vanilla
+                                                                        JavaScript <code>focus-trap</code>
+                                                                        library</li>
+                                                                    <li>Easy
+                                                                        to integrate with React components</li>
+                                                                    <li>
+                                                                        Provides fine-grained control over focus
+                                                                        trapping</li>
+                                                                    <li>
+                                                                        Lightweight and well-maintained</li>
+                                                                </ul>
+                                                            </li>
+                                                            <li><code>@floating-ui/react</code>:
+                                                                <ul>
+                                                                    <li>More
+                                                                        comprehensive UI interaction library</li>
+                                                                    <li>
+                                                                        Includes focus management as part of its feature
+                                                                        set</li>
+                                                                    <li>
+                                                                        Useful for complex overlay and modal
+                                                                        interactions</li>
+                                                                    <li>
+                                                                        Provides additional utilities beyond just focus
+                                                                        trapping</li>
+                                                                </ul>
+                                                            </li>
+                                                            <li><code>react-focus-lock</code>:
+                                                                <ul>
+                                                                    <li>
+                                                                        Another popular React-focused library</li>
+                                                                    <li>
+                                                                        Simple to use</li>
+                                                                    <li>
+                                                                        Handles focus trapping and related accessibility
+                                                                        concerns</li>
+                                                                    <li>
+                                                                        Lightweight and flexible</li>
+                                                                </ul>
+                                                            </li>
+                                                        </ol>
+                                                        <p>
+                                                            Here's a quick example of how you might use
+                                                            <code>focus-trap-react</code>:
+                                                        </p>
+                                                        <div>
+                                                            <div>
+                                                                <div>
+                                                                    <button class="Button_ghost__BUAoh" type="button"
+                                                                        aria-label="Copy to clipboard"
+                                                                        data-state="closed">
+                                                                        <div>
+                                                                            <div>
+                                                                                <svg>...</svg>
+                                                                            </div>
+                                                                            <div>
+                                                                                <svg>...</svg>
+                                                                            </div>
+                                                                        </div>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div>typescript
+                                                            </div>
+                                                            <div>
+                                                                <pre class="code-block__code">;</span><span>
+</span></span><span>
+</span><span><span></span><span class="token" >{</span><span>
+</span></span><span><span>  </span><span class="token" >{</span><span>
+</span></span><span><span>    </span><span class="token function-variable" >,</span><span>
+</span></span><span><span>    </span><span class="token function-variable" >)</span><span>
+</span></span><span><span>  </span><span class="token" >;</span><span>
+</span></span><span>
+</span><span><span>  </span><span class="token control-flow" >(</span><span>
+</span></span><span><span>    </span><span class="token" >&gt;</span><span>
+</span></span><span><span>      </span><span class="token" >}</span><span>
+</span></span><span><span>    </span><span class="token" >&gt;</span><span>
+</span></span><span><span>  </span><span class="token" >;</span><span>
+</span></span><span><span></span><span class="token" >}</span></span></code></pre>
+                                                            </div>
+                                                        </div>
+                                                        <p>
+                                                            I recommend <code>focus-trap-react</code>
+                                                            as the most straightforward and purpose-built solution for
+                                                            React and TypeScript projects. It's specifically designed
+                                                            for creating accessible modals and has excellent
+                                                            documentation.</p>
+                                                        <p>
+                                                            Would you like me to elaborate on any of these options?</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div role="group" aria-label="Message actions">
+                                        <div>
+                                            <div>
+                                                <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                        type="button" data-testid="action-bar-copy" aria-label="Copy">
+                                                        <div>
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                        </div>
+                                                    </button></div>
+                                                <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                        type="button" aria-label="Give positive feedback">
+                                                        <div>
+                                                            <svg>...</svg>
+                                                        </div>
+                                                    </button></div>
+                                                <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                        type="button" aria-label="Give negative feedback">
+                                                        <div>
+                                                            <svg>...</svg>
+                                                        </div>
+                                                    </button></div>
+                                                <div>
+                                                    <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                            type="button" id="radix-_r_8u_" aria-haspopup="menu"
+                                                            aria-expanded="false" data-state="closed"
+                                                            aria-label="Retry">
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                        </button></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-test-render-count="2">
+                                <div>
+                                    <div>
+                                        <div>
+                                            <div>
+                                                <div>
+                                                    <div data-testid="user-message">
+                                                        <p>Any typescript
+                                                            library for custom HTML / typescript without React ?</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div role="group" aria-label="Message actions">
+                                            <div>
+                                                <div><span data-state="closed">Nov 27, 2024</span>
+                                                    <div>
+                                                        <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                                type="button" aria-label="Retry">
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button></div>
+                                                        <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                                type="button" aria-label="Edit">
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button></div>
+                                                    </div>
+                                                    <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                            type="button" data-testid="action-bar-copy"
+                                                            aria-label="Copy">
+                                                            <div>
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </div>
+                                                        </button></div>
+                                                    <div></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-test-render-count="1">
+                                <div>
+                                    <div>
+                                        <div data-is-streaming="false">
+                                            <div>
+                                                <div>
+                                                    <div class="standard-markdown standard-markdown">
+                                                        <p>
+                                                            Excellent follow-up! For vanilla TypeScript/JavaScript
+                                                            without React, I recommend these focus trap libraries:</p>
+                                                        <ol>
+                                                            <li><code>focus-trap</code>:
+                                                                <ul>
+                                                                    <li>Pure
+                                                                        JavaScript library</li>
+                                                                    <li>Works
+                                                                        with vanilla TypeScript</li>
+                                                                    <li>
+                                                                        Lightweight and framework-agnostic</li>
+                                                                    <li>Most
+                                                                        popular and recommended option</li>
+                                                                    <li>
+                                                                        Simple API for creating and managing focus traps
+                                                                    </li>
+                                                                    <li>
+                                                                        Maintained by the same team behind
+                                                                        <code>focus-trap-react</code>
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                            <li><code>a11y-focus-trap</code>:
+                                                                <ul>
+                                                                    <li>
+                                                                        Lightweight vanilla JavaScript library</li>
+                                                                    <li>
+                                                                        Simple implementation</li>
+                                                                    <li>No
+                                                                        dependencies</li>
+                                                                    <li>Works
+                                                                        directly with HTML elements</li>
+                                                                </ul>
+                                                            </li>
+                                                        </ol>
+                                                        <p>
+                                                            Basic usage with
+                                                            <code>focus-trap</code>
+                                                            would look like:
+                                                        </p>
+                                                        <div>
+                                                            <div>
+                                                                <div>
+                                                                    <button class="Button_ghost__BUAoh" type="button"
+                                                                        aria-label="Copy to clipboard"
+                                                                        data-state="closed">
+                                                                        <div>
+                                                                            <div>
+                                                                                <svg>...</svg>
+                                                                            </div>
+                                                                            <div>
+                                                                                <svg>...</svg>
+                                                                            </div>
+                                                                        </div>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div>typescript
+                                                            </div>
+                                                            <div>
+                                                                <pre class="code-block__code">;</span><span>
+</span></span><span>
+</span><span><span></span><span class="token" >;</span><span>
+</span></span><span><span></span><span class="token" >{</span><span>
+</span></span><span><span>  </span><span class="token function-variable" >,</span><span>
+</span></span><span><span>  </span><span class="token function-variable" >)</span><span>
+</span></span><span><span></span><span class="token" >;</span><span>
+</span></span><span>
+</span><span><span></span><span class="token" >// Activate the trap when modal opens</span><span>
+</span></span><span><span>focusTrap</span><span class="token" >;</span><span>
+</span></span><span>
+</span><span><span></span><span class="token" >// Deactivate when modal closes</span><span>
+</span></span><span><span>focusTrap</span><span class="token" >;</span></span></code></pre>
+                                                            </div>
+                                                        </div>
+                                                        <p>
+                                                            I particularly recommend <code>focus-trap</code>
+                                                            for its robust implementation and ease of use in vanilla
+                                                            TypeScript projects.</p>
+                                                        <p>
+                                                            Would you like me to elaborate on implementation details?
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div role="group" aria-label="Message actions">
+                                        <div>
+                                            <div>
+                                                <div data-state="closed">
+                                                    <button type="button" data-testid="action-bar-copy"
+                                                        aria-label="Copy">
+                                                        <div>
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                                <div data-state="closed">
+                                                    <button type="button" aria-label="Give positive feedback">
+                                                        <div>
+                                                            <svg>...</svg>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                                <div data-state="closed">
+                                                    <button type="button" aria-label="Give negative feedback">
+                                                        <div>
+                                                            <svg>...</svg>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                                <div>
+                                                    <div data-state="closed"><button class="Button_ghost__BUAoh"
+                                                            type="button" id="radix-_r_9a_" aria-haspopup="menu"
+                                                            aria-expanded="false" data-state="closed"
+                                                            aria-label="Retry">
+                                                            <div>
+                                                                <svg>...</svg>
+                                                            </div>
+                                                        </button></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div aria-hidden="true"></div>
+                            <div>
+                                <div>
+                                    <div>
+                                        <div aria-hidden="true">
+                                            <div data-state="closed"><svg>...</svg></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <a target="_blank" data-state="closed"
+                                            href="https://support.anthropic.com/en/articles/8525154-claude-is-providing-incorrect-or-misleading-responses-what-s-going-on"><span>Claude
+                                                is AI and can make
+                                                mistakes. <br>Please double-check
+                                                responses.</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div></div>
+                            <div aria-hidden="true"></div>
+                        </div>
+                        <div data-chat-input-container="true">
+                            <button aria-label="Scroll to bottom">
+                                <div aria-hidden="true">
+                                    <div data-state="closed"><svg>...</svg></div>
+                                </div>
+                                <div>
+                                    <svg>...</svg>
+                                </div>
+                            </button>
+                            <div data-testid="chat-input-grid-container">
+                                <div data-testid="chat-input-grid-area">
+                                    <fieldset data-testid="prompt-input-ssr-interactive" inert="">
+                                        <div>
+                                            <div>
+                                                <div>
+                                                    <div>
+                                                        <textarea autofocus="" data-testid="chat-input-ssr"
+                                                            aria-invalid="false"
+                                                            aria-label="Write your prompt to Claude"
+                                                            aria-multiline="true" aria-required="false"
+                                                            placeholder="Reply..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div aria-hidden="true"></div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                                <div data-testid="chat-input-grid-area">
+                                    <fieldset><input id="chat-input-file-upload-bottom" data-testid="file-upload"
+                                            aria-hidden="true" tabindex="-1"
+                                            accept=".pdf,.docx,.rtf,.epub,.odt,.txt,.py,.ipynb,.js,.jsx,.html,.css,.java,.cs,.php,.c,.cc,.cpp,.cxx,.cts,.h,.hh,.hpp,.rs,.R,.Rmd,.swift,.go,.rb,.kt,.kts,.ts,.tsx,.m,.mm,.mts,.scala,.dart,.lua,.pl,.pm,.t,.sh,.bash,.zsh,.csv,.log,.ini,.cfg,.config,.json,.proto,.prisma,.yaml,.yml,.toml,.sql,.bat,.md,.coffee,.tex,.latex,.gd,.gdshader,.tres,.tscn,.typst,.rst,.adoc,.asciidoc,.textile,.creole,.wiki,.env,.gitignore,.dockerignore,.editorconfig,.prettierrc,.eslintrc,.gradle,.sbt,.cabal,.podspec,.gemspec,.makefile,.dockerfile,.xml,.rss,.atom,.graphql,.gql,.hbs,.handlebars,.mustache,.twig,.jinja,.jinja2,.j2,.vue,.svelte,.glsl,.hlsl,.frag,.vert,.shader,.elm,.clj,.cljs,.erl,.ex,.exs,.hs,.nim,.zig,.fs,.fsx,.ml,.mli,.v,.vsh,.vv,.pas,.pp,.inc,.fish,.csh,.tcsh,.ps1,.psm1,.psd1,.tsv,.tab,.jsonl,.ndjson,.lock,.ignore,.gitattributes,.gitmodules,.htaccess,.htpasswd,.robots,.sitemap,.jpg,.jpeg,.png,.gif,.webp,.csv,.xls,.xlsx,.xlsb,.xlm,.xlsm,.xlt,.xltm,.xltx,.ods,.zip"
+                                            multiple="" aria-label="Upload files" type="file">
+                                        <div data-alert-band-wrapper="true"></div>
+                                        <div>
+                                            <div>
+                                            </div>
+                                            <div>
+                                                <div>
+                                                    <div>
+                                                        <div>
+                                                            <div contenteditable="true" role="textbox"
+                                                                enterkeyhint="enter" data-testid="chat-input"
+                                                                aria-label="Write your prompt to Claude"
+                                                                aria-multiline="true" aria-required="false"
+                                                                aria-invalid="false" translate="no"
+                                                                class="tiptap ProseMirror" tabindex="0">
+                                                                <p data-placeholder="Reply..."
+                                                                    class="is-empty is-editor-empty">
+                                                                    <br class="ProseMirror-trailingBreak">
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div>
+                                                            <button class="Button_ghost__BUAoh" type="button"
+                                                                tabindex="0" aria-haspopup="menu" aria-expanded="false"
+                                                                id="_r_4q_" aria-label="Toggle menu"
+                                                                data-state="closed">
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button>
+                                                            <div data-state="closed">
+                                                                <button aria-pressed="false"
+                                                                    aria-label="Extended thinking">
+                                                                    <div>
+                                                                        <svg>...</svg>
+                                                                    </div>
+                                                                </button>
+                                                            </div>
+                                                            <div></div>
+                                                            <div></div>
+                                                        </div>
+                                                        <div type="button" id="radix-_r_4t_" aria-haspopup="menu"
+                                                            aria-expanded="false" data-state="closed">
+                                                            <button class="Button_ghost__BUAoh" type="button"
+                                                                data-testid="model-selector-dropdown">
+                                                                <div>
+                                                                    <div>
+                                                                        <div>
+                                                                            Sonnet 4.5</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <svg>...</svg>
+                                                                </div>
+                                                            </button>
+                                                        </div>
+                                                        <div>
+                                                            <div data-state="closed"><button
+                                                                    class="Button_claude__c_hZy" disabled=""
+                                                                    type="button" aria-label="Send message"><svg
+                                                                        xmlns="http://www.w3.org/2000/svg" width="16"
+                                                                        height="16" fill="currentColor"
+                                                                        viewBox="0 0 256 256">
+                                                                        <path
+                                                                            d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z">
+                                                                        </path>
+                                                                    </svg></button></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div></div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                            <div role="note" data-disclaimer="true"><span
+                                    href="https://support.anthropic.com/en/articles/8525154-claude-is-providing-incorrect-or-misleading-responses-what-s-going-on">Claude
+                                    is AI and can make mistakes. Please double-check responses.</a></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div>
+            </div>
+            <div>
+            </div>
+        </div>
+        <div>
+            <div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+</div>

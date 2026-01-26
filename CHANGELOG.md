@@ -7,10 +7,10 @@
 
 ### On Progress
 
+- Claude: Implement Chat Observer
 
 ### Planned
 
-- Claude: Implement Chat Observer
 - Claude: Notify users when Claude's shortcut dialog is open / close.
 - Claude: add `modal` attribute to Claude's shortcut dialog
 - Add tests for page adapters' DOM hierarchy
