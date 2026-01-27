@@ -293,7 +293,7 @@ export default class PageLive {
         if (!el) {
             resolved = false;
         } else if (!el.isConnected) {
-            this.utils.prodWarn(`${elName} disconnected from DOM - 5293. Intent: ${intent}`);
+            this.utils.devLog(`${elName} disconnected from DOM - 5293. Intent: ${intent}`);
             resolved = false;
         }
 
@@ -303,7 +303,7 @@ export default class PageLive {
         }
 
         if (!el) {
-            this.utils.prodWarn(`${elName} still not can not be resolved - 3851. Intent: ${intent}`);
+            this.utils.devLog(`${elName} still not can not be resolved - 3851. Intent: ${intent}`);
             return null;
         }
         return el;
