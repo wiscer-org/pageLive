@@ -155,6 +155,15 @@ export function devLog(msg: string): void {
         console.log(`[PageLive][dev] ${msg}`);
     }
 }
+/**
+ * Print logs used in production
+ */
+export function prodLog(msg: string | object) {
+    // Warning! At one case, `console.log` in this function will cause name collision, e.g.: 'he' already difined.
+    // For now we still use `console.log` but might be commented or altered.
+    const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+    console.log(`[PageLive] ${msgStr}`);
+}
 
 /**
  * Print warnings used in production
