@@ -90,12 +90,15 @@ export default class ChatObserver {
      * Connect, or re-connect the chat observer
      * @param chatContainer Closest parent of all previous prompts and responses, in some cases excluding the newest prompt/response
      * @param lastReplayContainer In some cases, the newest prompt/response is rendered to a different container than the previous prompts/responses. This parameter is the closest parent of the newest prompt/response.
+     * @param shouldObservePrevRCs Whether to observe previous responses to be rendered. This is useful when connecting on page load or switching between different chats. Useful to let user know that some number of responses just loaded.
+     * @param shouldAnnounceExistingResponses Whether to announce existing responses on initial connection. This option is different than `shouldObservePrevRCs`, which only announces newly added previous responses.
      * @returns {Promise<void>}
      */
     async connect(
         chatContainer: HTMLElement | null
         , lastReplayContainer: HTMLElement | null
         , shouldObservePrevRCs: boolean = true
+        , shouldAnnounceExistingResponses: boolean = false
     ): Promise<void> {
         this.chatContainer = chatContainer;
         this.lastReplayContainer = lastReplayContainer;
@@ -124,6 +127,9 @@ export default class ChatObserver {
         // TODO : Shouldn't count the existing response containers again ?
         this.responseContainers = [];
 
+        // Announce existing responses if needed
+        if (shouldAnnounceExistingResponses) this.announceExistingResponses();
+
         if (shouldObservePrevRCs) {
             // Start observing previous response containers to be rendered
             this.observePrevRCs();
@@ -141,7 +147,22 @@ export default class ChatObserver {
         // await this.waitForInitialRender();
 
         this.pl.utils.devLog("[ChatObserver] Connected to chat container successfully.");
+        console.log(chatContainer)
+        console.log("chat container parent: ", chatContainer?.parentElement);
     }
+
+    async announceExistingResponses() {
+        if (!this.validate().chatContainer("announceExistingResponses")) return;
+
+        this.mapResponseContainers();
+        const count = this.responseContainers.length;
+        console.log('Existing responses count: ', count);
+        if (count > 0) {
+            this.pl.utils.devLog(`[ChatObserver] Announcing existing responses: ${count}`);
+            this.pl.speak(`There are ${count} existing responses.`);
+        }
+    }
+
     async observeNewRC() {
         // If prev RCs observer is running, cancel
         if (this.prevRCObserver) {
@@ -204,6 +225,7 @@ export default class ChatObserver {
         });
     }
     async observePrevRCs() {
+        this.pl.utils.devLog("[ChatObserver] Observing previous response containers...");
         // Check key elements
         if (!this.chatContainer) {
             this.pl.utils.prodWarn("[ChatObserver] Cannot observe previous RCs - chat container is null - 3879");
@@ -220,6 +242,7 @@ export default class ChatObserver {
         // Define observer
         let newRCs: HTMLElement[] = [];
         this.prevRCObserver = new MutationObserver(async (mutations, observer) => {
+            console.log("Prev RCs mutations... ",);
             for (const mutation of mutations) {
                 if (mutation.type === "childList") {
                     for (let c = 0; c < mutation.addedNodes.length; c++) {
@@ -262,6 +285,7 @@ export default class ChatObserver {
                 this.prevRCObserver.disconnect();
                 this.prevRCObserver = null;
             }
+            this.pl.utils.devLog("[ChatObserver] Previous RCs observation completed. Now observing new RCs...");
             this.observeNewRC();
         }
 
@@ -284,10 +308,9 @@ export default class ChatObserver {
     async mapResponseContainers() {
         this.pl.utils.devLog("[ChatObserver] Mapping existing response containers...");
 
-        if (!this.chatContainer) {
-            this.pl.utils.prodWarn("[ChatObserver] Can not map response container - Chat container is null - 9281");
-            return;
-        }
+        // Check key elements
+        if (!this.validate().chatContainer("mapResponseContainers")) return;
+        if (!this.chatContainer) return;
 
         // Find all response container elements within chat container
         // this.responseContainers = Array.from(this.chatContainer.querySelectorAll("*")).filter(n => this.isResponseContainer(n)).map(n => n as HTMLElement);
@@ -475,9 +498,16 @@ export default class ChatObserver {
      */
     validate() {
         return {
-            chatContainer: () => {
-                if (!this.chatContainer || !this.chatContainer.isConnected) {
-                    this.pl.utils.prodWarn("[ChatObserver] Chat container is null or not connected - 283");
+            chatContainer: (intent: string) => {
+                let isValid = true;
+                if (!this.chatContainer) {
+                    this.pl.utils.devLog("[ChatObserver] Chat container is null. - 2954. Intent: " + intent);
+                    isValid = false;
+                } else if (!this.chatContainer.isConnected) {
+                    this.pl.utils.devLog("[ChatObserver] Chat container is not connected. - 4258. Intent: " + intent);
+                    isValid = false;
+                }
+                if (!isValid) {
                     this.disconnect();
                     return false;
                 }
@@ -491,8 +521,8 @@ export default class ChatObserver {
                 }
                 return true;
             },
-            all: () => {
-                return this.validate().chatContainer() && this.validate().lastReplayContainer();
+            all: (intent: string) => {
+                return this.validate().chatContainer(intent) && this.validate().lastReplayContainer();
             }
         }
     }
