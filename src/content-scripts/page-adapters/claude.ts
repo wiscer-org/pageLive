@@ -1,14 +1,15 @@
 import { Keybinds } from '../keybind-manager';
 import PageLive from '../pagelive';
 import ChatObserver from '../chat-observer';
-import { time } from 'console';
-import { parse } from 'path';
+import ChatObserverV2 from '../chat-observer-v2';
+import ElementObserver from '../element-observer';
 
 const claudeAdapter = async () => {
     const pl = new PageLive();
-    let chatObserver !: ChatObserver;
+    let chatObserver !: ChatObserverV2;
 
     // Element references
+    let mainContent: HTMLElement | null = null;
     let chatContainer: HTMLElement | null = null;
     let sideNavElement: HTMLElement | null = null;
     let chatInput: HTMLElement | null = null;
@@ -19,9 +20,6 @@ const claudeAdapter = async () => {
 
     const construct = async () => {
         pl.page.name = "Claude";
-        await init();
-    }
-    const init = async () => {
 
         // Add keyboard shortcuts
         pl.utils.devLog("Registering keybinds..");
@@ -31,36 +29,153 @@ const claudeAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
 
         // Initialize chat observer
-        chatObserver = new ChatObserver(
+        await resolve.mainContent("construct");
+        chatObserver = new ChatObserverV2(
             pl
             , parseResponseContainer
             , parseResponseElement
-            , async () => void 0
-            , async () => void 0
-        );
-        await resolve.chatContainer("init");
-        chatObserver.connect(chatContainer, null);
-
-        console.log("Chat container:", chatContainer);
-
-        // DELETE ME: observe added nodes to body for debugging
-        const bodyObserver = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                for (const node of mutation.addedNodes) {
-                    console.log("Body added node:", node);
-                }
+            , async () => pl.speak("Claude replies...")
+            , async (rc) => {
+                pl.utils.devLog(`Response element is not found in:`);
+                console.log(rc);
             }
-        });
-        // bodyObserver.observe(document.body, { childList: true, subtree: true });
+            , async () => {
+                console.log("Finding chat observer");
+                await resolve.chatContainer("From ChatObserverV2");
+                if (chatContainer) return chatContainer;
+                return null
+            }
+            , mainContent
+            , null
+        );
 
+        // await init();
+
+        // Observe chat container for added / removed
+        // const elementObserver = new ElementObserver(
+        //     async () => {
+        //         await resolve.chatContainer("Element Observer init")
+        //         if (chatContainer) return chatContainer
+        //         return null
+        //     }
+        //     , () => {
+        //         pl.toast("DEBUG: Chat container found by ElementObserver.");
+        //     }
+        //     , mainContent
+        //     , () => {
+        //         pl.toast("DEBUG: Chat container removed by ElementObserver.");
+        //     }
+        // );
+        // elementObserver.observe();
+
+        // observeForChatContainer();
 
         pl.page.ready();
     }
+    const init = async () => {
+        // await resolve.chatContainer("init");
+
+        // Connect and expect prev responses since this is re-init on page load or chat switch 
+        // Delete comments below
+        // console.log("[PageLive] Init...");
+        // if (chatContainer) console.log("chatContainer not null");
+        // if (!chatObserver.isConnected()) console.log("chatObserver not connected");
+        // if (chatObserver.isConnected()) console.log("chatObserver is connected");
+        // if (chatContainer) chatObserver.connect(chatContainer, null, true, true);
+
+        // // DELETE ME: observe added nodes to body for debugging
+        // let mainContent = document.querySelector('#main-content');
+        // if (!mainContent) {
+        //     pl.utils.prodWarn("Failed to find #main-content for debugging observer.");
+        //     alert("Main content not found for debugging observer.");
+        //     return;
+        // }
+        // let isPrevConnected = chatContainer?.isConnected;
+        // const bodyObserver = new MutationObserver((mutations) => {
+        //     // mainContent still connected?
+        //     if (!mainContent?.isConnected) {
+        //         pl.toast("DEBUG: Main content is NOT connected anymore.");
+        //         pl.utils.devLog("Main content disconnected:");
+        //         return;
+        //     } else {
+        //         pl.utils.devLog("Main content is still connected.");
+
+        //     }
+
+        //     // Check if `chatContainer` is still connected
+        //     if (isPrevConnected && !chatContainer?.isConnected) {
+        //         pl.toast("DEBUG: Chat container is NOT connected anymore. Finding which ancestor is still connected...");
+        //         // If not, find which ancestor that is still connected
+        //         let failsafe = 100;
+        //         let currentElement: HTMLElement | null = chatContainer;
+        //         for (let i = 0; i < failsafe; i++) {
+        //             let prevElement = currentElement;
+        //             currentElement = currentElement?.parentElement || null;
+
+        //             if (!currentElement) {
+        //                 pl.toast("DEBUG: Reached document root, no ancestor is connected.");
+        //                 console.log("No connected ancestor found. Previous element:");
+        //                 console.log(prevElement);
+        //                 break;
+        //             }
+        //             if (currentElement && currentElement.isConnected) {
+        //                 pl.toast("DEBUG: Found connected ancestor:");
+        //                 console.log("Connected ancestor element:");
+        //                 console.log(currentElement);
+        //                 break;
+        //             }
+        //         }
+
+        //     } else {
+        //         // pl.toast("DEBUG: Chat container is still connected.")
+        //     }
+
+        //     isPrevConnected = chatContainer?.isConnected;
+        // });
+        // bodyObserver.observe(document.body, { childList: true, subtree: true });
+
+    }
     const resolve = {
-        chatContainer: async (intent: string): Promise<HTMLElement | null> => {
+        mainContent: async (intent: string): Promise<HTMLElement | null> => {
+            mainContent = await pl.resolve(
+                null
+                , "#main-content"
+                , "Main Content"
+                , intent
+            );
+            return mainContent;
+        }
+        , chatContainer: async (intent: string): Promise<HTMLElement | null> => {
+
+            // `chatContainer` is the direct parent of `[data-test-render-count]` elements (prompts and responses)
+            const findChatContainer = async (): Promise<HTMLElement | null> => {
+                await resolve.mainContent(intent);
+                if (!mainContent) return null;
+
+                // Original chat container selector:
+                // , "#main-content > div > div > div > div > div > div"
+                // , '#main-content .flex-1.flex.flex-col.px-4.max-w-3xl.mx-auto.w-full.pt-1'
+
+                const chatUnit = mainContent.querySelector('[data-test-render-count]');
+                if (!chatUnit) return null;
+
+                const cc = chatUnit.parentElement;
+                return cc;
+            }
+
             chatContainer = await pl.resolve(
                 chatContainer
-                , "#main-content > div > div> div > div > div > div"
+                , findChatContainer
+                , "Chat Container"
+                , intent
+            );
+            return chatContainer;
+        }
+        , chatContainer2: async (intent: string): Promise<HTMLElement | null> => {
+            chatContainer = await pl.resolve(
+                chatContainer
+                , "#main-content > div > div > div > div > div > div"
+                // , '#main-content .flex-1.flex.flex-col.px-4.max-w-3xl.mx-auto.w-full.pt-1'
                 , "Chat Container"
                 , intent
             );
@@ -129,10 +244,11 @@ const claudeAdapter = async () => {
         // But then will be changed to `[data-test-render-count="2"]`
         // So we can not decide solely based on `[data-test-render-count="1"]`. Thus we also check if it has children.
 
+        console.log("[PageLive][1] Parsing response container from added node:", node);
+
         // Note: 
         // `node` is a prompt container if has attribute `data-test-render-count` & has descendant [data-testid="user-message"]
         // `node` is a response container if has attribute `data-test-render-count` & has descendant [data-is-streaming]
-        console.log("[PageLive][1] Parsing response container node:", node);
         if (node instanceof HTMLElement
             && node.hasAttribute('data-test-render-count')) {
             // return node.querySelector('[data-is-streaming]') as HTMLElement;
@@ -173,13 +289,13 @@ const claudeAdapter = async () => {
             // return rc.querySelector('[data-is-streaming] .standard-markdown') as HTMLElement;
             const responseElement = rc.querySelector('[data-is-streaming] .standard-markdown') as HTMLElement;
             if (responseElement != null) {
-                console.log("[PageLive][2] Found response element:");
-                console.log(responseElement);
+                // console.log("[PageLive][2] Found response element:");
+                // console.log(responseElement);
                 return responseElement;
             }
 
-            console.log("[PageLive][2] XXX Response element not found in response container.");
-            console.log(rc.outerHTML)
+            // console.log("[PageLive][2] XXX Response element not found in response container.");
+            // console.log(rc.outerHTML)
             return null;
         }
 
@@ -217,6 +333,96 @@ const claudeAdapter = async () => {
             });
             // Observe the RC
             responseObserver.observe(rc, { childList: true, subtree: true });
+        });
+    }
+
+    /**
+     * Observe on the events chat container is added or disconnected
+     */
+    const observeForChatContainer = async () => {
+        console.log("Observing for chat container...");
+
+        // First check if chat container already exists. If yes, no need to observe
+        await resolve.chatContainer("observeForChatContainer - initial check");
+        if (chatContainer && chatContainer.isConnected) {
+            pl.utils.devLog("Chat container already exists, no need to observe.");
+            pl.toast("DEBUG: Chat container already exists, no need to observe.");
+            return;
+        } else {
+            pl.utils.devLog("Chat container not found, start observing.");
+            pl.toast("DEBUG: Chat container not found, start observing.");
+        }
+
+
+        const observer = new MutationObserver(async (mutations) => {
+            console.log("scheduling check for chat container...");
+            scheduleCheckForChatContainer();
+        });
+        let checkTimeout: ReturnType<typeof setTimeout> | null = null;
+        const scheduleCheckForChatContainer = () => {
+            // Clear previous timeout
+            if (checkTimeout) clearTimeout(checkTimeout);
+            checkTimeout = setTimeout(checkForContainer, 2000);
+        }
+        // Flag is chat container is connected
+        let prevCC = chatContainer;
+        const checkForContainer = async () => {
+            console.log("Checking for chat container...");
+            pl.toast("DEBUG: Checking for chat container...");
+            // Chat container seems not added the same time with the addition of the mainContent's children. ChatContainer seems to be added in the next mutation cycle.
+            // That's why wait a little bit before querying for it.
+            await resolve.chatContainer("observeForChatContainer");
+            console.log("main content:", mainContent?.outerHTML);
+            console.log("Chat container after resolve:", chatContainer);
+            const chatUnit = mainContent?.querySelector('[data-test-render-count]');
+            console.log("Chat unit:", chatUnit);
+            console.log("Chat unit parent (chat container):", chatUnit?.parentElement);
+
+            // Check if chat container just connected
+            if (!prevCC?.isConnected && chatContainer?.isConnected) {
+                // pl.toast("DEBUG: Chat container is connected.");
+                // pl.utils.devLog("Chat container connected.");
+
+                // Re-initialize this chat adapter
+                // await init();
+
+                onChatContainerFound();
+            }
+            // Should we handle chat container disconnected here?
+            if (prevCC?.isConnected && (!chatContainer || !chatContainer.isConnected)) {
+                // TODO create timeout to parse chat container, so the parse will only run one time within few seconds.
+                // TODO: Only when switch chat, the toast below is read twice by SR, but only the toast only appears 1 and also the console.log below only appear once.
+                pl.toast("DEBUG 123: Chat container is disconnected.");
+                pl.utils.devLog("Chat container disconnected.");
+            }
+
+            prevCC = chatContainer;
+        };
+
+        // Callback after chat container is found
+        const onChatContainerFound = async () => {
+            pl.utils.devLog("Chat container found, disconnecting main content observer.");
+            pl.toast("DEBUG: Chat container found.");
+            observer.disconnect();
+
+            // Connect chat observer
+            if (chatContainer) {
+                chatObserver.connect(chatContainer, null, true, true);
+            }
+        }
+
+        // `#main-content` is the nearest ancestor of `chatContainer` that is stable, not getting disconnected.
+        // On the events of chat switching or new chat, `chatContainer` gets disconnected.
+        // So we observe `#main-content` for changes to detect when `chatContainer` is added.
+        console.log("main content : ", mainContent);
+        if (!mainContent) {
+            pl.utils.prodLog("Failed to find main content to observe for chat container. - 2410");
+            return;
+        }
+        observer.observe(mainContent, {
+            childList: true
+            , subtree: true
+            // , attributes: true
         });
     }
 
