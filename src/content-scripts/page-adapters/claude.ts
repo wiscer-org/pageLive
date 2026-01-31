@@ -70,6 +70,8 @@ const claudeAdapter = async () => {
 
         // observeForChatContainer();
 
+        observeForClaudeShortcutsDialog()
+
         pl.page.ready();
     }
     const init = async () => {
@@ -588,6 +590,58 @@ const claudeAdapter = async () => {
     }
     function closeAllDialogsAndModals() {
         pl.pageInfoDialog.close();
+    }
+    /**
+     * Observe for Claude Shortcuts dialog. Announce when opened and closed.
+     */
+    const observeForClaudeShortcutsDialog = () => {
+        let isDialogOpen = false;
+        const observer = new MutationObserver((mutations) => {
+            // Check if Claude Shortcuts dialog is opened or closed
+            for (const mutation of mutations) {
+                // Check added nodes for dialog is opened
+                for (const node of mutation.addedNodes) {
+                    if (!(node instanceof HTMLElement)) continue;
+
+                    if (isDialog(node) && isDialogOpen) {
+                        pl.speak("Claude Shortcuts dialog opened. Press Escape to close.");
+                    }
+                }
+                // Check removed nodes for dialog is closed
+                for (const node of mutation.removedNodes) {
+                    if (!(node instanceof HTMLElement)) continue;
+
+                    if (isDialog(node) && !isDialogOpen) {
+                        pl.speak("Claude Shortcuts dialog closed.");
+                    }
+                }
+            }
+        });
+
+        // Check if this is the Claude Shortcuts dialog
+        const isDialog = (node: Node): boolean => {
+            if (!(node instanceof HTMLElement)) return false;
+
+            // It is dialog if ancestor has role="dialog"
+            if (node.getAttribute('role') === 'dialog'
+                || node.querySelector('[role="dialog"]')) {
+                readDialogState(node);
+                return true;
+            }
+            return false;
+        }
+        const readDialogState = (node: Node) => {
+            if (!(node instanceof HTMLElement)) return;
+
+            if (node.getAttribute("data-state") === "open") isDialogOpen = true;
+            else isDialogOpen = false;
+        }
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
     }
 
     await construct();
