@@ -283,7 +283,7 @@ export default class PageLive {
     */
     async resolve(
         el: HTMLElement | null
-        , selector: string
+        , selector: string | (() => Promise<HTMLElement | null>)
         , elName: string
         , intent: string
         , elAncestor?: HTMLElement | null
@@ -299,7 +299,11 @@ export default class PageLive {
 
         if (!resolved) {
             const ancestor = elAncestor ?? document;
-            el = ancestor.querySelector(selector);
+            if (typeof selector === 'function') {
+                el = await selector();
+            } else {
+                el = ancestor.querySelector(selector);
+            }
         }
 
         if (!el) {
