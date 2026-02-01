@@ -32,6 +32,7 @@ const claudeAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toggleSidebar);
         pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
+        pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, announceLastResponse);
 
         // Initialize chat observer
         await resolve.mainContent("construct");
@@ -609,6 +610,63 @@ const claudeAdapter = async () => {
                 })
             );
         });
+    }
+    const announceLastResponse = async () => {
+        // Note: This function will parse the last response everytime called, for dev simplicity
+
+        // Check if this is an empty chat   
+        if (isPageEmptyChat()) {
+            pl.speak("This is an empty chat, no responses to read.");
+            return;
+        }
+
+        // Check if chat container is connected
+        await resolve.chatContainer("announceLastResponse");
+
+        // In case there is no chat container
+        if (!chatContainer || chatContainer.children.length === 0) {
+            pl.speak("There is no responses to read.");
+            return;
+        }
+
+        // Find the last response container
+        let lastResponseContainer: HTMLElement | null = null;
+        for (let i = chatContainer.children.length - 1; i >= 0; i--) {
+            const child = chatContainer.children[i] as HTMLElement;
+            if (parseResponseContainer(child)) {
+                lastResponseContainer = child;
+                break;
+            }
+        }
+
+        if (!lastResponseContainer) {
+            pl.speak("There is no responses to read.");
+            return;
+        }
+
+        // Parse the response element from last response container
+        const responseElement = await parseResponseElement(lastResponseContainer);
+        if (!responseElement) {
+            pl.speak("Failed to find the last response content.");
+            return;
+        }
+
+        // Does response element has text content?
+        if (!responseElement.textContent.trim()) {
+            pl.speak("The last response is empty.");
+            return;
+        }
+
+        // Announce the response by response segments
+        pl.speak("Reading the last response...");
+        for (let i = 0; i < responseElement.children.length; i++) {
+            const node = responseElement.children[i];
+            pl.speak(node.outerHTML);
+            // Wait a little to ease SR queue
+            await new Promise(r => setTimeout(r, 500));
+        }
+        pl.speak("End of last response.");
+
     }
     function closeAllDialogsAndModals() {
         pl.pageInfoDialog.close();
