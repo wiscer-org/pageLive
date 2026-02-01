@@ -372,11 +372,11 @@ const claudeAdapter = async () => {
         await resolve.chatContainer("observeForChatContainer - initial check");
         if (chatContainer && chatContainer.isConnected) {
             pl.utils.devLog("Chat container already exists, no need to observe.");
-            pl.toast("DEBUG: Chat container already exists, no need to observe.");
+            // pl.toast("DEBUG: Chat container already exists, no need to observe.");
             return;
         } else {
             pl.utils.devLog("Chat container not found, start observing.");
-            pl.toast("DEBUG: Chat container not found, start observing.");
+            // pl.toast("DEBUG: Chat container not found, start observing.");
         }
 
 
@@ -393,16 +393,14 @@ const claudeAdapter = async () => {
         // Flag is chat container is connected
         let prevCC = chatContainer;
         const checkForContainer = async () => {
-            console.log("Checking for chat container...");
-            pl.toast("DEBUG: Checking for chat container...");
             // Chat container seems not added the same time with the addition of the mainContent's children. ChatContainer seems to be added in the next mutation cycle.
             // That's why wait a little bit before querying for it.
             await resolve.chatContainer("observeForChatContainer");
-            console.log("main content:", mainContent?.outerHTML);
-            console.log("Chat container after resolve:", chatContainer);
+            // console.log("main content:", mainContent?.outerHTML);
+            // console.log("Chat container after resolve:", chatContainer);
             const chatUnit = mainContent?.querySelector('[data-test-render-count]');
-            console.log("Chat unit:", chatUnit);
-            console.log("Chat unit parent (chat container):", chatUnit?.parentElement);
+            // console.log("Chat unit:", chatUnit);
+            // console.log("Chat unit parent (chat container):", chatUnit?.parentElement);
 
             // Check if chat container just connected
             if (!prevCC?.isConnected && chatContainer?.isConnected) {
@@ -428,7 +426,7 @@ const claudeAdapter = async () => {
         // Callback after chat container is found
         const onChatContainerFound = async () => {
             pl.utils.devLog("Chat container found, disconnecting main content observer.");
-            pl.toast("DEBUG: Chat container found.");
+            // pl.toast("DEBUG: Chat container found.");
             observer.disconnect();
 
             // Connect chat observer
@@ -727,9 +725,7 @@ const claudeAdapter = async () => {
         }
 
         // Update number of responses
-        pl.toast("DEBUG: Updating number of responses... :" + responseCount);
         if (responseCount !== undefined) {
-
             // Update active chat info
             pl.page.activeChat.responsesCount = responseCount;
             let responseCountText = `This chat has no responses yet.`;
