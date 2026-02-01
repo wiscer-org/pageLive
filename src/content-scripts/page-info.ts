@@ -264,6 +264,7 @@ export class PageInfoDialog {
             // If there is a callback function to be run every time the dialog is opened, run it
             if (this.onEveryOpenCallback !== null) {
                 await this.onEveryOpenCallback();
+                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure content is rendered before showing the dialog
             }
 
             this.showModal();
