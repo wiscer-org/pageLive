@@ -18,15 +18,17 @@ export default class ElementObserver {
         , onElementFound: (element: HTMLElement) => void
         , container: HTMLElement | null
         , onElementDisconnected?: (element: HTMLElement) => void
+        // Timeout to check for element presence again after mutations. The lesser the time, the faster update in the cost of more CPU it may use.
+        , checkElementTimeout?: number  // In milliseconds
     ) {
         this.findElement = findElement;
         this.onElementFound = onElementFound;
-        if (container)
-            this.container = container;
-        else
-            this.container = document.body;
-        if (onElementDisconnected)
-            this.onElementDisconnected = onElementDisconnected;
+        
+        if (container) this.container = container;
+        else this.container = document.body;
+
+        if (onElementDisconnected) this.onElementDisconnected = onElementDisconnected;
+        if (checkElementTimeout !== undefined) this.checkElementTimeout = checkElementTimeout;
     }
     observe() {
         this.elementObserver.observe(this.container, {
