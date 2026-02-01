@@ -388,6 +388,7 @@ export default class ChatObserverV2 {
         this.lastReplayContainer = null;
         this.newRCObserver?.disconnect();
         this.prevRCObserver?.disconnect();
+        this.responseContainers = [];
     }
     isConnected() {
         return this.chatContainer !== null;
