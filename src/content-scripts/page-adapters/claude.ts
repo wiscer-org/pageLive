@@ -3,6 +3,8 @@ import PageLive from '../pagelive';
 import ChatObserver from '../chat-observer';
 import ChatObserverV2 from '../chat-observer-v2';
 import ElementObserver from '../element-observer';
+import ChatInfo from '../chat-info';
+import { PageInfoDialog } from '../page-info';
 
 const claudeAdapter = async () => {
     const pl = new PageLive();
@@ -17,6 +19,9 @@ const claudeAdapter = async () => {
     let toggleSidebarButton: HTMLElement | null = null;
     // A button to open more options for the active chat, contains 'Delete chat' button
     let chatMenuTrigger: HTMLElement | null = null;
+    let chatTitleButton: HTMLElement | null = null;
+    // Page info container elements
+    let pageInfoContainer: HTMLElement = document && document.createElement("div");
 
     const construct = async () => {
         pl.page.name = "Claude";
@@ -70,9 +75,16 @@ const claudeAdapter = async () => {
 
         // observeForChatContainer();
 
+        pl.page.ready();
+
         observeForClaudeShortcutsDialog()
 
-        pl.page.ready();
+        // Page info container
+        pl.pageInfoDialog.setTitle("Chat title not yet loaded");
+        pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen;
+        renderPageAdapterContainer();
+
+        observeForChatTitle();
     }
     const init = async () => {
         // await resolve.chatContainer("init");
@@ -227,6 +239,18 @@ const claudeAdapter = async () => {
                 , intent
             );
             return chatMenuTrigger;
+        }, chatTitleButton: async (intent: string) => {
+            resolve.mainContent(intent);
+            if (!mainContent) return null;
+
+            chatTitleButton = await pl.resolve(
+                chatTitleButton
+                , '[data-testid="chat-title-button"]'
+                , "Chat Title Button"
+                , intent
+                , mainContent
+            );
+            return chatTitleButton;
         }
     }
 
@@ -642,6 +666,89 @@ const claudeAdapter = async () => {
             subtree: true
         });
 
+    }
+
+    const observeForChatTitle = async () => {
+        // Note: The button that contains chat title: `[data-testid="chat-title-button"]`
+
+        // Scenario: On new chat page, the title button will not appear.
+        // On existing chat page, the title button will not exist on first load but will be added.
+        // On chat switch, the title button will disconnected then new button will be added.
+
+        // Plan of action:
+        // - Create an ElementObserver to observe the title button and update title on found or removed.
+        // - Set time out to update the title - this is for new chat page scenario. Will be cancelled by `EventObserver` if title button is found
+
+        // Set the timeout to update title
+        const titleTimeout = setTimeout(() => {
+            updatePageInfo({ title: "" });
+        }, 4e3); // 4 seconds
+
+        // Observe
+        const buttonObserver = new ElementObserver(
+            async () => resolve.chatTitleButton("observeForChatTitle")
+            , (element: HTMLElement) => {
+                clearTimeout(titleTimeout); // Cancel the timeout
+
+                updatePageInfo({ title: element.textContent });
+            }, mainContent
+            , (element: HTMLElement) => {
+                // When element removed, also update the title to empty
+                updatePageInfo({ title: "" });
+            }, 4e3
+
+        );
+        buttonObserver.observe();
+    }
+    const renderPageAdapterContainer = async () => {
+        pl.pageInfoDialog.pageAdapterContainer.appendChild(pageInfoContainer);
+    }
+    const updatePageInfo = async ({ title, responseCount }: {
+        title?: string
+        responseCount?: number
+    }) => {
+        if (!pl.page.activeChat) pl.page.activeChat = new ChatInfo();
+
+        // Update title
+        if (title !== undefined) {
+            let toRenderTitle = "";
+            // In case of empty title
+            if (!title) {
+                // In case of new chat
+                if (isPageEmptyChat()) toRenderTitle = "New Chat";
+                // Title not found
+                else toRenderTitle = "Chat title not found";
+
+            } else toRenderTitle = title.trim();
+
+            pl.page.activeChat.title = toRenderTitle;
+            // Update UI
+            pl.pageInfoDialog.setTitle(toRenderTitle);
+        }
+
+        // Update number of responses
+        pl.toast("DEBUG: Updating number of responses... :" + responseCount);
+        if (responseCount !== undefined) {
+
+            // Update active chat info
+            pl.page.activeChat.responsesCount = responseCount;
+            let responseCountText = `This chat has no responses yet.`;
+            if (responseCount === 1) {
+                responseCountText = `This chat has ${responseCount} response.`;
+            } else if (responseCount > 1) {
+                responseCountText = `This chat has ${responseCount} responses.`;
+            }
+            pageInfoContainer.innerHTML = responseCountText;
+        }
+    }
+    const onDialogOpen = async () => {
+        // Note: Currently, number of responses is updated every time the dialog is opened. 
+        // This method may be changed in future for performance consideration.
+
+        // Count number of responses in current chat
+        await chatObserver.mapResponseContainers();
+        const responseCount = chatObserver.responseContainers.length;
+        updatePageInfo({ responseCount });
     }
 
     await construct();
