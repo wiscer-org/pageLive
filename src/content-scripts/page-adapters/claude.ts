@@ -28,11 +28,11 @@ const claudeAdapter = async () => {
 
         // Add keyboard shortcuts
         pl.utils.devLog("Registering keybinds..");
+        pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, announceLastResponse);
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, focusChatInput);
         pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toggleSidebar);
         pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
-        pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, announceLastResponse);
 
         // Initialize chat observer
         await resolve.mainContent("construct");
