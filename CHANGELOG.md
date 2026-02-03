@@ -2,12 +2,18 @@
 
 ## v3.4.0
 
+- Claude: Add keybind to delete current chat
 - Claude: Add keybind to toggle sidebar
--
+- Claude: Add keybind to read last response
+- Claude: Add keybind to start new chat
+- Claude: Add keybind to focus on chat input
+- Claude: Add chat title and number of responses to Page Info
+- Claude: Notify user when Claude's shortcuts dialog opens or closes
+- Claude: Implement Chat Observer
 
 ### On Progress
 
-- Claude: Implement Chat Observer
+=======
 
 ### Planned
 
