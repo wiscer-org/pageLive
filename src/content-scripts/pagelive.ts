@@ -279,6 +279,16 @@ export default class PageLive {
         }, duration);
     }
     /**
+     * `toast` used for dev
+     */
+    devToast(msg: string,
+        ariaHidden: boolean = false,
+        duration: number = 9e3) {
+        if (this.isDev) {
+            this.toast("DEV: " + msg, ariaHidden, duration);
+        }
+    }
+    /**
     * Resolve element
     */
     async resolve(

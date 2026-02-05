@@ -321,19 +321,20 @@ export default class ChatObserverV2 {
         // consumer of this class need t provide a function to detect if the last chat container children is a new RC, not prev RC.
         let newRC: HTMLElement | null = null;
 
-        console.log("consider to parse new RC");
         if (this.isNewRC && observerTarget.children.length > 0) {
-            console.log("Start to parse new RC");
+            this.pl.utils.devLog("Start to parse new RC");
             // Find from the bottom, if there is any new RC. We can find from the bottom, because usually the new RC is rendered at the end of chat container, and in some cases like claude, the new RC is rendered together with chat container, so we need to find the new RC from the rendered chat container.
             for (let i = observerTarget.children.length - 1 || 0; i >= 0; i--) {
                 const node = observerTarget.children.item(i) as Node;
 
-                console.log(`parsing new RC for node: `, node);
-                // if (node instanceof HTMLElement) console.log(node.outerHTML);
+                // this.pl.utils.devLog(`parsing new RC for node: `, node);
+                // if (node instanceof HTMLElement) this.pl.utils.devLog(node.outerHTML);
 
                 newRC = await this.isNewRC(node);
                 if (newRC) {
-                    console.log("Found new RC on initial parsing: ", newRC);
+                    this.pl.utils.devLog("Found new RC on initial parsing: ");
+                    console.log(newRC);
+                    
                     await this.handleNewResponse(newRC);
                     this.observeNewResponseSegments(newRC);
                     break;
