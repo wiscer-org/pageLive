@@ -67,7 +67,12 @@ export class PageInfoDialog {
             msg: "PageLive modal is closed.",
         });
     }
-
+    /**
+     * Is dialog open ?
+     */
+    isOpen() {
+        return this.dialog.open;
+    }
     /**
      * Initializes the dialog manager by ensuring the dialog container is present in the DOM.
      */

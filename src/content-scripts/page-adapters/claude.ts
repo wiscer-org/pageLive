@@ -721,7 +721,13 @@ const claudeAdapter = async () => {
                 // Title not found
                 else toRenderTitle = "Chat title not found";
 
-            } else toRenderTitle = title.trim();
+            } else {
+                toRenderTitle = "Chat title: " + title.trim();
+                // If dialog is open, notify users that title is found and updated
+                if (pl.pageInfoDialog.isOpen()) {
+                    pl.speak("Chat title found and updated.");
+                }
+            }
 
             pl.page.activeChat.title = toRenderTitle;
             // Update UI
