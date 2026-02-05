@@ -53,6 +53,9 @@ const claudeAdapter = async () => {
             }
             , mainContent
             , null
+            , isPageEmptyChat
+            , false
+            , isNewRC
         );
 
         // await init();
@@ -86,6 +89,8 @@ const claudeAdapter = async () => {
         renderPageAdapterContainer();
 
         observeForChatTitle();
+
+        setClickListeners();
     }
     const init = async () => {
         // await resolve.chatContainer("init");
@@ -268,10 +273,10 @@ const claudeAdapter = async () => {
         // 2. `div[data-test-render-count="1"]` without any children
 
         // There is a chance when prev prompts and responses are loaded, all has `[data-test-render-count="1"]` 
-        // But then will be changed to `[data-test-render-count="2"]`
+        // [Assumption] But then will be changed to `[data-test-render-count="2"]` by Claude UI after a while.
         // So we can not decide solely based on `[data-test-render-count="1"]`. Thus we also check if it has children.
 
-        console.log("[PageLive][1] Parsing response container from added node:", node);
+        // console.log("[PageLive][1] Parsing response container from added node:", node);
 
         // Note: 
         // `node` is a prompt container if has attribute `data-test-render-count` & has descendant [data-testid="user-message"]
@@ -282,13 +287,13 @@ const claudeAdapter = async () => {
             // console.log(node.outerHTML);
 
             if (node.getAttribute('data-test-render-count') === '1' && node.children.length === 0) {
-                console.log("[PageLive][1] Found response container node (no children):", node);
+                // console.log("[PageLive][1] Found response container node (no children):", node);
                 return node as HTMLElement
             }
 
             if (node.querySelector('[data-is-streaming]') != null) {
-                console.log("[PageLive][1] Found response container node:");
-                console.log(node);
+                // console.log("[PageLive][1] Found response container node:");
+                // console.log(node);
                 return node;
             }
         }
@@ -302,7 +307,7 @@ const claudeAdapter = async () => {
         // The response element selector relative to response container is:
         // `[data-is-streaming] .standard-markdown`
 
-        // Note: Since when new response container is added, it has no children,
+        // Note: When new response container in Claude is added, it has no children,
         // so we need to observe the the RC for changes to get the response element or until timeout.
 
         if (!(rc instanceof HTMLElement)) {
@@ -311,7 +316,7 @@ const claudeAdapter = async () => {
             return null;
         }
 
-        console.log("[PageLive][2] Parsing response element from response container:", rc);
+        console.log("[PageLive] Parsing response element from response container:", rc);
         function parseIt(rc: HTMLElement): HTMLElement | null {
             // return rc.querySelector('[data-is-streaming] .standard-markdown') as HTMLElement;
             const responseElement = rc.querySelector('[data-is-streaming] .standard-markdown') as HTMLElement;
@@ -361,6 +366,22 @@ const claudeAdapter = async () => {
             // Observe the RC
             responseObserver.observe(rc, { childList: true, subtree: true });
         });
+    }
+
+    /**
+     * Determine if the added node is a new RC, not previous RC
+     */
+    const isNewRC = async (node: Node): Promise<HTMLElement | null> => {
+        if (node instanceof HTMLElement
+            && node.hasAttribute('data-test-render-count')) {
+
+            // new RC does not have children when added, but prev RC has children when added, so we can use this to determine if it is a new RC or prev RC.
+            if (node.getAttribute('data-test-render-count') === '1' && node.children.length === 0) {
+                // if (node.getAttribute('data-test-render-count') === '1') {
+                return node as HTMLElement
+            }
+        }
+        return null;
     }
 
     /**
@@ -477,6 +498,9 @@ const claudeAdapter = async () => {
         // Waiting a bit to ensure any animations / transitions are complete
         await new Promise(r => setTimeout(r, 250));
         newChatButton.click();
+
+        // Instruct chatObserver to treat all response containers as new
+        // chatObserver.shouldTreatAllAsNewRCs = true;
     }
     /**
      * Test is the current page is an empty / new chat page.
@@ -797,12 +821,47 @@ const claudeAdapter = async () => {
     }
     const onDialogOpen = async () => {
         // Note: Currently, number of responses is updated every time the dialog is opened. 
-        // This method may be changed in future for performance consideration.
 
+        // This method may be changed in future for performance consideration.
         // Count number of responses in current chat
         await chatObserver.mapResponseContainers();
         const responseCount = chatObserver.responseContainers.length;
         updatePageInfo({ responseCount });
+    }
+    async function setClickListeners() {
+        resolve.sideNavElement("setClickListeners");
+        document.addEventListener('click', async (event) => {
+            // sideNavElement?.addEventListener('click', async (event) => {
+            const target = event.target as HTMLElement;
+            if (!target) return;
+
+            // Is it chat link from side nav ?
+            if (isChatLinkFromSideNav(target)) {
+                // Close all dialogs / modals first
+                await closeAllDialogsAndModals();
+                // Switching chat, expect existing and prev responses
+                chatObserver.shouldTreatAllAsNewRCs = false;
+                // chatObserver.connect(chatContainer!, null);
+            }
+        });
+
+        /**
+         * Check whether the clicked element is a chat link from side nav
+         * Hierarchy of the link: a[data-dd-action-name="sidebar-chat-item"]
+         */
+        const isChatLinkFromSideNav = (target: HTMLElement): boolean => {
+            // Recursive up to 4 levels to find the element
+            let currentElement: HTMLElement | null = target;
+            for (let i = 0; i < 4; i++) {
+                if (!currentElement) return false;
+                if (currentElement.tagName.toLowerCase() === "a"
+                    && currentElement.getAttribute('data-dd-action-name') === 'sidebar-chat-item') {
+                    return true;
+                }
+                currentElement = currentElement.parentElement;
+            }
+            return false;
+        }
     }
 
     await construct();

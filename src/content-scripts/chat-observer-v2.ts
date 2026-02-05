@@ -82,8 +82,14 @@ export default class ChatObserverV2 {
     // Observer for added response segments within a response element
     responseSegmentsObserver: MutationObserver | null = null;
 
+    // Set to true if we want to treat all RC additions as new RCs, not existing RCs nor previous RCs.
+    shouldTreatAllAsNewRCs: boolean = false;
+    // Function to determine if the current chat is an empty chat.
+    isThisEmptyChat !: (() => boolean);
     // Options for observing chat container. Default not to observe subtree for performance reason.
     subtree: boolean = false;
+    // Function to determine if a newly added node is a new RC, not previous RC.
+    isNewRC: ((node: Node) => Promise<HTMLElement | null>) | null = null;
     // Response containers mapped from existing chat history
     // Note: Currently not used
     responseContainers: HTMLElement[] = [];
@@ -97,7 +103,9 @@ export default class ChatObserverV2 {
         , findCC: () => Promise<HTMLElement | null>
         , steadyCCParent: HTMLElement | null
         , findLastReplyContainer: (() => Promise<HTMLElement | null>) | null
+        , isThisEmptyChat: (() => boolean)
         , subtree: boolean = false
+        , isNewRC: ((node: Node) => Promise<HTMLElement | null>) | null = null
 
     ) {
         this.pl = pl;
@@ -108,9 +116,14 @@ export default class ChatObserverV2 {
         this.findCC = findCC;
         this.steadyParent = this.steadyParent;
         this.findLastReplayContainer = findLastReplyContainer;
+        this.isThisEmptyChat = isThisEmptyChat;
         this.subtree = subtree;
+        this.isNewRC = isNewRC;
 
-        console.log("Log: ChatObserverV2 initialized.");
+        // If empty page, we want to treat all RCs as new RCs
+        this.shouldTreatAllAsNewRCs = this.isThisEmptyChat() ? true : false;;
+
+
         const chatContainerObserver = new ElementObserver(
             findCC
             , this.onCCFound.bind(this)
@@ -162,15 +175,27 @@ export default class ChatObserverV2 {
         this.responseContainers = [];
 
         // Announce existing responses if needed
-        if (shouldAnnounceExistingResponses) this.announceExistingResponses();
+        // if (shouldAnnounceExistingResponses) this.announceExistingResponses();
+        console.log("shouldTreatAllAsNewRCs: ", this.shouldTreatAllAsNewRCs);
+        if (!this.shouldTreatAllAsNewRCs) this.announceExistingResponses();
 
-        if (shouldObservePrevRCs) {
+        if (!this.shouldTreatAllAsNewRCs) {
             // Start observing previous response containers to be rendered
-            this.observePrevRCs();
+            await this.observePrevRCs();
+            // After finishing observing previous RCs, new RC observer will be started
+
         } else {
             // Directly observe new response container addition
             this.observeNewRC();
         }
+
+        // if (shouldObservePrevRCs) {
+        //     // Start observing previous response containers to be rendered
+        //     this.observePrevRCs();
+        // } else {
+        //     // Directly observe new response container addition
+        //     this.observeNewRC();
+        // }
 
         this.pl.utils.devLog("[ChatObserver] Connected to chat container successfully.");
         // console.log(chatContainer)
@@ -233,6 +258,20 @@ export default class ChatObserverV2 {
         }
 
         let newRC: HTMLElement | null = null;
+        // for (let i = observerTarget.children.length - 1 || 0; i >= 0; i--) {
+        //     const child = observerTarget.children.item(i) as Node;
+
+        //     // Either use the specific 
+
+        //     const rc = this.parseResponseContainer(child);
+        //     if (rc) {
+        //         this.pl.utils.devLog("[ChatObserver][ResponseElement] Announcing new RC found on initial parsing before observing, which is likely rendered together with chat container. Announcing response segments within this RC.");
+        //         await this.handleNewResponse(rc);
+        //         this.observeNewResponseSegments(rc);
+        //     }
+        // }
+
+
         // this.pl.speak("Setting new RC observer");
         this.newRCObserver = new MutationObserver(async (mutations, observer) => {
             for (const mutation of mutations) {
@@ -267,11 +306,41 @@ export default class ChatObserverV2 {
             }
         });
 
+        await this.parseExistingNewRC(observerTarget);
+
         // Observe
         this.newRCObserver.observe(observerTarget, {
             childList: true,
             subtree: this.subtree,
         });
+    }
+    async parseExistingNewRC(observerTarget: HTMLElement) {
+        // In claude, new RCs are already rendered within the chat container. 
+        // That's why we are going to read the new RCs, but not mixed with the existing prev RCs.
+        // To be able to differentiate new RCs from existing prev RCs, 
+        // consumer of this class need t provide a function to detect if the last chat container children is a new RC, not prev RC.
+        let newRC: HTMLElement | null = null;
+
+        console.log("consider to parse new RC");
+        if (this.isNewRC && observerTarget.children.length > 0) {
+            console.log("Start to parse new RC");
+            // Find from the bottom, if there is any new RC. We can find from the bottom, because usually the new RC is rendered at the end of chat container, and in some cases like claude, the new RC is rendered together with chat container, so we need to find the new RC from the rendered chat container.
+            for (let i = observerTarget.children.length - 1 || 0; i >= 0; i--) {
+                const node = observerTarget.children.item(i) as Node;
+
+                console.log(`parsing new RC for node: `, node);
+                // if (node instanceof HTMLElement) console.log(node.outerHTML);
+
+                newRC = await this.isNewRC(node);
+                if (newRC) {
+                    console.log("Found new RC on initial parsing: ", newRC);
+                    await this.handleNewResponse(newRC);
+                    this.observeNewResponseSegments(newRC);
+                    break;
+                }
+            }
+        }
+        return null;
     }
     /**
      * Observe the previously saved responses. These RCs will be rendred after `chatContainer` is rendered.
@@ -327,7 +396,11 @@ export default class ChatObserverV2 {
             onObservePrevRCsComplete();
         }
 
-        const onObservePrevRCsComplete = () => {
+        // In case there are no prev RCs are added, thus mutations not triggered, 
+        // we still need to schedule announcement to trigger the next step, which is to observe new RCs.
+        scheduleAnnouncement();
+
+        const onObservePrevRCsComplete = async () => {
             if (observePrevRCsTimeout) {
                 clearTimeout(observePrevRCsTimeout);
                 observePrevRCsTimeout = null;
@@ -338,6 +411,13 @@ export default class ChatObserverV2 {
                 this.prevRCObserver = null;
             }
             this.pl.utils.devLog("[ChatObserver] Previous RCs observation completed. Now observing new RCs...");
+
+            // Wait a little bit for the page to be fully idle and stable after rendering previous RCs, before starting to observe new RCs, to avoid the prev RCs that being rendered treated as new RC.
+            // This wait will not reduce UX, since user also need time to type in before expecting new response.
+            await new Promise(r => setTimeout(r, 4e3));
+
+            // Now start to observe new RCs
+            this.shouldTreatAllAsNewRCs = true;
             this.observeNewRC();
         }
 
@@ -358,7 +438,7 @@ export default class ChatObserverV2 {
     }
 
     /**
-     * Map the rendered RCs
+     * Map the rendered RCs-
      * @returns 
      */
     async mapResponseContainers() {
@@ -387,8 +467,15 @@ export default class ChatObserverV2 {
         this.chatContainer = null;
         this.lastReplayContainer = null;
         this.newRCObserver?.disconnect();
+        this.newRCObserver = null;
         this.prevRCObserver?.disconnect();
+        this.prevRCObserver = null;
         this.responseContainers = [];
+
+        // If disconnected to an empty chat, set `shouldTreatAllAsNewRCs` to true
+        if (this.isThisEmptyChat()) {
+            this.shouldTreatAllAsNewRCs = true;
+        }
     }
     isConnected() {
         return this.chatContainer !== null;
@@ -408,7 +495,6 @@ export default class ChatObserverV2 {
         let remainingTimeoutId: ReturnType<typeof setTimeout> | undefined = undefined;
 
         /**
-         * 
          * Observer to handle response segment addition / update.
          * Everytime a response segment is added, 2 things will happen:
          * 1. Announce all segments before the last one, that has not been announced.
@@ -448,10 +534,23 @@ export default class ChatObserverV2 {
 
         // Handle existing segments before observing new segments
         this.pl.utils.devLog(`[ChatObserver] Response element has ${prevSegmentsCount} existing segments before observing new segments.`);
+        console.log("prevSegmentsCount: ", prevSegmentsCount);
         if (prevSegmentsCount > 0) {
-            // To allow SR quickly read the existing segments, we announce the first segments right away
-            lastAnnouncedSegment = await this.announceSegments(responseElement, lastAnnouncedSegment, 0);
+
+            // If only 1 prevSegments, delay to announce it in case still being updated
+            if (prevSegmentsCount === 1)
+                remainingTimeoutId = this.delayAnnounceRemainingSegments(
+                    responseElement,
+                    lastAnnouncedSegment,
+                    remainingTimeoutId,
+                    this.responseSegmentsObserver
+                );
+
+            // // To allow SR quickly read the existing segments, we announce the first segments right away
+            // lastAnnouncedSegment = await this.announceSegments(responseElement, lastAnnouncedSegment, 0);
             if (prevSegmentsCount > 1) {
+                // To allow SR quickly read the existing segments, we announce the first segments right away
+                lastAnnouncedSegment = await this.announceSegments(responseElement, lastAnnouncedSegment, 0)
                 await new Promise(r => setTimeout(r, 500));
                 // Announce now all segments excluding the last one
                 // console.log("After announce first segment, lastAnnouncedSegment: ", lastAnnouncedSegment);
@@ -520,6 +619,8 @@ export default class ChatObserverV2 {
 
             this.pl.utils.devLog("[ChatObserver] announcing :");
             this.pl.utils.devLog(segmentElement.textContent || '[empty segment]');
+            // console.log(segmentElement.outerHTML);
+            // console.log(segmentElement.parentElement?.outerHTML);
             this.pl.speak(segmentElement.outerHTML);
             // this.pl.announce({
             //     msg: segmentElement.outerHTML
@@ -544,6 +645,9 @@ export default class ChatObserverV2 {
 
         // Notify user that response is completed
         this.pl.utils.devLog("[ChatObserver] End of response received");
+
+        // Everytime a response is completed, we assume the next incoming response is a new response.
+        // this.shouldTreatAllAsNewRCs = false;
     }
     /**
      * Validate elements
