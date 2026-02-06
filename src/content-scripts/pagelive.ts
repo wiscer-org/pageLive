@@ -317,7 +317,8 @@ export default class PageLive {
         }
 
         if (!el) {
-            this.utils.devLog(`${elName} still not can not be resolved - 3851. Intent: ${intent}`);
+            // No need to log this, since the element may not meant be present, depending on the page state. 
+            // this.utils.devLog(`${elName} still not can not be resolved - 3851. Intent: ${intent}`);
             return null;
         }
         return el;
