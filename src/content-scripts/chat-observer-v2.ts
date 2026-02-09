@@ -33,7 +33,7 @@ export default class ChatObserverV2 {
     // By default chat container is the direct parent of all prompt and response container elements.
     lastReplayContainer: HTMLElement | null = null;
     // Wait time for a 'response segment' element to be considered as fully updated by the page adapter (Gemini, Grok, etc)
-    static SEGMENT_WAIT_SECONDS: number = 4e3; // seconds
+    static SEGMENT_WAIT_SECONDS: number = 5e3; // seconds
     /**
     * Used in MutationObserver, to parse the response container element from a newly added node
     * @return {HTMLElement | null} The response container element, or null if cannot be found
