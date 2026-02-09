@@ -39,7 +39,8 @@ const claudeAdapter = async () => {
         chatObserver = new ChatObserverV2(
             pl
             , parseResponseContainer
-            , parseResponseElement
+            , parseResponseElements
+            , parseAndWaitResponseElement
             , async () => pl.speak("Claude replies...")
             , async (rc) => {
                 pl.utils.devLog(`Response element is not found in:`);
@@ -74,6 +75,45 @@ const claudeAdapter = async () => {
         observeForChatTitle();
 
         setClickListeners();
+
+        // DEBUG
+        // const onCCFound = async (element: HTMLElement) => {
+        //     // Set observer to log the changes in chat container
+        //     const observer = new MutationObserver((mutations) => {
+        //         mutations.forEach(mutation => {
+        //             mutation.addedNodes.forEach(node => {
+        //                 console.log("*********");
+        //                 pl.utils.devLog("Node added to chat container:");
+        //                 console.log(node.cloneNode(true));
+        //             });
+        //             mutation.removedNodes.forEach(node => {
+        //                 console.log("*********");
+        //                 pl.utils.devLog("Node removed from chat container:");
+        //                 console.log(node.cloneNode(true));
+        //             });
+        //             if (mutation.type === "attributes") {
+        //                 console.log("*********");
+        //                 pl.utils.devLog(`Attribute ${mutation.attributeName} changed in chat container:`);
+        //                 console.log(mutation.target.cloneNode(true));
+        //             }
+        //         });
+        //     });
+        //     observer.observe(element, {
+        //         childList: true,
+        //         subtree: true,
+        //         attributes: true
+        //     });
+        // }
+        // const onCCDisconnected = async (element: HTMLElement) => {
+
+        // }
+        // const chatContainerObserver = new ElementObserver(
+        //     resolve.chatContainer.bind(null, "ChatContainerObserver")
+        //     , onCCFound
+        //     , mainContent
+        //     , onCCDisconnected
+        // );
+        // chatContainerObserver.observe();
     }
     const init = async () => {
 
@@ -222,11 +262,30 @@ const claudeAdapter = async () => {
         }
         return null;
     }
+    /**
+     * Parse from a node, whether the node itself is a response container, or it contains response containers
+     */
+    const parseResponseElements = (node: Node): HTMLElement[] => {
+        const responseElements: HTMLElement[] = [];
 
+        if (!(node instanceof HTMLElement)) {
+            pl.utils.devLog("Node is not an HTMLElement - 7630:");
+            return [];
+        }
+
+        // First check if the node itself is a response element
+        if (node.classList.contains('standard-markdown')) {
+            responseElements.push(node);
+        } else {
+            responseElements.push(...(node.querySelectorAll('.standard-markdown') as NodeListOf<HTMLElement>));
+        }
+
+        return responseElements;
+    }
     /**
      * Parse the response element from added nodes in `responseContainer`
      */
-    const parseResponseElement = async (rc: HTMLElement): Promise<HTMLElement | null> => {
+    const parseAndWaitResponseElement = async (rc: HTMLElement): Promise<HTMLElement | null> => {
         // The response element selector relative to response container is:
         // `[data-is-streaming] .standard-markdown`
 
@@ -298,8 +357,13 @@ const claudeAdapter = async () => {
         if (node instanceof HTMLElement
             && node.hasAttribute('data-test-render-count')) {
 
-            // new RC does not have children when added, but prev RC has children when added, so we can use this to determine if it is a new RC or prev RC.
-            if (node.getAttribute('data-test-render-count') === '1' && node.children.length === 0) {
+            // Below are the assumptions we found when a new RC is added in Claude, beside a new RC has `[data-test-render-count="1"]`:
+            // 1. new RC does not have children when added, but prev RC has children when added, so we can use this to determine if it is a new RC or prev RC.
+            // 2. new RC may has children when added, but it has descendant `[data-is-streaming="true"]`. It seems that the attribute `data-is-streaming=true` is used to mark when an element is still updated.
+            if (node.getAttribute('data-test-render-count') === '1'
+                && (node.children.length === 0)
+                || (node.querySelector('[data-is-streaming="true"]') != null)
+            ) {
                 // if (node.getAttribute('data-test-render-count') === '1') {
                 return node as HTMLElement
             }
@@ -558,7 +622,7 @@ const claudeAdapter = async () => {
         });
     }
     const announceLastResponse = async () => {
-        // Note: This function will parse the last response everytime called, for dev simplicity
+        // Note: This function will parse the last response everytime called, for dev simplicity.
 
         // Check if this is an empty chat   
         if (isPageEmptyChat()) {
@@ -590,30 +654,33 @@ const claudeAdapter = async () => {
             return;
         }
 
-        // Parse the response element from last response container
-        const responseElement = await parseResponseElement(lastResponseContainer);
-        if (!responseElement) {
-            pl.speak("Failed to find the last response content.");
+        // Parse response elements from the last response container.
+        const responseElements = parseResponseElements(lastResponseContainer);
+        if (!responseElements || responseElements.length === 0) {
+            pl.speak("Failed to find the last response contents.");
             return;
         }
 
         // Does response element has text content?
-        if (!responseElement.textContent.trim()) {
+        const isResponseEmpty = responseElements.every(el => !el.textContent || !el.textContent.trim());
+        if (isResponseEmpty) {
             pl.speak("The last response is empty.");
             return;
         }
 
-        // Announce the response by response segments
+        // Announce all segments from all response elements, one by one
         pl.speak("Reading the last response...");
-        for (let i = 0; i < responseElement.children.length; i++) {
-            const node = responseElement.children[i];
-            pl.speak(node.outerHTML);
-            // Wait a little to ease SR queue
-            await new Promise(r => setTimeout(r, 500));
+        for (const responseElement of responseElements) {
+            for (let i = 0; i < responseElement.children.length; i++) {
+                const node = responseElement.children[i];
+                pl.speak(node.outerHTML);
+                // Wait a little to ease SR queue
+                await new Promise(r => setTimeout(r, 2e3));
+            }
         }
         pl.speak("End of last response.");
-
     }
+
     function closeAllDialogsAndModals() {
         pl.pageInfoDialog.close();
     }
