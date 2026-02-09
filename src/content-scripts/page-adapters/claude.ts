@@ -274,13 +274,40 @@ const claudeAdapter = async () => {
         }
 
         // First check if the node itself is a response element
-        if (node.classList.contains('standard-markdown')) {
+        if (isResponseElement(node)) {
             responseElements.push(node);
         } else {
-            responseElements.push(...(node.querySelectorAll('.standard-markdown') as NodeListOf<HTMLElement>));
+            // Maybe the node contains response element(s)
+            const elements = node.querySelectorAll('.standard-markdown') as NodeListOf<HTMLElement>;
+            elements.forEach(el => {
+                if (isResponseElement(el)) responseElements.push(el);
+            });
         }
 
         return responseElements;
+    }
+    /**
+     * Filter if a node is a response element or not
+     */
+    const isResponseElement = (node: Node): boolean => {
+        if (!(node instanceof HTMLElement)) {
+            return false;
+        }
+        if (!node.classList.contains('standard-markdown')) return false;
+
+        // Ignore the node if ancestor within 3 levels has class 'overflow-hidden'
+        let ancestor = node.parentElement;
+        let shouldIgnore = false;
+        for (let i = 0; i < 3; i++) {
+            if (!ancestor) break;
+            if (ancestor.classList.contains('overflow-hidden')) {
+                shouldIgnore = true;
+                break;
+            }
+            ancestor = ancestor.parentElement;
+        }
+        if (!shouldIgnore) return true;
+        return false;
     }
     /**
      * Parse the response element from added nodes in `responseContainer`
