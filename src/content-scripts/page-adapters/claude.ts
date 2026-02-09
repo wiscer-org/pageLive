@@ -295,7 +295,7 @@ const claudeAdapter = async () => {
         }
         if (!node.classList.contains('standard-markdown')) return false;
 
-        // Ignore the node if ancestor within 3 levels has class 'overflow-hidden'
+        // Ignore if node is a 'thinking' section: ancestor within 3 levels has class 'overflow-hidden'
         let ancestor = node.parentElement;
         let shouldIgnore = false;
         for (let i = 0; i < 3; i++) {
