@@ -94,6 +94,8 @@ export default class ChatObserverV2 {
     subtree: boolean = false;
     // Function to determine if a newly added node is a new RC, not previous RC.
     isNewRC: ((node: Node) => Promise<HTMLElement | null>) | null = null;
+    // Function to be called when a new RC is found, to handle the new RC. This useful when the consumer want to do operations on the new RC, like observe certain element or announce something to user.
+    handleNewRC: ((newRC: HTMLElement) => Promise<void>) | null = null;
     // Response containers mapped from existing chat history
     // Note: Currently not used
     responseContainers: HTMLElement[] = [];
@@ -111,6 +113,7 @@ export default class ChatObserverV2 {
         , isThisEmptyChat: (() => boolean)
         , subtree: boolean = false
         , isNewRC: ((node: Node) => Promise<HTMLElement | null>) | null = null
+        , handleNewRC: ((newRC: HTMLElement) => Promise<void>) | null = null
 
     ) {
         this.pl = pl;
@@ -125,7 +128,7 @@ export default class ChatObserverV2 {
         this.isThisEmptyChat = isThisEmptyChat;
         this.subtree = subtree;
         this.isNewRC = isNewRC;
-
+        this.handleNewRC = handleNewRC;
         // If empty page, we want to treat all RCs as new RCs
         this.shouldTreatAllAsNewRCs = this.isThisEmptyChat() ? true : false;;
 
@@ -489,6 +492,9 @@ export default class ChatObserverV2 {
      * which is expected to contain the response element and response segments of a new response.
      */
     async observeForNewSegments(newRC: HTMLElement) {
+        // If provided, wait for callback
+        if (this.handleNewRC) await this.handleNewRC(newRC);
+
         // The previous total of segments, before added in the mutation callback
         // let prevSegmentsCount = responseElement.children.length;
         let prevSegmentsCount = 0
@@ -517,8 +523,24 @@ export default class ChatObserverV2 {
                 return;
             }
             // Remove disconnected REs
-            REs = REs.filter(re => re.isConnected);
+            REs = REs.filter(re => {
+                if (!re.isConnected) {
+                    this.pl.utils.devLog("[ChatObserver] >>>>> RE is no longer connected. Removing...");
+                    this.pl.utils.devLog("text content : " + re.textContent)
+                }
+                return re.isConnected;
+            });
 
+            this.pl.utils.devLog(">>>> Before collecting segments..");
+            let disconnectedCount = 0;
+            segments.forEach(s => {
+                if (!s.isConnected) {
+                    disconnectedCount++;
+                    this.pl.utils.devLog("[ChatObserver] >>>>> Disconnected segment found in existing segments list. Removing text content below: ");
+                    this.pl.utils.devLog("text content : " + s.textContent)
+                }
+            });
+            
             // Collect segments from all REs
             segments = [];
             REs.forEach(re => {
@@ -700,12 +722,12 @@ export default class ChatObserverV2 {
             this.onResponseComplete(responseSegmentsObserver);
         }, ChatObserverV2.SEGMENT_WAIT_SECONDS);
     }
-/**
-     * Schedule to announce the remaining not-yet-announced response segments
-     * @param {HTMLElement} responseElement The direct parent of the response segment elements
-     * @param {number} lastAnnouncedSegment The index of the last announced segment
-     * @param {MutationObserver} responseSegmentsObserver The mutation observer to disconnect at the end of receiving response
-     */
+    /**
+         * Schedule to announce the remaining not-yet-announced response segments
+         * @param {HTMLElement} responseElement The direct parent of the response segment elements
+         * @param {number} lastAnnouncedSegment The index of the last announced segment
+         * @param {MutationObserver} responseSegmentsObserver The mutation observer to disconnect at the end of receiving response
+         */
     delayAnnounceRemainingSegments(responseElement: HTMLElement, lastAnnouncedSegment: number
         , announceTimeout: ReturnType<typeof setTimeout> | undefined
         , responseSegmentsObserver: MutationObserver) {

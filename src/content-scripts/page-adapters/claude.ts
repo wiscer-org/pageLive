@@ -4,7 +4,6 @@ import ChatObserver from '../chat-observer';
 import ChatObserverV2 from '../chat-observer-v2';
 import ElementObserver from '../element-observer';
 import ChatInfo from '../chat-info';
-import { PageInfoDialog } from '../page-info';
 
 const claudeAdapter = async () => {
     const pl = new PageLive();
@@ -57,6 +56,7 @@ const claudeAdapter = async () => {
             , isPageEmptyChat
             , false
             , isNewRC
+            , handleNewRC
         );
 
         // await init();
@@ -396,6 +396,92 @@ const claudeAdapter = async () => {
             }
         }
         return null;
+    }
+
+    const handleNewRC = async (newRC: HTMLElement) : Promise<void> => {
+        // Note: When a new RC is added, claude has `thinking section` which keep being updated before generating the response.
+        // Then `thinkingSection` has class `standard-markdown` and also has ancestor with class `overflow-hidden`, so we can check the descendants of RC with class `standard-markdown` for ancestors with class `overflow-hidden` to determine if there is a thinking section, and handle it if found.
+        // The `.overflow-hidden` element is the second ancestor of `.standard-markdown` element in the thinking section.
+
+        // This functio==n goal is to let user know when the RC is still in thinking stage, so they won't be confused by the empty RC and think that the page is broken.
+
+        return new Promise((resolve) => {
+
+            // Query the thinking section in the new RC. The thinking section seems to have class `overflow-hidden`, and is usually ancestor of response element, so we check the descendants of RC with class `standard-markdown` for ancestors with class `overflow-hidden`.
+            const parseThinkingSection = (rc: HTMLElement): HTMLElement | null => {
+                return rc.querySelector('.overflow-hidden > * > .standard-markdown') as HTMLElement;
+            }
+            const handleTSFound = (thinkingSection: HTMLElement) => {
+                // When found, start observing changes in the `ts`
+                tsMutationObserver.observe(thinkingSection, { childList: true, subtree: true, characterData: true });
+                scheduleStopObserveTSMutation();
+
+                // Stop observing for ts addtion
+                tsAdditionObserver.disconnect();
+                if (stopObserverTSAdditionTimeout) {
+                    clearTimeout(stopObserverTSAdditionTimeout);
+                    stopObserverTSAdditionTimeout = null;
+                }
+
+                // Let user know 
+                pl.speak("Claude is thinking...");
+                // pl.toast("Claude is thinking in toast...");
+            }
+
+            // Observer to get the thinking section if not found in the new RC, since the thinking section may be added after the RC is added, and also may be removed when the response is generated.
+            const tsAdditionObserver = new MutationObserver((mutations, obs) => {
+                thinkingSection = parseThinkingSection(newRC);
+                if (thinkingSection) {
+                    handleTSFound(thinkingSection);
+                }
+            });
+            // Observer to get observe changes in the thinking section, so we can inform users when the thinking section is idle for a while, which means the response is likely generated even if the thinking section is still there.
+            const tsMutationObserver = new MutationObserver((mutations, obs) => {
+                // Still busy, reschedule to stop
+                scheduleStopObserveTSMutation();
+            });
+            // Schedule to stop observing
+            let stopObserverTSAdditionTimeout: ReturnType<typeof setTimeout> | null = null;
+            const scheduleStopObserveTSAddition = () => {
+                return setTimeout(() => {
+                    // Only executed when ts can not be found after a while
+                    // If `ts` is found, the `tsAdditionObserver` will be disconnected in `handleTSFound` function
+                    tsAdditionObserver.disconnect();
+
+                    // Failed to find thinking section after a while
+                    // pl.speak("failed finding thinking section");
+                    resolve();
+                }, 4e3);
+            }
+            let stopObserverTSMutationTimeout: ReturnType<typeof setTimeout> | null = null;
+            const scheduleStopObserveTSMutation = () => {
+
+                return setTimeout(() => {
+                    // Just to be safe, clear and disconnect the both observers and timeouts
+                    tsAdditionObserver.disconnect();
+                    if (stopObserverTSAdditionTimeout) clearTimeout(stopObserverTSAdditionTimeout);
+
+                    tsMutationObserver.disconnect();
+                    if (stopObserverTSMutationTimeout) clearTimeout(stopObserverTSMutationTimeout);
+
+                    resolve();
+                }, 800); // Adjust the timeout as needed
+            }
+
+            // Query existing thinking section
+            let thinkingSection = parseThinkingSection(newRC);
+
+            // If not found, observe the new RC to query the thinking section until timeout
+            if (!thinkingSection) {
+                // pl.speak("Thinking section is not found, start observing for it.");
+                tsAdditionObserver.observe(newRC, { childList: true, subtree: true, characterData: true });
+                stopObserverTSAdditionTimeout = scheduleStopObserveTSAddition();
+            } else {
+                // pl.speak("Thinking section is found");
+                // If thinking section is found, handle it
+                handleTSFound(thinkingSection);
+            }
+        });
     }
 
     /**
