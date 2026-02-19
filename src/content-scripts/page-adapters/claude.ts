@@ -1,13 +1,12 @@
 import { Keybinds } from '../keybind-manager';
 import PageLive from '../pagelive';
-import ChatObserver from '../chat-observer';
-import ChatObserverV2 from '../chat-observer-v2';
+import ChatObserverV3 from '../chat-observer-v3';
 import ElementObserver from '../element-observer';
 import ChatInfo from '../chat-info';
 
 const claudeAdapter = async () => {
     const pl = new PageLive();
-    let chatObserver !: ChatObserverV2;
+    let chatObserver !: ChatObserverV3;
 
     // Element references
     let mainContent: HTMLElement | null = null;
@@ -35,16 +34,8 @@ const claudeAdapter = async () => {
 
         // Initialize chat observer
         await resolve.mainContent("construct");
-        chatObserver = new ChatObserverV2(
+        chatObserver = new ChatObserverV3(
             pl
-            , parseResponseContainer
-            , parseResponseElements
-            , parseAndWaitResponseElement
-            , async () => pl.speak("Claude replies...")
-            , async (rc) => {
-                pl.utils.devLog(`Response element is not found in:`);
-                console.log(rc);
-            }
             , async () => {
                 console.log("Finding chat observer");
                 await resolve.chatContainer("From ChatObserverV2");
@@ -54,9 +45,20 @@ const claudeAdapter = async () => {
             , mainContent
             , null
             , isPageEmptyChat
-            , false
+            // , parseResponseContainer
+            // , parseResponseElements
+            // , parseAndWaitResponseElement
+            // , async () => pl.speak("Claude replies...")
+            // , async (rc) => {
+            //     pl.utils.devLog(`Response element is not found in:`);
+            //     console.log(rc);
+            // }
+            // , null
+            // , false
+            , isRC
             , isNewRC
             , handleNewRC
+
         );
 
         // await init();
@@ -224,6 +226,27 @@ const claudeAdapter = async () => {
     }
 
     /**
+     * Parse the response container (RC) from a node, if the node itself is a RC or it contains RC(s). Return null if not found.
+     */
+    function _parseForRC(n: Node): HTMLElement | null {
+        if (!(n instanceof HTMLElement)) return null;
+
+        // Check if node itself is a response container
+        const direct = parseResponseContainer(n);
+        if (direct) return direct;
+
+        // Otherwise, search descendants for a response container
+        const candidates = n.querySelectorAll('[data-test-render-count]');
+        for (const el of Array.from(candidates)) {
+            const rc = parseResponseContainer(el);
+            if (rc) return rc;
+        }
+
+        return null;
+    }
+
+
+    /**
      * Parse the response container element from added nodes in `chatContainer`
      */
     const parseResponseContainer = (node: Node): HTMLElement | null => {
@@ -238,6 +261,9 @@ const claudeAdapter = async () => {
         // There is a chance when prev prompts and responses are loaded, all has `[data-test-render-count="1"]` 
         // [Assumption] But then will be changed to `[data-test-render-count="2"]` by Claude UI after a while.
         // So we can not decide solely based on `[data-test-render-count="1"]`. Thus we also check if it has children.
+
+        // [Assumption] The `[data-test-render-count="1"]` is the new RC,
+        // while `[data-test-render-count="2"]` is prev / updated RCs    
 
         // console.log("[PageLive][1] Parsing response container from added node:", node);
 
@@ -263,7 +289,8 @@ const claudeAdapter = async () => {
         return null;
     }
     /**
-     * Parse from a node, whether the node itself is a response container, or it contains response containers
+     * Parse response elements from a given node. 
+     * The node can be the response container itself, or any node that contains response element(s).
      */
     const parseResponseElements = (node: Node): HTMLElement[] => {
         const responseElements: HTMLElement[] = [];
@@ -378,15 +405,81 @@ const claudeAdapter = async () => {
     }
 
     /**
+     * Determine if a node is a response container (RC) or not.
+     * The given node should be a child node of `chatContainer`. 
+     */
+    const isRC = (node: Node): boolean => {
+        if (!(node instanceof HTMLElement)) return false;
+
+        // If has [data-testid="user-message"], it's a prompt container, not RC
+        if (node.querySelector('[data-testid="user-message"]')) return false;
+
+        // A RC must have attribute `data-test-render-count` 
+        // and have child `.group` > `.contents`
+        if (node.querySelector(':scope > .group > .contents')) return true;
+        // This may be a RC if has `data-test-render-count` attribute and has no children
+        if (node.hasAttribute('data-test-render-count') && node.children.length === 0) return true;
+        return false;
+    }
+
+    /**
+     * Determine if a node is a new RC or not.
+     * The given node should be a child node of `chatContainer`. 
+     */
+    const isNewRC = async (node: Node): Promise<boolean> => {
+        if (!(node instanceof HTMLElement)) return false;
+
+        // Is this even a RC ?
+        if (!isRC(node)) {
+            return false;
+        }
+
+        // Note: On page load, the `data-test-render-count` of all RCs are "1", 
+        // but after sometimes the `data-test-render-count`, except the most recent, will be updated to "2" by Claude UI.
+        // So we can not determine if a RC is new or not solely based on `data-test-render-count="1"`. However, we found that only the new RC has no children when it is added to the DOM, while the previous RC has children when it is added to the DOM.
+        // Conclusion, we can determine if a RC is new or not by one of the following:
+        // 1. Has `data-test-render-count="1"` and has no children
+        // 2. Has `data-test-render-count="1"` and has descendant with selector `.contents > [data-is-streaming="true"]`
+        // 3. Has `data-test-render-count="1"` and has descendant with selector `.contents > [data-is-streaming="false"]` on the first response of a new chat. Maybe the newRC already fully rendered with `chatContainer`
+
+        let dataTestRenderCount = node.getAttribute('data-test-render-count');
+        if (dataTestRenderCount !== '1') {
+            return false;
+        }
+
+        if (node.children.length > 0) {
+            // Find the descendant with selector `.contents > [data-is-streaming]`
+            const streamingElement = node.querySelector('.contents > [data-is-streaming]') as HTMLElement;
+            if (!streamingElement) {
+                pl.speak("Found RC with children but no streaming element, not a new RC.");
+                console.log("Found RC with children but no streaming element, not a new RC.");
+                console.log(node.cloneNode(true));
+                return false;
+            }
+            // IMPORTANT: one the first response on the chat, newRC from empty chat, `data-is-streaming="false"` is set when added to the DOM.
+            // This will mistakenly recognized as not new RC.
+            // Maybe we should wait ?
+            if (streamingElement.getAttribute('data-is-streaming') !== 'true') {
+                pl.speak("Found RC with children and streaming element, but data-is-streaming is not true, not a new RC.");
+                console.log("Found RC with children and streaming element, but data-is-streaming is not true, not a new RC.");
+                console.log(node.cloneNode(true));
+                console.log('data-is-streaming:', streamingElement.getAttribute('data-is-streaming'));
+                return false;
+            }
+        } 
+        return true;
+    }
+
+    /**
      * Determine if the added node is a new RC, not previous RC
      */
-    const isNewRC = async (node: Node): Promise<HTMLElement | null> => {
+    const _isNewRC = async (node: Node): Promise<HTMLElement | null> => {
         if (node instanceof HTMLElement
             && node.hasAttribute('data-test-render-count')) {
 
             // Below are the assumptions we found when a new RC is added in Claude, beside a new RC has `[data-test-render-count="1"]`:
             // 1. new RC does not have children when added, but prev RC has children when added, so we can use this to determine if it is a new RC or prev RC.
-            // 2. new RC may has children when added, but it has descendant `[data-is-streaming="true"]`. It seems that the attribute `data-is-streaming=true` is used to mark when an element is still updated.
+            // 2. new RC may has children when added, but it has descendant `[data-is-streaming="true"]`. It seems that the attribute `data-is-streaming=true` is used to mark when an element is still being updated.
             if (node.getAttribute('data-test-render-count') === '1'
                 && (node.children.length === 0)
                 || (node.querySelector('[data-is-streaming="true"]') != null)
@@ -398,7 +491,206 @@ const claudeAdapter = async () => {
         return null;
     }
 
-    const handleNewRC = async (newRC: HTMLElement) : Promise<void> => {
+    /**
+     * Handle new RC
+     */
+    const handleNewRC = async (newRC: HTMLElement): Promise<void> => {
+        // Interval to let user know that Claude is still thinking
+        let thinkingNotifInterval: ReturnType<typeof setInterval> | null = null;
+        // let hasThinkingStarted = false;
+        // Check if thinking has started. 
+        // If yes, will trigger interval to let user know.
+        // The interval will be cleared when response is being received.
+        const checkIsThinkingMode = () => {
+            // Only if the thinking notif interval is not started
+            if (!thinkingNotifInterval) {
+                pl.devSpeak("Check is thinking...");
+                // Check if 'thinking' has started
+                const thinkingSection = newRC.querySelector('.overflow-hidden > * > .standard-markdown') as HTMLElement;
+                const isThinking = thinkingSection != null;
+
+                if (isThinking) {
+                    // Start thinking mode: let user know every few seconds that Claude is still thinking
+                    pl.speak("Claude is thinking...");
+                    thinkingNotifInterval = setInterval(() => {
+                        pl.speak("still thinking...");
+                    }, 5e3);
+                }
+            }
+        };
+        // Stop thinking interval
+        const stopThinkingMode = () => {
+            pl.devSpeak("Stop thinking mode...");
+            if (thinkingNotifInterval) {
+                clearInterval(thinkingNotifInterval);
+                thinkingNotifInterval = null;
+            }
+        };
+
+        // The element that has `data-is-streaming` as indicator if response has been completed
+        let streamingElement: HTMLElement | null = null;
+        // Check if response has started being received. If yes, will trigger the observer to check when response is completed. If not, will trigger the observer to check when response is started.
+        const checkHasResponseStarted = () => {
+            pl.devSpeak("Check has response started...");
+            // Reschedule failsafe 
+            scheduleEndAllTimeout();
+            // Response is considered started being received when there is an element with `data-is-streaming`
+            streamingElement = newRC.querySelector('[data-is-streaming]') as HTMLElement;
+            if (!streamingElement) {
+                observeForResponseStart();
+                return false;
+            } else {
+                onResponseStarted();
+                return true;
+            }
+        };
+
+        // Observer to check if response has started being received.
+        let responseStartObserver: MutationObserver | null = null;
+        const observeForResponseStart = () => {
+            pl.devSpeak("Observing for response start...");
+            // Observe the `newRC` to know when response has started being received
+            responseStartObserver = new MutationObserver((mutations, obs) => {
+                checkHasResponseStarted();
+            });
+            responseStartObserver.observe(newRC, {
+                childList: true,
+                subtree: true,
+            });
+        }
+
+        // Handle when newRC first start receiving response
+        const onResponseStarted = () => {
+            pl.speak("Claude is responding...");
+            // No need to check `isThinking` anymore, now assume response is being received
+            stopThinkingMode();
+            // Stop 'response started' observer
+            if (responseStartObserver) {
+                responseStartObserver.disconnect();
+                responseStartObserver = null;
+            }
+            // Check if response has been completed
+            const hasCompleted = checkHasResponseCompleted();
+            if (!hasCompleted) {
+                // At this point, response is being received yet not completed.
+                // Let user know
+                responseReceiveNotifInterfal = setInterval(() => {
+                    pl.speak("loading...");
+                }, 3e3);
+            }
+        };
+
+        // Check if the newRC has finish being rendered
+        const checkHasResponseCompleted = (): boolean => {
+            pl.devSpeak("Check has response completed...");
+            // Is disconnected, end all
+            if (!newRC.isConnected) endAll();
+
+            // Reschedule failsafe 
+            scheduleEndAllTimeout();
+
+            // The RC is fully rendered when it has response element with `data-is-streaming="false"`
+            const isStreaming = streamingElement?.getAttribute('data-is-streaming');
+            if (isStreaming === 'false') {
+                // Response is completed
+                onResponseCompleted();
+                return true;
+            } else {
+                observeForResponseCompletion();
+                return false;
+            }
+        };
+
+        let responseCompleteObserver: MutationObserver | null = null;
+        const observeForResponseCompletion = () => {
+            pl.devSpeak("Observing for response completion...");
+            // If disconnected, end all
+            if (!newRC.isConnected) endAll();
+
+            if (!streamingElement || !streamingElement.isConnected) {
+                pl.devSpeak("Streaming element not found when checking if response has been completed");
+                // If `streamingElement` not connected, we have to go back to `checkHasResponseStarted` to find the `streamingElement` again
+                // , since the newRC may be re-rendered and the old `streamingElement` is removed and a new `streamingElement` is added.
+                checkHasResponseStarted();
+                return;
+            }
+
+            // Observe the `streamingElement` to know when response has finished being received, since the `data-is-streaming` attribute will be updated to "false" when the response is fully rendered.
+            responseCompleteObserver = new MutationObserver((mutations, obs) => {
+                checkHasResponseCompleted();
+            });
+            responseCompleteObserver.observe(streamingElement, {
+                attributes: true,
+                attributeFilter: ['data-is-streaming'],
+            });
+        }
+
+        // Handle when newRC finishes receiving response
+        const onResponseCompleted = async () => {
+            pl.devSpeak("Response completed...");
+            // Stop 'loading' interval & notify user 
+            responseReceiveNotifInterfal && clearInterval(responseReceiveNotifInterfal);
+            pl.speak("Response received.");
+            // Get all response elements
+            const responseElements = parseResponseElements(newRC);
+            if (responseElements.length === 0) pl.speak("Unknown error: response is not found");
+
+            // Announce 
+            for (let i = 0; i < responseElements.length; i++) {
+                // Announce by segment (children of response element)
+                for (let j = 0; j < responseElements[i].children.length; j++) {
+                    pl.speak(responseElements[i].children[j].outerHTML || "");
+                    await new Promise(r => setTimeout(r, 2e3));
+                }
+            }
+            endAll();
+        };
+
+        // Interval to notify user that response is still being rendered
+        let responseReceiveNotifInterfal: ReturnType<typeof setInterval> | null = null;
+
+        // Handle to end everything
+        const endAll = () => {
+            pl.devSpeak("End all: stop all observers and intervals related to response receiving and thinking mode...");
+            // `thinking` related
+            stopThinkingMode();
+
+            // Response receiving related
+            responseReceiveNotifInterfal && clearInterval(responseReceiveNotifInterfal);
+            responseReceiveNotifInterfal = null;
+            responseStartObserver && responseStartObserver.disconnect();
+            responseStartObserver = null;
+            responseCompleteObserver && responseCompleteObserver.disconnect();
+            responseCompleteObserver = null;
+
+            // The 'fail safe' timeout
+            endAllTimeout && clearTimeout(endAllTimeout);
+            endAllTimeout = null;
+        }
+
+        // Schedule to `endAll` after a timeout to avoid unexpected long waiting
+        let endAllTimeout: ReturnType<typeof setTimeout> | null = null;
+        const scheduleEndAllTimeout = () => {
+            if (endAllTimeout) clearTimeout(endAllTimeout);
+            endAllTimeout = setTimeout(() => {
+                pl.speak("Unknown error, stop waiting for response.");
+                endAll();
+            }, 30e3);
+        }
+
+        // On load
+        checkIsThinkingMode();
+        scheduleEndAllTimeout();
+        // Check if response has started
+        // , no need to set observer or call other sequential functions since
+        // This function will automatically will start the chain reaction until response is completed
+        // , no matter the response has started or even completed when we check
+        // , since it will check the status in each step and decide what to do next
+        // , so we won't miss the response completed status even if it is already completed before we set observer.
+        checkHasResponseStarted();
+    }
+
+    const _handleNewRC = async (newRC: HTMLElement): Promise<void> => {
         // Note: When a new RC is added, claude has `thinking section` which keep being updated before generating the response.
         // Then `thinkingSection` has class `standard-markdown` and also has ancestor with class `overflow-hidden`, so we can check the descendants of RC with class `standard-markdown` for ancestors with class `overflow-hidden` to determine if there is a thinking section, and handle it if found.
         // The `.overflow-hidden` element is the second ancestor of `.standard-markdown` element in the thinking section.

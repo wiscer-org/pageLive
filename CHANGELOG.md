@@ -13,6 +13,8 @@
 
 ### On Progress
 
+- Claude: Implement Chat Observer v3
+
 =======
 
 ### Planned

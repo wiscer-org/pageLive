@@ -525,30 +525,56 @@ export default class ChatObserverV2 {
             // Remove disconnected REs
             REs = REs.filter(re => {
                 if (!re.isConnected) {
-                    this.pl.utils.devLog("[ChatObserver] >>>>> RE is no longer connected. Removing...");
-                    this.pl.utils.devLog("text content : " + re.textContent)
+                    // this.pl.utils.devLog("[ChatObserver] >>>>> RE is no longer connected. Removing...");
+                    // this.pl.utils.devLog("text content : " + re.textContent)
                 }
                 return re.isConnected;
             });
 
-            this.pl.utils.devLog(">>>> Before collecting segments..");
+            // this.pl.utils.devLog(">>>> Before collecting segments..");
             let disconnectedCount = 0;
             segments.forEach(s => {
                 if (!s.isConnected) {
                     disconnectedCount++;
-                    this.pl.utils.devLog("[ChatObserver] >>>>> Disconnected segment found in existing segments list. Removing text content below: ");
-                    this.pl.utils.devLog("text content : " + s.textContent)
+                    // this.pl.utils.devLog("[ChatObserver] >>>>> Disconnected segment found in existing segments list. Removing text content below: ");
+                    // this.pl.utils.devLog("text content : --" + s.textContent + "--");
                 }
             });
-            
+
+            // Just for debug
+            const prevSegments = segments.slice();
+
             // Collect segments from all REs
             segments = [];
             REs.forEach(re => {
-                segments.push(...Array.from(re.children) as HTMLElement[]);
+                const children = Array.from(re.children) as HTMLElement[];
+                // Only add non-empty segments, to avoid the case that page add empty segment first then update the content later, which can cause a lot of noise if we announce the empty segment.
+                segments.push(...children.filter(child => (child.textContent ?? "").trim().length > 0));
             });
+
+            if (prevSegments.length > segments.length) {
+                console.log(`Segments count decreased from ${prevSegments.length} to ${segments.length}, disconnected count in existing segments: ${disconnectedCount}`);
+                console.log("Previous segments: ");
+                prevSegments.forEach((s, index) => {
+                    console.log(`Segment ${index} : --${s.textContent}--`);
+                });
+                console.log("Current segments: ");
+                segments.forEach((s, index) => {
+                    console.log(`Segment ${index} : --${s.textContent}--`);
+                });
+            }
+
+            // console.log("Logging segments... total: ", segments.length, " disconnected count in existing segments: ", disconnectedCount);
+            // segments.forEach((s, index) => {
+            //     console.log(`Segment ${index} : --${s.textContent}--`);
+            // });
+            // console.log("^^^^^^^ end of logging segments ^^^^^^^")
 
             // Process segments. Is total segments increased ?
             const segmentsCount = segments.length;
+
+            console.log(`====== segments count: ${prevSegmentsCount} to ${segmentsCount}, lastAnnouncedSegment: ${lastAnnouncedSegment}`);
+
             if (prevSegmentsCount < segmentsCount) {
                 // Note: Number of segments can increase more than 1 on 1 callback. On a found case 2 segments added at once.
                 // Assuming the Single Page App only updating the last segment, we can announce right away the n-1 segments.
@@ -560,7 +586,12 @@ export default class ChatObserverV2 {
 
                 // announce the previous not yet announced segments
                 this.pl.utils.devLog(`[ChatObserver] lastAnnouncedSegment before : ${lastAnnouncedSegment}`);
-                lastAnnouncedSegment = await this.readSegments(segments, lastAnnouncedSegment, secondLastSegmentIndex);
+                // In claude, more segments may cause 1, or maybe more segments will be announced more than once and the last segment(s) might not be announced.
+                // For UX consideration, we only going instant announce, without waiting the whole response to be completed, on for the first 2 segments.
+                if (lastAnnouncedSegment < 1) {
+                    lastAnnouncedSegment = await this.readSegments(segments, lastAnnouncedSegment, secondLastSegmentIndex);
+                }
+                // lastAnnouncedSegment = await this.readSegments(segments, lastAnnouncedSegment, secondLastSegmentIndex);
                 this.pl.utils.devLog(`[ChatObserver] lastAnnouncedSegment after : ${lastAnnouncedSegment}`);
 
                 // Schedule to announce the remaining not-yet-announced segments
@@ -582,6 +613,14 @@ export default class ChatObserverV2 {
 
         // Set observer to detect response element addition
         const responseElementsObserver = new MutationObserver(async (mutations, observer) => {
+            // Stop observing if RC is no longer connected
+            if (!newRC.isConnected) {
+                this.pl.utils.devLog("[ChatObserver] RC is no longer connected. Stopping observing... - 3943");
+                // Do not call `this.onResponseComplete` as it is for completed response, not for disconnected response container.
+                stopObserving();
+                return;
+            }
+
             for (let mutation of mutations) {
                 if (mutation.type === "childList") {
                     for (let c = 0; c < mutation.addedNodes.length; c++) {
@@ -603,8 +642,24 @@ export default class ChatObserverV2 {
         // Observe the RC for response element addition / removal, and segment addition / removal
         responseElementsObserver.observe(newRC, { childList: true, subtree: true, characterData: true });
 
+        // Stop observing response element when the RC is disconnected, or after a long idle time (in case the page stop updating the response but still keep the RC connected)
+        // Observer also will be stopped if `readRemainingSegments` is triggered, which means the page stop updating the response for a while, thus we want to announce the remaining segments and stop observing to save resource and avoid unexpected behavior.
+        const stopObserving = () => {
+            if (remainingTimeoutId) {
+                clearTimeout(remainingTimeoutId);
+                remainingTimeoutId = undefined;
+            }
+            if (responseElementsObserver) {
+                responseElementsObserver.disconnect();
+                this.pl.utils.devLog("[ChatObserver] Stopped observing response elements and segments.");
+            }
+        }
+
         // Set timeout to disconnect observer
-        // TODO
+        remainingTimeoutId = setTimeout(() => {
+            this.pl.utils.devLog("[ChatObserver] No segment update for a while, consider the response is completed. Stopping observing response elements and segments.");
+            stopObserving();
+        }, 2 * ChatObserverV2.SEGMENT_WAIT_SECONDS);
 
     }
 
@@ -712,6 +767,8 @@ export default class ChatObserverV2 {
 
         // Cancel the timeout id if exist
         if (readTimeout) clearTimeout(readTimeout);
+
+        console.log(`Schedule to read remaining segment. Total segments: ${segments.length}, lastReadSegment: ${lastReadSegment}`);
 
         return setTimeout(async () => {
             const lastSegmentToRead = segments.length - 1;
