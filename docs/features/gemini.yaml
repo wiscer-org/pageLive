@@ -1,0 +1,82 @@
+app: gemini
+source_repo: pagelive
+last_updated: 2026-02-20
+features:
+  - id: focus-chat-input
+    name: Focus chat input
+    user_value: Jump quickly to the prompt input.
+    shortcut: Shift+Esc
+    status: stable
+    notes: Requires input to be mounted.
+    use_cases:
+      - goal: Move focus to prompt input quickly
+        steps:
+          - Press Shift+Esc
+        expected_result: Keyboard focus moves to Gemini prompt input.
+
+  - id: start-new-chat
+    name: Start new chat
+    user_value: Create a new chat without navigating with mouse.
+    shortcut: Ctrl+Alt+O
+    status: stable
+    notes: Uses Gemini-specific page controls.
+    use_cases:
+      - goal: Start a fresh conversation immediately
+        steps:
+          - Press Ctrl+Alt+O
+        expected_result: A new chat is opened and ready for input.
+
+  - id: read-last-response
+    name: Read last response
+    user_value: Hear the latest response quickly.
+    shortcut: Ctrl+Shift+Enter
+    status: stable
+    notes: Announced through PageLive speech pipeline.
+    use_cases:
+      - goal: Re-listen to the most recent Gemini response
+        steps:
+          - Press Ctrl+Shift+Enter
+        expected_result: PageLive reads the latest response aloud.
+
+  - id: delete-current-chat
+    name: Delete current chat
+    user_value: Delete the active conversation from keyboard.
+    shortcut: Ctrl+Shift+Backspace
+    status: stable
+    notes: Destructive action; depends on chat context.
+    use_cases:
+      - goal: Remove the current chat without mouse navigation
+        steps:
+          - Press Ctrl+Shift+Backspace
+          - Confirm deletion if Gemini asks for confirmation
+        expected_result: The active conversation is deleted.
+
+  - id: page-info
+    name: Page Info dialog
+    user_value: Get snapshot information about the active page/chat.
+    shortcut: Alt+/
+    status: stable
+    notes: Includes navigation hints and chat metadata.
+    use_cases:
+      - goal: Open Page Info and hear current chat context
+        steps:
+          - Press Alt+/
+        expected_result: Page Info dialog opens and announces snapshot info.
+      - goal: Focus active chat item in sidebar
+        steps:
+          - Press Alt+/
+          - In Page Info, press Enter on the first H1 (dialog title)
+        expected_result: Focus moves to the active chat in the sidebar list.
+
+  - id: content-map
+    name: Content Map dialog
+    user_value: Navigate prompts and responses in current chat.
+    shortcut: null
+    status: stable
+    notes: Dialog items move focus to corresponding chat units.
+    use_cases:
+      - goal: Jump to a specific response from the map
+        steps:
+          - Open Content Map from PageLive dialog controls
+          - Choose a response item and press Enter
+        expected_result: Focus moves to the selected response element.

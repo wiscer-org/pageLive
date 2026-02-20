@@ -1,0 +1,85 @@
+app: claude
+source_repo: pagelive
+last_updated: 2026-02-20
+audience_segments:
+  - id: power-users
+    label: Power users
+    doc_priority: 1
+    description: Keyboard-first users focused on speed and workflow efficiency.
+  - id: screen-reader-users
+    label: Screen reader users
+    doc_priority: 2
+    description: Users who rely on assistive technology and non-visual navigation.
+features:
+  - id: focus-chat-input
+    name: Focus chat input
+    user_value: Jump quickly to the chat input box.
+    value_by_segment:
+      power-users: Keep typing flow fast by jumping straight to the input.
+      screen-reader-users: Reach the input predictably without scanning page regions.
+    shortcut: Shift+Esc
+    status: stable
+    notes: Requires chat input element to be available.
+
+  - id: start-new-chat
+    name: Start new chat
+    user_value: Start a fresh conversation without mouse navigation.
+    value_by_segment:
+      power-users: Start a new thread instantly to keep momentum.
+      screen-reader-users: Open a fresh chat without hunting for visual controls.
+    shortcut: Ctrl+Alt+O
+    status: stable
+    notes: Behavior depends on Claude page state.
+
+  - id: read-last-response
+    name: Read last response
+    user_value: Hear the most recent assistant response quickly.
+    audience_fit:
+      power-users: none
+      screen-reader-users: primary
+    value_by_segment:
+      power-users: Recheck the latest output immediately while staying on keyboard.
+      screen-reader-users: Hear the newest response on demand with consistent speech output.
+    shortcut: Ctrl+Shift+Enter
+    status: stable
+    notes: Works when at least one response exists.
+
+  - id: delete-current-chat
+    name: Delete current chat
+    user_value: Remove current conversation from shortcut only.
+    value_by_segment:
+      power-users: Clean up chat history quickly without interrupting workflow.
+      screen-reader-users: Delete current chat without complex pointer-based actions.
+    shortcut: Ctrl+Shift+Backspace
+    status: stable
+    notes: Should be used carefully because the action is destructive.
+
+  - id: toggle-sidebar
+    name: Toggle sidebar
+    user_value: Open/close sidebar quickly for navigation.
+    value_by_segment:
+      power-users: Switch layout context quickly to move between chats.
+      screen-reader-users: Reduce navigation overhead by controlling sidebar visibility directly.
+    shortcut: null
+    status: stable
+    notes: Shortcut depends on current keybind mapping in adapter.
+
+  - id: page-info
+    name: Page Info dialog
+    user_value: Access active chat metadata and quick navigation info.
+    value_by_segment:
+      power-users: Get chat context fast and jump to key locations.
+      screen-reader-users: Receive structured, spoken context and navigation cues.
+    shortcut: Alt+/
+    status: stable
+    notes: Includes chat title and response count for Claude.
+
+  - id: dialog-notify
+    name: Dialog state notification
+    user_value: Know when Claude shortcut dialog opens/closes.
+    value_by_segment:
+      power-users: none
+      screen-reader-users: Get explicit state announcements for dialog open/close events.
+    shortcut: null
+    status: stable
+    notes: Announced by PageLive for accessibility context.

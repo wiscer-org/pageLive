@@ -1,0 +1,52 @@
+app: grok
+source_repo: pagelive
+last_updated: 2026-02-20
+features:
+  - id: focus-chat-input
+    name: Focus chat input
+    user_value: Move focus directly to the input box.
+    shortcut: Shift+Esc
+    status: stable
+    notes: Works after page adapter is ready.
+
+  - id: start-new-chat
+    name: Start new chat
+    user_value: Start a new conversation quickly.
+    shortcut: Ctrl+Alt+O
+    status: stable
+    notes: Uses Grok page adapter selectors.
+
+  - id: read-last-response
+    name: Read last response
+    user_value: Hear the latest assistant output.
+    shortcut: Ctrl+Shift+Enter
+    status: stable
+    notes: Requires at least one response in active chat.
+
+  - id: delete-current-chat
+    name: Delete current chat
+    user_value: Remove current conversation from keyboard only.
+    shortcut: Ctrl+Shift+Backspace
+    status: stable
+    notes: Destructive flow with adapter safeguards.
+
+  - id: toggle-sidebar
+    name: Toggle sidebar
+    user_value: Quickly switch sidebar visibility.
+    shortcut: null
+    status: stable
+    notes: Shortcut depends on current keybind mapping in adapter.
+
+  - id: all-chat-dialog
+    name: Open all chat dialog
+    user_value: Open Grok chat list dialog from shortcut.
+    shortcut: null
+    status: stable
+    notes: Triggered via PageLive shortcut button mapping.
+
+  - id: page-info
+    name: Page Info dialog
+    user_value: Get current page/chat context and navigation info.
+    shortcut: Alt+/
+    status: stable
+    notes: Shared PageLive dialog behavior.
