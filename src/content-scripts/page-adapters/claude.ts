@@ -1102,7 +1102,7 @@ const claudeAdapter = async () => {
                     if (!(node instanceof HTMLElement)) continue;
 
                     if (isDialog(node) && isDialogOpen) {
-                        pl.speak("Claude Shortcuts dialog opened. Press Escape to close.");
+                        pl.speak("Claude dialog opened. Press Escape to close.");
                     }
                 }
                 // Check removed nodes for dialog is closed
