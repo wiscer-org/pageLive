@@ -942,7 +942,7 @@ const claudeAdapter = async () => {
             const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
             if (firstFocusable) {
                 firstFocusable.focus();
-                pl.toast("Focus moved to sidebar.");
+                pl.toast("Focus moved to the chat list in the sidebar.");
             }
         } else if (!isExpanded) {
             // Focus back to chat input. No need to announce, since SR will announce when focus on chat input
