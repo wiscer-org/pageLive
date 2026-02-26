@@ -9,7 +9,7 @@ audience_segments:
   - id: screen-reader-users
     label: Screen reader users
     doc_priority: 2
-    description: Users who rely on assistive technology and non-visual navigation.
+    description: Users who rely on assistive technology and non-visual navigation. Screen reader users also benefit from keyboard shortcuts that reduce the need for complex pointer interactions and provide consistent access to key features.
 features:
   - id: focus-chat-input
     name: Focus chat input
@@ -54,9 +54,9 @@ features:
     status: stable
     notes: Should be used carefully because the action is destructive.
 
-  - id: toggle-sidebar
-    name: Toggle sidebar
-    user_value: Open/close sidebar quickly for navigation.
+  - id: toggle-sidebar-focus-chat-list
+    name: Toggle sidebar and focus chat list
+    user_value: Open/close sidebar quickly for navigation, then focus on the chat list.
     value_by_segment:
       power-users: Switch layout context quickly to move between chats.
       screen-reader-users: Reduce navigation overhead by controlling sidebar visibility directly.
@@ -83,3 +83,13 @@ features:
     shortcut: null
     status: stable
     notes: Announced by PageLive for accessibility context.
+  
+  - id: read-new-response-notify
+    name: Read new response notification
+    user_value: Be notified when a new assistant response is available.
+    value_by_segment:
+      power-users: none
+      screen-reader-users: Get an announcement when a new response is ready to be read.
+    shortcut: null
+    status: stable
+    notes: Announced by PageLive when a new response is detected.

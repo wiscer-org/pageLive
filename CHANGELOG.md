@@ -1,26 +1,17 @@
 # Changelog
 
-## v3.4.0
+## v3.5.0
 
-- Claude: Add keybind to delete current chat
-- Claude: Add keybind to toggle sidebar
-- Claude: Add keybind to read last response
-- Claude: Add keybind to start new chat
-- Claude: Add keybind to focus on chat input
-- Claude: Add chat title and number of responses to Page Info
-- Claude: Notify user when Claude's shortcuts dialog opens or closes
-- Claude: Implement Chat Observer
+-
 
 ### On Progress
 
-- Claude: Implement Chat Observer v3
+-
 
 =======
 
 ### Planned
 
-- Claude: Notify users when Claude's shortcut dialog is open / close.
-- Claude: add `modal` attribute to Claude's shortcut dialog
 - Add tests for page adapters' DOM hierarchy
 - Gemini: Fix: Chat title not updated in the case of long delay with the side nav.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
@@ -30,6 +21,17 @@
 ### Future
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v3.4.0
+
+- Claude: Add keybind to delete current chat
+- Claude: Add keybind to toggle sidebar
+- Claude: Add keybind to read last response
+- Claude: Add keybind to start new chat
+- Claude: Add keybind to focus on chat input
+- Claude: Add chat title and number of responses to Page Info
+- Claude: Implement Chat Observer v3
+- Claude: Notify users when Claude's shortcut dialog is open / close.
 
 ## v3.3.0
 

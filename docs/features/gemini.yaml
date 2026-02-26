@@ -1,82 +1,75 @@
 app: gemini
 source_repo: pagelive
-last_updated: 2026-02-20
+last_updated: 2026-02-26
+audience_segments:
+  - id: power-users
+    label: Power users
+    doc_priority: 1
+    description: Keyboard-first users focused on speed and workflow efficiency.
+  - id: screen-reader-users
+    label: Screen reader users
+    doc_priority: 2
+    description: Users who rely on assistive technology and non-visual navigation. Screen reader users also benefit from keyboard shortcuts that reduce the need for complex pointer interactions and provide consistent access to key features.
 features:
   - id: focus-chat-input
     name: Focus chat input
-    user_value: Jump quickly to the prompt input.
+    user_value: Jump quickly to the chat input box.
+    value_by_segment:
+      power-users: Keep typing flow fast by jumping straight to the input.
+      screen-reader-users: Reach the input predictably without scanning page regions.
     shortcut: Shift+Esc
     status: stable
-    notes: Requires input to be mounted.
-    use_cases:
-      - goal: Move focus to prompt input quickly
-        steps:
-          - Press Shift+Esc
-        expected_result: Keyboard focus moves to Gemini prompt input.
+    notes: Requires chat input element to be available.
 
   - id: start-new-chat
     name: Start new chat
-    user_value: Create a new chat without navigating with mouse.
+    user_value: Start a fresh conversation without mouse navigation.
+    value_by_segment:
+      power-users: Start a new thread instantly to keep momentum.
+      screen-reader-users: Open a fresh chat without hunting for visual controls.
     shortcut: Ctrl+Alt+O
     status: stable
-    notes: Uses Gemini-specific page controls.
-    use_cases:
-      - goal: Start a fresh conversation immediately
-        steps:
-          - Press Ctrl+Alt+O
-        expected_result: A new chat is opened and ready for input.
-
-  - id: read-last-response
-    name: Read last response
-    user_value: Hear the latest response quickly.
-    shortcut: Ctrl+Shift+Enter
-    status: stable
-    notes: Announced through PageLive speech pipeline.
-    use_cases:
-      - goal: Re-listen to the most recent Gemini response
-        steps:
-          - Press Ctrl+Shift+Enter
-        expected_result: PageLive reads the latest response aloud.
+    notes: Behavior depends on Gemini page state.
 
   - id: delete-current-chat
     name: Delete current chat
-    user_value: Delete the active conversation from keyboard.
+    user_value: Remove current conversation from shortcut only.
+    value_by_segment:
+      power-users: Clean up chat history quickly without interrupting workflow.
+      screen-reader-users: Delete current chat without complex pointer-based actions.
     shortcut: Ctrl+Shift+Backspace
     status: stable
-    notes: Destructive action; depends on chat context.
-    use_cases:
-      - goal: Remove the current chat without mouse navigation
-        steps:
-          - Press Ctrl+Shift+Backspace
-          - Confirm deletion if Gemini asks for confirmation
-        expected_result: The active conversation is deleted.
+    notes: Should be used carefully because the action is destructive.
 
   - id: page-info
     name: Page Info dialog
-    user_value: Get snapshot information about the active page/chat.
+    user_value: Access active chat metadata and quick navigation info.
+    value_by_segment:
+      power-users: Get chat context fast and jump to key locations.
+      screen-reader-users: Receive structured, spoken context and navigation cues.
     shortcut: Alt+/
     status: stable
-    notes: Includes navigation hints and chat metadata.
-    use_cases:
-      - goal: Open Page Info and hear current chat context
-        steps:
-          - Press Alt+/
-        expected_result: Page Info dialog opens and announces snapshot info.
-      - goal: Focus active chat item in sidebar
-        steps:
-          - Press Alt+/
-          - In Page Info, press Enter on the first H1 (dialog title)
-        expected_result: Focus moves to the active chat in the sidebar list.
+    notes: Includes chat title and response count for Gemini.
 
   - id: content-map
     name: Content Map dialog
-    user_value: Navigate prompts and responses in current chat.
+    user_value: Navigate prompts and responses in the current chat quickly.
+    value_by_segment:
+      power-users: Jump directly to specific chat units and keep context-switching fast.
+      screen-reader-users: Move through prompts and responses from a structured list.
     shortcut: null
     status: stable
     notes: Dialog items move focus to corresponding chat units.
-    use_cases:
-      - goal: Jump to a specific response from the map
-        steps:
-          - Open Content Map from PageLive dialog controls
-          - Choose a response item and press Enter
-        expected_result: Focus moves to the selected response element.
+
+  - id: read-last-response
+    name: Read last response
+    user_value: Hear the most recent assistant response quickly.
+    audience_fit:
+      power-users: none
+      screen-reader-users: primary
+    value_by_segment:
+      power-users: none
+      screen-reader-users: Hear the newest response on demand with consistent speech output.
+    shortcut: Ctrl+Shift+Enter
+    status: stable
+    notes: Works when at least one response exists.
