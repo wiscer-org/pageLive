@@ -74,7 +74,7 @@ features:
     status: stable
     notes: Includes chat title and response count for Claude.
 
-  - id: dialog-notify
+  - id: claude-dialog-notify
     name: Dialog state notification
     user_value: Know when Claude shortcut dialog opens/closes.
     value_by_segment:
