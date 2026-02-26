@@ -1,0 +1,47 @@
+name: Sync feature catalogs to web
+
+on:
+  push:
+    paths:
+      - 'docs/features/**'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-features-to-web
+  cancel-in-progress: true
+
+env:
+  TARGET_REPO: wiscer-org/wiscer-org.github.io
+  TARGET_DIR: pagelive/features
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+
+      - name: Checkout target web repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TARGET_REPO }}
+          token: ${{ secrets.WEB_REPO_TOKEN }}
+          path: web
+
+      - name: Copy feature files
+        run: |
+          mkdir -p "web/${TARGET_DIR}"
+          rsync -av --delete docs/features/ "web/${TARGET_DIR}/"
+
+      - name: Create Pull Request in web repo
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.WEB_REPO_TOKEN }}
+          path: web
+          branch: chore/sync-pagelive-features
+          commit-message: 'chore: sync PageLive feature catalog'
+          title: 'chore: sync PageLive feature catalog'
+          body: 'Automated sync from PageLive docs/features.'
+          labels: |
+            auto-sync
+            documentation
