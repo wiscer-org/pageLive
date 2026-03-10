@@ -836,7 +836,7 @@ const claudeAdapter = async () => {
         // Focus on the 'Recent' button (h3)
         await resolve.sideNavElement("toggleSidebar");
         if (isExpanded && sideNavElement) {
-            const focusableSelector = 'h3[role="button"]';
+            const focusableSelector = 'h2[role="button"]';
             const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
             if (firstFocusable) {
                 firstFocusable.focus();

@@ -1,8 +1,8 @@
 # Changelog
 
-## v3.5.0
+## v3.4.1
 
--
+- Claude: adapt selector for 'recent chats' element in sidebar
 
 ### On Progress
 
