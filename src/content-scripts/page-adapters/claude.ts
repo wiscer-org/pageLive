@@ -836,11 +836,20 @@ const claudeAdapter = async () => {
         // Focus on the 'Recent' button (h3)
         await resolve.sideNavElement("toggleSidebar");
         if (isExpanded && sideNavElement) {
-            const focusableSelector = 'h2[role="button"]';
-            const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
-            if (firstFocusable) {
-                firstFocusable.focus();
+            const recentChatsHeadingSelector = 'h2[role="button"]';
+            const recentChatsHeading = sideNavElement.querySelector(recentChatsHeadingSelector) as HTMLElement;
+            if (recentChatsHeading) {
+                recentChatsHeading.focus();
                 pl.toast("Focus moved to the chat list in the sidebar.");
+            } else {
+                // Failed to find the 'Recent' button, just focus on focusable element in the sidebar, as below
+                const focusableElement = sideNavElement.querySelector<HTMLElement>('button, [role="button"], [href], [tabindex]:not([tabindex="-1"])');
+                if (focusableElement) {
+                    focusableElement.focus();
+                    pl.toast("Focus moved to the top of sidebar.");
+                } else {
+                    pl.toast("Failed to find any focusable element in the sidebar.");
+                }
             }
         } else if (!isExpanded) {
             // Focus back to chat input. No need to announce, since SR will announce when focus on chat input
