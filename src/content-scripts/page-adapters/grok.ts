@@ -30,7 +30,7 @@ const grokAdapter = async () => {
     let pageInfoContainer!: HTMLElement;
     // Contain page's navigational elements , will be placed inside PageInfoDialog.pageAdapterContainer.
     let pageNavContainer!: HTMLElement;
-    
+
     const construct = async () => {
         pl.page.name = "grok";
         await init();
@@ -343,7 +343,14 @@ const grokAdapter = async () => {
             }
             if (!toggleSidebarButton || !toggleSidebarButton.isConnected) {
                 pl.utils.devLog("Toggle sidebar button is null or not connected - 2830");
-                toggleSidebarButton = sideNavElement.querySelector('[data-sidebar="trigger"]');
+                // Element below only exist if sidebar is expanded
+                // toggleSidebarButton = sideNavElement.querySelector('[data-sidebar="trigger"]');
+
+                // Use the next element to toggle sidebar instead, as it always exists
+                const nextElement = sideNavElement.nextElementSibling;
+                if (nextElement && nextElement instanceof HTMLElement) {
+                    toggleSidebarButton = nextElement as HTMLElement;
+                }
             }
             if (!toggleSidebarButton) {
                 pl.utils.devLog("Could not find toggle sidebar button - 2126");
@@ -560,11 +567,17 @@ const grokAdapter = async () => {
     }
     async function toogleSidebar() {
         await resolve.sideNavElement();
+        if (!sideNavElement) {
+            const msg = "Failed to find the side nav element";
+            pl.utils.prodWarn(msg);
+            pl.speak(msg);
+            return;
+        }
         await resolve.toggleSidebarButton();
         if (!toggleSidebarButton) {
             const msg = "Failed to find the toggle sidebar button";
             pl.utils.prodWarn(msg);
-            pl.announce({ msg, o: true });
+            pl.speak(msg);
             return;
         }
         // Close all dialogs / modals first
@@ -576,24 +589,51 @@ const grokAdapter = async () => {
 
         // We know if sidebar is expanded or collapsed by checking `data-state` attribute of the closest parent div
         let msg = "Toggling sidebar";
+        let dataState = ""; // Indicator of the sidebar state
         const closestSidebarWrapper = toggleSidebarButton.closest('div[data-state]') as HTMLElement | null;
         if (closestSidebarWrapper) {
-            const dataState = closestSidebarWrapper.getAttribute('data-state') || "empty data-state";
+            dataState = closestSidebarWrapper.getAttribute('data-state') || "empty data-state";
             if (dataState === 'collapsed') msg = "Expanding sidebar";
             else if (dataState === 'expanded') msg = "Collapsing sidebar";
         }
-        pl.announce({ msg, o: true });
+        pl.speak(msg);
 
-        // If found, focus on the first anchor, button, or input inside the sidebar for better accessibility
-        if (sideNavElement) {
-            const focusableSelector = 'a, button, input, [tabindex]:not([tabindex="-1"])';
-            const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
-            // console.log("First focusable element in sidebar:", firstFocusable);
-            if (firstFocusable) {
-                firstFocusable.focus();
-                // console.log("Focused on the first focusable element in sidebar");
+        // wait a little for the animation to complete, and the sidebar state to be updated
+        await new Promise(r => setTimeout(r, 500));
+
+        // If sidebar is collapsing, focus on the chat input
+        if (dataState === 'expanded') {
+            await focusChatInput();
+        }
+
+        // If sidebar is expanding, manage the focus for better accessibility
+        if (dataState === 'collapsed') {
+            // Try to focus on the chat list heading in the sidebar
+            let historyHeading: HTMLElement | null = sideNavElement.querySelector("[aria-label='History']") || null;
+            if (historyHeading) {
+                await historyHeading.focus();
+                pl.toast("Focused on the chat list in the sidebar");
+            } else {
+                // Try to focus on the first anchor, button, or input inside the sidebar if 'History' heading is not found
+                const focusableSelector = 'a, button, input, [tabindex]:not([tabindex="-1"])';
+                const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
+                if (firstFocusable) {
+                    firstFocusable.focus();
+                    pl.toast("Focused on the first focusable element in the sidebar");
+                }
             }
         }
+
+        // If found, focus on the first anchor, button, or input inside the sidebar for better accessibility
+        // if (sideNavElement) {
+        //     const focusableSelector = 'a, button, input, [tabindex]:not([tabindex="-1"])';
+        //     const firstFocusable = sideNavElement.querySelector(focusableSelector) as HTMLElement;
+        //     // console.log("First focusable element in sidebar:", firstFocusable);
+        //     if (firstFocusable) {
+        //         firstFocusable.focus();
+        //         // console.log("Focused on the first focusable element in sidebar");
+        //     }
+        // }
     }
     async function chatCurrentDelete() {
         // If this is an empty chat, do nothing
