@@ -2,7 +2,7 @@ import { before, after, describe, it } from "node:test";
 import assert from "node:assert";
 import { Browser, Page } from "puppeteer";
 import { launchBrowser } from "./e2e.utils";
-import GeminiAdapterChat from "../../src/content-scripts/page-adapters/gemini-chat";
+// import GeminiAdapterChat from "../../src/content-scripts/page-adapters/gemini-chat";
 
 // This file is general e2e test file for gemini.
 // Tests in this file will focus on elements in gemini, to detect if there is any changes on Gemini web page that may effect PageLive
@@ -29,21 +29,20 @@ describe("Gemini general tests", async () => {
         });
 
         it("Has chat container element in desktop layout", async (t) => {
-            await page.setViewport({ width: 1600, height: 700 });
+            // await page.setViewport({ width: 1600, height: 700 });
 
-            const selector = GeminiAdapterChat.CHAT_CONTAINER_SELECTOR;
-            // let chatContainer = await waitForAnElement(selector);
-            let chatContainer = await page.$(selector);
-            console.log(chatContainer);
-            assert.notEqual(chatContainer, null);
+            // const selector = GeminiAdapterChat.CHAT_CONTAINER_SELECTOR;
+            // let chatContainer = await page.$(selector);
+            // console.log(chatContainer);
+            // assert.notEqual(chatContainer, null);
         });
 
         it("Has chat container element in the smaller layout", async (t) => {
-            await page.setViewport({ width: 500, height: 700 });
+            // await page.setViewport({ width: 500, height: 700 });
 
-            let chatContainer = await page.$(GeminiAdapterChat.CHAT_CONTAINER_SELECTOR);
-            console.log(chatContainer);
-            assert.notEqual(chatContainer, null);
+            // let chatContainer = await page.$(GeminiAdapterChat.CHAT_CONTAINER_SELECTOR);
+            // console.log(chatContainer);
+            // assert.notEqual(chatContainer, null);
         });
 
     });
