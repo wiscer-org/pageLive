@@ -7,7 +7,7 @@ import PageLive from "../pagelive";
 // Define page adapter to be executed on DOMContentLoaded
 const geminiPageAdapter = async () => {
 
-    const pageLive = new PageLive();
+    const pl = new PageLive();
 
     // Selector for chat item container, per chat item, on the right side navigation
     const CHAT_ITEM_CONTAINER_SELECTOR = '.conversation-items-container';
@@ -44,19 +44,19 @@ const geminiPageAdapter = async () => {
         let allFound = true;
 
         // Active chat container
-        chatContainer = await pageLive.utils.waitForAnElement("chat-window infinite-scroller.chat-history");
+        chatContainer = await pl.utils.waitForAnElement("chat-window infinite-scroller.chat-history");
         if (!chatContainer) {
             allFound = false;
-            pageLive.utils.prodWarn("Failed to find chat container. Code u73");
+            pl.utils.prodWarn("Failed to find chat container. Code u73");
         }
 
         // Chat list container
-        chatListContainer = await pageLive.utils.waitForAnElement('.chat-history');
+        chatListContainer = await pl.utils.waitForAnElement('.chat-history');
         if (!chatListContainer) allFound = false;
 
         // Chat input
         const chatInputSelector = '.new-input-ui[role="textbox"]';
-        const temporaryChatInputElement = await pageLive.utils.waitForAnElement(chatInputSelector);
+        const temporaryChatInputElement = await pl.utils.waitForAnElement(chatInputSelector);
         if (temporaryChatInputElement === null) {
             allFound = false;
         } else {
@@ -76,44 +76,49 @@ const geminiPageAdapter = async () => {
         addWindowResizeListener();
 
         // Feed info to pageLive & pageLive.page
-        pageLive.page.name = 'Gemini';
+        pl.page.name = 'Gemini';
         // Update chat info to dialog title, even if the chat info is not yet parsed
         updateDialogWithChatInfo();
         // Initial announce info
         // pageLive.initialAnnounceInfo.push("Gemini page");
 
         // Add keybinds for the Content Map
-        pageLive.keybindManager.registerKeybind(
+        pl.keybindManager.registerKeybind(
             PageLive.KeybindManager.Keybinds.ContentMapToggle,
             contentMapper.toggleModal.bind(contentMapper)
         )
         // Add keybind 'focus chat input'
-        pageLive.keybindManager.registerKeybind(
+        pl.keybindManager.registerKeybind(
             PageLive.KeybindManager.Keybinds.FocusChatInput,
             focusChatInput
         );
         // Add keybind 'announce last response'
-        pageLive.keybindManager.registerKeybind(
+        pl.keybindManager.registerKeybind(
             PageLive.KeybindManager.Keybinds.AnnounceLastResponse,
             // announceLastResponse
             chatAdapter.announceLastResponse.bind(chatAdapter)
         );
         // Add keybind 'delete current chat'
-        pageLive.keybindManager.registerKeybind(
+        pl.keybindManager.registerKeybind(
             PageLive.KeybindManager.Keybinds.ChatCurrentDelete,
             currentChatDelete
         );
         // Add keybind 'start new chat'
-        pageLive.keybindManager.registerKeybind(
+        pl.keybindManager.registerKeybind(
             PageLive.KeybindManager.Keybinds.NewChat,
             startNewChat
         )
+        // Add keybind 'toggle sidebar'
+        pl.keybindManager.registerKeybind(
+            PageLive.KeybindManager.Keybinds.ToggleSidebar,
+            toggleSidebar
+        );
 
         // Add callback to be executed the next time dialog is shown
-        pageLive.pageInfoDialog.onEveryOpenCallback = onDialogOpen
+        pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen
 
         // Notify PageLive that the page adapter is fully loaded
-        pageLive.page.ready();
+        pl.page.ready();
 
         start();
 
@@ -129,6 +134,30 @@ const geminiPageAdapter = async () => {
      */
     async function start() {
         // TODO later
+    }
+
+    /**
+     * Common element resolvers
+     */
+    const resolve = {
+        sidebar: async (intent: string) => {
+            sidebar = await pl.resolve(
+                sidebar
+                , '.sidenav-with-history-container'
+                , "Sidebar element"
+                , intent
+            );
+            return sidebar;
+        },
+        toggleSidebarButton: async (intent: string) => {
+            toggleSidebarButton = await pl.resolve(
+                toggleSidebarButton
+                , '[data-test-id="side-nav-menu-button"]'
+                , "Toggle Sidebar Button"
+                , intent
+            );
+            return toggleSidebarButton;
+        }
     }
 
     /**
@@ -194,8 +223,8 @@ const geminiPageAdapter = async () => {
         // If still not exist, notify
         if (!sideNavToogleButton) {
             const msg = "Failed to find side nav toggle button";
-            pageLive.utils.prodWarn(msg);
-            pageLive.announce({ msg });
+            pl.utils.prodWarn(msg);
+            pl.announce({ msg });
         }
         return sideNavToogleButton;
     }
@@ -212,19 +241,19 @@ const geminiPageAdapter = async () => {
      */
     async function focusChatInput() {
         if (!chatInputElement) {
-            pageLive.utils.prodWarn("Chat input element not found. Re-querying the element.");
+            pl.utils.prodWarn("Chat input element not found. Re-querying the element.");
             chatInputElement = getChatInputElement();
         }
 
         if (!chatInputElement?.isConnected) {
-            pageLive.utils.prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
-            pageLive.announce({ msg: "Chat input element not found." });
+            pl.utils.prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
+            pl.announce({ msg: "Chat input element not found." });
             return;
         }
 
         if (chatInputElement) {
             // Close any dialogs / modals first
-            pageLive.pageInfoDialog.close();
+            pl.pageInfoDialog.close();
             contentMapper.close();
 
             // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
@@ -267,8 +296,8 @@ const geminiPageAdapter = async () => {
 
         if (chatActionsMenu === null) {
             const msg = "Failed to find chat actions menu element";
-            pageLive.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
-            pageLive.announce({ msg });
+            pl.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
+            pl.announce({ msg });
         }
 
         return chatActionsMenu;
@@ -284,8 +313,8 @@ const geminiPageAdapter = async () => {
         const deleteButton = chatActionsMenu?.querySelector('[data-test-id="delete-button"]') as HTMLElement | null;
         if (deleteButton === null) {
             const msg = "Failed to find delete button";
-            pageLive.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
-            pageLive.announce({ msg });
+            pl.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
+            pl.announce({ msg });
         }
 
         return deleteButton;
@@ -308,7 +337,7 @@ const geminiPageAdapter = async () => {
         // Detect if this is a new chat. If yes, cannot find the chat menu button, thus cannot continue. Announce so the user knows.
         const isUnsavedChat = isThisUnsavedChat();
         if (isUnsavedChat) {
-            pageLive.announce({ msg: "This is a new chat. Nothing to delete." })
+            pl.announce({ msg: "This is a new chat. Nothing to delete." })
             return;
         }
 
@@ -389,7 +418,7 @@ const geminiPageAdapter = async () => {
             // Click to open the side nav. No need to be closed back.
             await sideNavToggleButton.click();
             // Announce about the current activity
-            pageLive.announce({ msg: "Opening side navigation" });
+            pl.announce({ msg: "Opening side navigation" });
         }
 
         // wait a little for animation to finish
@@ -429,16 +458,16 @@ const geminiPageAdapter = async () => {
         const isLoadingElement = chatListContainer.querySelector('.loading-history-spinner-container');
         if (!isLoadingElement) {
             const msg = "Unable to find loading-history-spinner-container element";
-            pageLive.utils.prodWarn(msg);
-            pageLive.announce({ msg });
+            pl.utils.prodWarn(msg);
+            pl.announce({ msg });
             return;
         }
         // Required: Scroller element that need to be scrolled down
         const scrollerElement = chatListContainer.closest('infinite-scroller');
         if (!scrollerElement) {
             const msg = "Failed to find the closest infinite-scroller element";
-            pageLive.utils.prodWarn(msg);
-            pageLive.announce({ msg });
+            pl.utils.prodWarn(msg);
+            pl.announce({ msg });
             return;
         }
 
@@ -475,7 +504,7 @@ const geminiPageAdapter = async () => {
                     // If loading has not started, that means all chats has been loaded
                     if (!loadingStarted) {
                         resolve(null);
-                        pageLive.announce({ msg: "Not loading anymore. All chats has been loaded" });
+                        pl.announce({ msg: "Not loading anymore. All chats has been loaded" });
                         // We can not return here, since this is inside setTimeout.
                         // Instead, we will set the `failSafe` to a large number to break the while loop below
                         failSafe = 999;
@@ -504,7 +533,7 @@ const geminiPageAdapter = async () => {
                             if (!prevHasLoadingClass && currentHasLoadingClass) {
                                 // Flagging the loading has started is useful to cancel timeout above (the case when all chats has been loaded)
                                 loadingStarted = true;
-                                pageLive.announce({ msg: "Loading previous chats" });
+                                pl.announce({ msg: "Loading previous chats" });
                             } else if (prevHasLoadingClass && !currentHasLoadingClass) {
                                 // Loading has finished. Disconnect `isLoadingObserver` and resolve.
                                 observer.disconnect();
@@ -583,7 +612,7 @@ const geminiPageAdapter = async () => {
         if (chatActionsContainer === null) {
             const msg = "Chat actions container is null";
             console.warn(`[PageLive][Gemini] ${msg}`);
-            pageLive.announce({ msg });
+            pl.announce({ msg });
             return null;
         }
 
@@ -591,7 +620,7 @@ const geminiPageAdapter = async () => {
         if (!chatActionsContainer.classList.contains(CHAT_ACTIONS_CONTAINER_CLASS)) {
             const msg = "Chat actions container does not have the required class";
             console.warn(`PageLive][Gemini] ${msg}`);
-            pageLive.announce({ msg });
+            pl.announce({ msg });
             return null;
         }
 
@@ -603,7 +632,7 @@ const geminiPageAdapter = async () => {
      * Start new chat, by clicking a button on side nav.
      */
     async function startNewChat() {
-        pageLive.announce({ msg: "Start new chat", o: true });
+        pl.announce({ msg: "Start new chat", o: true });
 
         // Make sure side nav is opened
         const isSideNavOpened = await checkIsSideNavOpened();
@@ -621,8 +650,8 @@ const geminiPageAdapter = async () => {
 
         if (newChatButton === null) {
             const msg = "Failed to find the new chat button";
-            pageLive.utils.prodWarn(msg);
-            pageLive.announce({ msg });
+            pl.utils.prodWarn(msg);
+            pl.announce({ msg });
             return;
         } else {
             // Close all dialogs / modals first
@@ -670,9 +699,9 @@ const geminiPageAdapter = async () => {
         if (shouldUpdateDialog) updateDialogWithChatInfo();
 
         // Attach to global var if `activeChat.id` is found and not yet attached to `pageLive.page.activeChat`:
-        if (activeChat.id && pageLive.page.activeChat === null) {
+        if (activeChat.id && pl.page.activeChat === null) {
             // pageLive.page.activeChat = activeChat;
-            pageLive.page.activeChat = new ChatInfo(
+            pl.page.activeChat = new ChatInfo(
                 activeChat.id
                 , activeChat.title
                 , activeChat.promptCount
@@ -716,7 +745,7 @@ const geminiPageAdapter = async () => {
                 if (remainder === 0) snapshotInfos = [`This chat has ${activeChat.promptCount} or more responses.`];
                 else snapshotInfos = [`This chat has ${activeChat.promptCount} responses.`];
             }
-            pageLive.pageInfoDialog.setSnapshotInfos(snapshotInfos);
+            pl.pageInfoDialog.setSnapshotInfos(snapshotInfos);
         }
     }
 
@@ -736,20 +765,20 @@ const geminiPageAdapter = async () => {
                 if (firstHeading) {
                     firstHeading.setAttribute("tabindex", "-1");
                     firstHeading.focus();
-                    pageLive.announce({ msg: "Focus moved to side nav" });
+                    pl.announce({ msg: "Focus moved to side nav" });
                 } else {
                     const msg = "Failed to find active chat element in the chat list.";
-                    pageLive.utils.prodWarn(msg); pageLive.announce({ msg });
+                    pl.utils.prodWarn(msg); pl.announce({ msg });
                 }
             } else {
                 // Force SR to browse mode by focus on non-form element first
-                const dummyElement = pageLive.dummySpanElement;
+                const dummyElement = pl.dummySpanElement;
                 if (typeof dummyElement?.focus === 'function') {
                     dummyElement.focus();
                     await new Promise(r => setTimeout(r, 1e3));
-                } else pageLive.utils.prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
+                } else pl.utils.prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
                 if (typeof activeChatElement.focus === "function") activeChatElement.focus();
-                else pageLive.utils.prodWarn('active chat element missing focus method - 81');
+                else pl.utils.prodWarn('active chat element missing focus method - 81');
             }
         }
 
@@ -775,7 +804,7 @@ const geminiPageAdapter = async () => {
         }
 
         // Update the dialog
-        pageLive.pageInfoDialog.setTitle(title, attributes);
+        pl.pageInfoDialog.setTitle(title, attributes);
     }
     /**
      * Update the active chat info. 
@@ -791,7 +820,7 @@ const geminiPageAdapter = async () => {
         // Expose to global page if we have a valid id
         if (activeChat.id) {
             // pageLive.page.activeChat = activeChat;
-            pageLive.page.activeChat = new ChatInfo(
+            pl.page.activeChat = new ChatInfo(
                 activeChat.id
                 , activeChat.title
                 , activeChat.promptCount
@@ -825,9 +854,64 @@ const geminiPageAdapter = async () => {
     }
 
     async function closeAllDialogsAndModals(): Promise<void> {
-        pageLive.pageInfoDialog.close();
+        pl.pageInfoDialog.close();
         contentMapper.close();
-        pageLive.announce({ msg: "all modals has been closed" });
+        // To avoid too many announcements, each dialog will handle its own announcement if needed
+    }
+
+    async function toggleSidebar() {
+        await resolve.toggleSidebarButton("toggleSidebarButton");
+        if (!toggleSidebarButton) {
+            const msg = "Failed to find the toggle sidebar button";
+            pl.utils.prodWarn(msg);
+            pl.speak(msg);
+            return;
+        }
+
+        // Close all dialogs / modals first
+        await closeAllDialogsAndModals();
+
+        // Click the toogle button and wait a little
+        toggleSidebarButton.click();
+        await new Promise(r => setTimeout(r, 250));
+
+        // Handle sidebar
+        await resolve.sidebar("Toggling sidebar");
+        if (!sidebar) {
+            const msg = "Failed to find the sidebar element";
+            pl.utils.prodWarn(msg);
+            pl.toast(msg);
+            return;
+        }
+
+        // If sidebar is expanded, the element will has 'expanded' class, otherwise will has 'collapsed' class.
+        let isExpanded = sidebar.classList.contains('expanded') ? true : false;
+        const stateMsg = isExpanded ? "Expanding sidebar" : "Collapsing sidebar";
+        pl.speak(stateMsg);
+
+        // If sidebar is collapsing, focus on the chat input
+        if (!isExpanded) {
+            await focusChatInput();
+        } else {
+            // If sidebar is expanding, manage the focus for better accessibility
+
+            // Try to focus on the chat list heading in the sidebar
+            let chatListHeading: HTMLElement | null = sidebar.querySelector("conversations-list h1, conversations-list > *");
+            if (chatListHeading) {
+                // Add `tabindex="-1"` to make it focusable, and focus on it
+                chatListHeading.setAttribute("tabindex", "-1");
+                await chatListHeading.focus();
+                pl.toast("Focused on the chat list in the sidebar");
+            } else {
+                // Try to focus on the first anchor, button, or input inside the sidebar if 'History' heading is not found
+                const focusableSelector = 'a, button, input, [tabindex]:not([tabindex="-1"])';
+                const firstFocusable = sidebar.querySelector(focusableSelector) as HTMLElement;
+                if (firstFocusable) {
+                    firstFocusable.focus();
+                    pl.toast("Focused on the first focusable element in the sidebar");
+                }
+            }
+        }
     }
 
     // References to HTML elements
@@ -835,19 +919,22 @@ const geminiPageAdapter = async () => {
     let chatInputElement: HTMLInputElement | null;
     // Chat list container on the right side navigation
     let chatListContainer: HTMLElement | null = null;
+    let toggleSidebarButton: HTMLElement | null = null;
+    // The sidebar / side nav element
+    let sidebar: HTMLElement | null = null;
 
     // =============== Execution ===============
 
     // Object to handle chat container related features
-    const chatAdapter = new GeminiAdapterChat(pageLive);
+    const chatAdapter = new GeminiAdapterChat(pl);
     // await chatAdapter.init();
 
     // Content Mapper, to map chat units to a Modal
-    const contentMapper = new ContentMapper(pageLive, updateActiveChatInfo);
+    const contentMapper = new ContentMapper(pl, updateActiveChatInfo);
     // await contentMapper.init()
 
     // Object to reveal hidden content
-    const contentRevealer = new ContentRevealer(pageLive);
+    const contentRevealer = new ContentRevealer(pl);
 
     // Initialize the page adapter
     init();
@@ -1451,7 +1538,10 @@ class ContentMapper {
     }
     async close() {
         if (!this.dialog.open) return;
-        this.dialog.close();
+
+        // Close, wait, and announce
+        await this.dialog.close();
+        this.pl.speak("Content Map is closed");
     }
     async showModal() {
         // If there is schedule to generate chatUnits, do it now and put 'generating..' label

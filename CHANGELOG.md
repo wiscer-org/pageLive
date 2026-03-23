@@ -4,8 +4,11 @@
 
 - Grok: Fix missing trigger element to expand sidebar & focus management
 - Claude: adapt selector for 'recent chats' element in sidebar or focus the first button or link
+- Gemini: Add keyboard shortcut to toggle sidebar
 
 ### On Progress
+
+- 
 
 =======
 
