@@ -1,3 +1,4 @@
+import { timeStamp } from "console";
 import PageLive from "./pagelive"
 
 
@@ -21,6 +22,10 @@ export class PageInfoDialog {
     public pageAdapterContainer!: HTMLDivElement;
     // The container of keybind list 
     private keybindsContainer!: HTMLDivElement;
+    // The container of 'more' native keybind list
+    private moreKeybindsContainer!: HTMLDivElement;
+    // The 'more' keybinds are the native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
+    private moreKeybinds: { key: string, description: string }[] = [];
 
     // Callback function everytime the dialog is opened
     onEveryOpenCallback: (() => Promise<void>) | null = null;
@@ -84,6 +89,7 @@ export class PageInfoDialog {
         // Container for page adapter specific info
         this.pageAdapterContainer = document.createElement('div');
         this.keybindsContainer = document.createElement('div');
+        this.moreKeybindsContainer = document.createElement('div');
 
         this.initDialogElement();
 
@@ -105,7 +111,9 @@ export class PageInfoDialog {
         this.renderSnapshotInfo();
         this.dialog.appendChild(this.pageAdapterContainer);
         this.initKeybindsContainer();
+        this.initMoreKeybindsContainer();
         this.renderKeybindsInfo();
+        this.renderMoreKeybindsInfo();
         this.renderPageLiveInfo();
     }
     attachDialogListeners() {
@@ -213,6 +221,10 @@ export class PageInfoDialog {
         // Append the initialized keybinds container to the dialog
         this.dialog.appendChild(this.keybindsContainer);
     }
+    private initMoreKeybindsContainer(): void {
+        // Append the initialized 'more keybinds' container to the dialog
+        this.dialog.appendChild(this.moreKeybindsContainer);
+    }
     /**
      * This function will render a dialog with a list of available keybinds / shortcuts.
      * It will include the keybinds and their descriptions.
@@ -237,6 +249,38 @@ export class PageInfoDialog {
         });
 
         this.keybindsContainer.appendChild(keybindsList);
+    }
+
+    /**
+     * This function will render a dialog with a list of native keybinds / shortcuts
+     * For the records, these 'more keybinds' are informational only. Pagelive does not provide callback function for these native keybinds
+     */
+    public renderMoreKeybindsInfo(): void {
+        // Clear the keybinds container
+        this.moreKeybindsContainer.innerHTML = '';
+
+        // If there is no more keybinds to show, do not render the container
+        // if (this.moreKeybinds.length === 0) return;
+
+        const header = document.createElement('h2');
+        header.textContent = 'More Keybinds / Shortcuts';
+        this.moreKeybindsContainer.appendChild(header);
+
+        const keybindsList = document.createElement('ul');
+        // Iterate over the more keybinds and create list items
+        this.moreKeybinds.forEach((keybind) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${keybind.description} : ${keybind.key}`;
+            // Prepend instead of append
+            keybindsList.prepend(listItem);
+        });
+
+        this.moreKeybindsContainer.appendChild(keybindsList);
+    }
+
+    public addMoreKeybind(key: string, description: string) {
+        this.moreKeybinds.push({ key, description });
+        this.renderMoreKeybindsInfo();
     }
 
     /**
