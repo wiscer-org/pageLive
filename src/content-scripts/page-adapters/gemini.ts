@@ -114,7 +114,7 @@ const geminiPageAdapter = async () => {
             toggleSidebar
         );
         // Add 'more' keybinds to page info dialog. These are native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
-        pl.pageInfoDialog.addMoreKeybind("Ctrl + K", "Open dialog to search chat");
+        pl.pageInfoDialog.addMoreKeybind("Ctrl + Shift + K", "Open dialog to search chat");
 
         // Add callback to be executed the next time dialog is shown
         pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen

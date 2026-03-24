@@ -32,6 +32,9 @@ const claudeAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toggleSidebar);
         pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
 
+        // Add 'more' keybinds to page info dialog. These are native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
+        pl.pageInfoDialog.addMoreKeybind("Ctrl + Shift + K", "Open dialog to search chat");
+
         // Initialize chat observer
         await resolve.mainContent("construct");
         chatObserver = new ChatObserverV3(

@@ -56,6 +56,9 @@ const grokAdapter = async () => {
         // Add keybind: Toggle sidebar
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toogleSidebar);
         pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
+        
+        // Add 'more' keybinds to page info dialog. These are native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
+        pl.pageInfoDialog.addMoreKeybind("Ctrl + Shift + K", "Open dialog to search chat");
 
         // Add callback to be executed the next time dialog is shown
         pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen;
