@@ -12,7 +12,7 @@ export type KeybindDetailKeys = {
 // Detail of keybinds, which will be used to register the keybinds
 type KeybindDetail = {
     description: string; // A brief description of the keybind's purpose
-    action: () =>  void; // The function to execute when the keybind is triggered
+    action: () => void; // The function to execute when the keybind is triggered
     keys: KeybindDetailKeys; // Optional: The keys used in the keybind, if applicable
 }
 
@@ -27,6 +27,7 @@ export enum Keybinds {
     NewChat = 'Ctrl + Alt + O', // Start new chat
     ContentMapToggle = "Ctrl + M", // Toggle content map
     ToggleSidebar = "Ctrl + Shift + S", // Toggle sidebar
+    CopyLastCodeBlock = "Ctrl + Shift + ;", // Copy the last code block
 }
 
 /**
@@ -132,6 +133,19 @@ const createKeybindDetail = (
                     ctrlKey: true,
                     shiftKey: true,
                     key: 's',
+                    altKey: false,
+                    metaKey: false,
+                }
+            };
+            break;
+        case Keybinds.CopyLastCodeBlock:
+            keybindDetail = {
+                description: description || 'Copy the last code block',
+                action: action,
+                keys: {
+                    ctrlKey: true,
+                    shiftKey: true,
+                    key: ':',
                     altKey: false,
                     metaKey: false,
                 }

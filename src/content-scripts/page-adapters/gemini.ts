@@ -113,6 +113,11 @@ const geminiPageAdapter = async () => {
             PageLive.KeybindManager.Keybinds.ToggleSidebar,
             toggleSidebar
         );
+        // Add keybind 'copy last code block'
+        pl.keybindManager.registerKeybind(
+            PageLive.KeybindManager.Keybinds.CopyLastCodeBlock,
+            copyLastCodeBlock
+        );
         // Add 'more' keybinds to page info dialog. These are native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
         pl.pageInfoDialog.addMoreKeybind("Ctrl + Shift + K", "Open dialog to search chat");
 
@@ -142,6 +147,15 @@ const geminiPageAdapter = async () => {
      * Common element resolvers
      */
     const resolve = {
+        chatContainer: async (intent: string) => {
+            chatContainer = await pl.resolve(
+                chatContainer
+                , "chat-window infinite-scroller.chat-history"
+                , "Chat Container"
+                , intent
+            );
+            return chatContainer;
+        },
         sidebar: async (intent: string) => {
             sidebar = await pl.resolve(
                 sidebar
@@ -913,6 +927,34 @@ const geminiPageAdapter = async () => {
                     pl.toast("Focused on the first focusable element in the sidebar");
                 }
             }
+        }
+    }
+
+    // Add keybind 'copy last code block'
+    async function copyLastCodeBlock() {
+        // Strategy: Instead of directly copy the content, we will trigger the click event on the copy button of the last code block, since Gemini already has the logic to copy the content and show the confirmation toast.
+
+        // Use `chatContainer` as the root to query the last copy button for performance.If not exist, use `document`.
+        await resolve.chatContainer("Copying last code block");
+        let root: HTMLElement | Document = document;
+        if (chatContainer) {
+            root = chatContainer;
+        } else {
+            const msg = "Failed to find the chat container element";
+            pl.utils.prodWarn(msg);
+        }
+
+        const buttonSel = "button.copy-button:last-child";
+        const lastCopyButton = root.querySelector(buttonSel) as HTMLElement | null;
+        if (!lastCopyButton) {
+            const msg = "Copy button not found. Unable to copy the last code block.";
+            pl.utils.prodWarn(msg);
+            pl.toast(msg);
+            return;
+        } else {
+            // Click the last copy button
+            lastCopyButton.click();
+            pl.toast("Last code block copied.");
         }
     }
 
