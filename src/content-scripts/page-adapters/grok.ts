@@ -2,6 +2,7 @@ import { Keybinds } from "../keybind-manager";
 import PageLive from "../pagelive";
 import ChatObserver from "../chat-observer";
 import ChatInfo from "../chat-info";
+import { exit } from "process";
 
 const grokAdapter = async () => {
     const pl = new PageLive();
@@ -55,8 +56,10 @@ const grokAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.NewChat, startNewChat);
         // Add keybind: Toggle sidebar
         pl.keybindManager.registerKeybind(Keybinds.ToggleSidebar, toogleSidebar);
+
         pl.keybindManager.registerKeybind(Keybinds.ChatCurrentDelete, chatCurrentDelete);
-        
+        pl.keybindManager.registerKeybind(Keybinds.CopyLastCodeBlock, copyLastCodeBlock);
+
         // Add 'more' keybinds to page info dialog. These are native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
         pl.pageInfoDialog.addMoreKeybind("Ctrl + Shift + K", "Open dialog to search chat");
 
@@ -714,6 +717,42 @@ const grokAdapter = async () => {
                 })
             );
         });
+    }
+    async function copyLastCodeBlock() {
+        // Strategy: Use the existing copy button in the UI
+
+        await resolve.chatContainer("copyLastCodeBlock");
+        const root = chatContainer ? chatContainer : document;
+
+        // Find the last code block
+        const codeBlock = root.querySelector('.\\@container\\/code-block:last-child');
+        if (!codeBlock) {
+            pl.prodWarnToast("No code block found when copying last code block.");
+            return;
+        }
+
+        // Then find the buttons inside the code block
+        const buttons = codeBlock.querySelectorAll('button');
+        if (!buttons || buttons.length === 0) {
+            pl.prodWarnToast("No buttons found in the last code block.");
+            return;
+        }
+
+        // Find the button with "Copy" text content, and click it
+        let copyButton: HTMLElement | null = null;
+        for (let i = 0; i < buttons.length; i++) {
+            const button = buttons[i];
+            if (button.textContent?.trim().toLowerCase().includes('copy')) {
+                copyButton = button as HTMLElement;
+                break;
+            }
+        }
+        if (!copyButton) {
+            pl.prodWarnToast("No copy button found in the last code block.");
+            return;
+        }
+        copyButton.click();
+        pl.toast("Last code block has been copied to clipboard.");
     }
     async function openAllChatsDialog() {
         closeAllDialogsAndModals();

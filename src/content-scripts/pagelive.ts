@@ -288,6 +288,21 @@ export default class PageLive {
         }
     }
     /**
+     * Used in prod to log important messages that are useful for debugging in production, and also want to be seen by users (since they may indicate some issues that users can fix by themselves, e.g., by changing certain settings on the page, or just to let users know why certain features are not working).
+     */
+    prodLogToast(msg: string) {
+        this.utils.prodLog(msg);
+        this.toast(msg);
+    }
+    /**
+     * Used in prod to log important warnings that are useful for debugging in production, and also want to be seen by users (since they may indicate some issues that users can fix by themselves, e.g., by changing certain settings on the page, or just to let users know why certain features are not working). This is different from `devLog`, which is only for development and will not be included in production build.
+     * @param msg 
+     */
+    prodWarnToast(msg: string) {
+        this.utils.prodWarn(msg);
+        this.toast(msg);
+    }
+    /**
     * Resolve element
     */
     async resolve(
