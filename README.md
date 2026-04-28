@@ -42,6 +42,68 @@ PageLive acts as a seamless companion for desktop screen readers. It is develope
 
 ### Discord
 
+## Development: Version Bumping and Releases
+
+### Automated Version Bump Script
+
+PageLive includes a script to automate version updates across multiple files during releases.
+
+**Usage:**
+```bash
+pnpm run bump X.Y.Z
+```
+
+Replace `X.Y.Z` with the new version (e.g., `pnpm run bump 3.5.0`).
+
+**What the script does:**
+
+1. **Updates version in `package.json`** – Sets the new version number
+2. **Updates version in `public/manifest.json`** – Keeps the Chrome extension manifest in sync
+3. **Updates `CHANGELOG.md`** – Moves the current "### Updated" list from "## Next Version" to the new release section
+4. **Commits changes and add tag automatically** – Creates a git commit with message "Release vX.Y.Z" and a git tag "vX.Y.Z"
+5. **Push changes to remote repo** - Right away push changes to the remote repo
+
+**After running the script:**
+
+- Done! The script automatically commits, tags, and pushes all changes to the remote repository.
+- The release is now ready and visible on GitHub.
+
+### CHANGELOG.md Format Requirements
+
+⚠️ **Important:** The bump script parses `CHANGELOG.md` based on specific formatting. To ensure the script works correctly, maintain this structure:
+
+```markdown
+# Changelog
+
+## Next Version
+
+### Updated
+
+- (List your changes here, or use "- none" if no changes yet)
+
+### On Progress
+
+- (Features currently being worked on)
+
+### Planned
+
+- (Future planned features)
+
+### Future Ideas
+
+- (Long-term ideas)
+
+## vX.Y.Z
+
+- (Previous release changes)
+```
+
+**Key requirements:**
+- `## Next Version` must exist as the first version entry
+- Must contain `### Updated` subsection (script will extract this)
+- Do not add extra headers or change the structure significantly
+- Use `- none` for empty update lists to maintain consistency
+
 ## License
 
 PageLive is free and open source.

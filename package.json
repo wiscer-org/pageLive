@@ -13,7 +13,8 @@
     "claude:build": "vite build --config config/vite.config.claude.ts ",
     "claude:build:watch": "NODE_ENV=development vite build --config config/vite.config.claude.ts --watch",
     "watch:dist:wrap": "node ./scripts/watch-dist-wrap.js",
-    "test": "tsx --test"
+    "test": "tsx --test",
+    "bump": "node ./scripts/bump-version.js"
   },
   "devDependencies": {
     "@types/node": "^24.6.2",
