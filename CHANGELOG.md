@@ -4,11 +4,11 @@
 
 ### Updated
 
-- none
+- ChatGPT: init support
 
 ### On Progress
 
-- none`
+- ChatGPT: Announce when keyboard shortcut is shown
 
 ### Planned
 

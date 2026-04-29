@@ -5,13 +5,15 @@
   "scripts": {
     "dev": "vite",
     "build:watch": "NODE_ENV=development vite build --watch",
-    "build": "pnpm gemini:build && pnpm grok:build && pnpm claude:build",
+    "build": "pnpm gemini:build && pnpm grok:build && pnpm claude:build && pnpm chatgpt:build",
     "gemini:build": "vite build --config config/vite.config.gemini.ts",
     "gemini:build:watch": "NODE_ENV=development vite build --config config/vite.config.gemini.ts --watch",
     "grok:build": "vite build --config config/vite.config.grok.ts ",
     "grok:build:watch": "NODE_ENV=development vite build --config config/vite.config.grok.ts --watch",
     "claude:build": "vite build --config config/vite.config.claude.ts ",
     "claude:build:watch": "NODE_ENV=development vite build --config config/vite.config.claude.ts --watch",
+    "chatgpt:build": "vite build --config config/vite.config.chatgpt.ts ",
+    "chatgpt:build:watch": "NODE_ENV=development vite build --config config/vite.config.chatgpt.ts --watch",
     "watch:dist:wrap": "node ./scripts/watch-dist-wrap.js",
     "test": "tsx --test",
     "bump": "node ./scripts/bump-version.js"
