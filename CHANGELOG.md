@@ -1,17 +1,14 @@
 # Changelog
 
-## v3.4.1
+## Next Version
 
-- Grok: Fix missing trigger element to expand sidebar & focus management
-- Claude: adapt selector for 'recent chats' element in sidebar or focus the first button or link
-- Gemini: Add keyboard shortcut to toggle sidebar
-- Add 'more keybinds' in the Page Info dialog
+### Updated
+
+- none
 
 ### On Progress
 
--
-
-=======
+- none`
 
 ### Planned
 
@@ -21,9 +18,16 @@
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
 
-### Future
+### Future Ideas
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v3.4.1
+
+- Grok: Fix missing trigger element to expand sidebar & focus management
+- Claude: adapt selector for 'recent chats' element in sidebar or focus the first button or link
+- Gemini: Add keyboard shortcut to toggle sidebar
+- Add 'more keybinds' in the Page Info dialog
 
 ## v3.4.0
 
