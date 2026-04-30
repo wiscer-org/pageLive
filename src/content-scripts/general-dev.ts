@@ -14,3 +14,44 @@ export const parseElementsId = (parent: HTMLElement): string[] => {
     });
     return ids;
 }
+
+/**
+ * Console log added elements to the page.
+ * @param parentNode The parent node to observe for added elements. If not provided, it defaults to the entire document.
+ */
+export const observeAddedElements = (parentNode: Node = document) => {
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node instanceof HTMLElement) {
+                    console.log('Added element:', node);
+                    // log the parent element of the added node
+                    console.log('Parent element:', node.parentElement);
+                }
+            }
+            );
+        });
+    });
+
+    observer.observe(parentNode, { childList: true, subtree: true });
+}
+
+/**
+ * Console log removed elements from the page.
+ * @param parentNode The parent node to observe for removed elements. If not provided, it defaults to the entire document.
+ */
+export const observeRemovedElements = (parentNode: Node = document) => {
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.removedNodes.forEach(node => {
+                if (node instanceof HTMLElement) {
+                    console.log('Removed element:', node);
+                    // log the parent element of the removed node
+                    console.log('Parent element:', node.parentElement);
+                }
+            });
+        });
+    });
+
+    observer.observe(parentNode, { childList: true, subtree: true });
+}
