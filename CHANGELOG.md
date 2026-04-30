@@ -6,10 +6,11 @@
 
 - ChatGPT: init support
 - ChatGPT: Announce when keyboard shortcut is open
+- ChatGPT: Fix unreadable keyboard shortcut in the ChatGPT's shortcut dialog
 
 ### On Progress
 
-- ChatGPT: Fix unreadable keyboard shortcut in the ChatGPT's shortcut dialog
+- none
 
 ### Planned
 
