@@ -5,8 +5,9 @@
 ### Updated
 
 - ChatGPT: init support
-- ChatGPT: Announce when keyboard shortcut is open
+- ChatGPT: Announce when ChatGPT's keyboard shortcut is open
 - ChatGPT: Fix unreadable keyboard shortcut in the ChatGPT's shortcut dialog
+- ChatGPT: Announce when ChatGPT's chat list dialog is closed
 
 ### On Progress
 
