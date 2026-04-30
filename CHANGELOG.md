@@ -10,7 +10,7 @@
 
 ### On Progress
 
-- none
+- ChatGPT: Fix unreadable chat title in the ChatGPT's chat list dialog
 
 ### Planned
 

@@ -46,6 +46,7 @@ const chatgptAdapter = async () => {
                 const shortcutKey = Array.from(kbdElements).map(kbd => {
                     // Replace inaccessible characters with more accessible ones. For example, replace " " with "Space".
                     if (kbd.textContent === '⏎') return 'Enter';
+                    if (kbd.textContent === '⌫') return 'Backspace';
                     if (kbd.textContent === ' ') return 'Space';
 
                     return kbd.textContent;
