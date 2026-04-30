@@ -62,7 +62,7 @@ features:
       screen-reader-users: Reduce navigation overhead by controlling sidebar visibility directly.
     shortcut: null
     status: stable
-    notes: Shortcut depends on current keybind mapping in adapter.
+    notes: After sidebar opens focus moves to the top / heading of chat list. After sidebar closes, focus moves to the chat input.
 
   - id: page-info
     name: Page Info dialog

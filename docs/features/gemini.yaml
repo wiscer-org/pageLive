@@ -73,3 +73,13 @@ features:
     shortcut: Ctrl+Shift+Enter
     status: stable
     notes: Works when at least one response exists.
+
+  - id: toggle-sidebar
+    name: Toggle sidebar
+    user_value: Open/close sidebar quickly for navigation.
+    value_by_segment:
+      power-users: Switch layout context quickly to move between chats.
+      screen-reader-users: Reduce navigation overhead by controlling sidebar visibility directly.
+    shortcut: null
+    status: stable
+    notes: After sidebar opens focus moves to the top / heading of chat list. After sidebar closes, focus moves to the chat input.

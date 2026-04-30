@@ -1,0 +1,42 @@
+app: chatgpt
+source_repo: pagelive
+last_updated: 2026-04-30
+audience_segments:
+  - id: power-users
+    label: Power users
+    doc_priority: 1
+    description: Keyboard-first users focused on speed and workflow efficiency.
+  - id: screen-reader-users
+    label: Screen reader users
+    doc_priority: 2
+    description: Users who rely on assistive technology and non-visual navigation. Screen reader users also benefit from keyboard shortcuts that reduce the need for complex pointer interactions and provide consistent access to key features.
+features:
+  - id: notify-chatgpt-shortcuts-dialog-close
+    name: Notify shortcuts dialog close
+    user_value: Get notified when the ChatGPT's keyboard shortcuts dialog is closed.
+    value_by_segment:
+      power-users: none.
+      screen-reader-users: Receive clear announcements when the shortcuts dialog is closed.
+    shortcut: none
+    status: stable
+    notes: This feature ensures that screen reader users are informed when the keyboard shortcuts dialog is closed, preventing confusion and improving the overall user experience.
+
+  - id: embed-chatgpt-keyboard-shortcuts-label
+    name: Embed ChatGPT keyboard shortcuts label
+    user_value: Embed keyboard shortcuts to each corresponding label.
+    value_by_segment:
+      power-users: none.
+      screen-reader-users: Accessible labels for each keyboard shortcut.
+    shortcut: none
+    status: stable
+    notes: ChatGPT keyboard shortcuts in dialog not accessible to screen reader users. This feature allows embedding the corresponding keyboard shortcut to each label in the shortcuts dialog, making it accessible for screen reader users.
+
+  - id: page-info
+    name: Page Info dialog
+    user_value: Access active chat metadata and quick navigation info.
+    value_by_segment:
+      power-users: Get chat context fast and available keyboard shortcuts.
+      screen-reader-users: Get chat context fast and available keyboard shortcuts.
+    shortcut: Alt+/
+    status: stable
+    notes: Includes chat title and response count.
