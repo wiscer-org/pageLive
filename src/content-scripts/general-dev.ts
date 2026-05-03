@@ -55,3 +55,27 @@ export const observeRemovedElements = (parentNode: Node = document) => {
 
     observer.observe(parentNode, { childList: true, subtree: true });
 }
+
+/**
+ * Console log attribute changes of elements on the page.
+ * @param parentNode The parent node to observe for attribute changes. If not provided, it defaults to the entire document.
+ */
+export const observeAttributeChanges = (parentNode: Node = document) => {
+    const observer = new MutationObserver(mutations => {
+
+        // Disconnect the observer once the element is removed from the DOM to avoid memory leaks and unnecessary observations.
+        if (parentNode.isConnected === false) observer.disconnect();
+
+        mutations.forEach(mutation => {
+            if (mutation.type === 'attributes' && mutation.target instanceof HTMLElement) {
+                console.log('==== [PageLive], attribute changed detected');
+                console.log('Attribute changed:', mutation.attributeName);
+                console.log('Old value:', mutation.oldValue);
+                console.log('New value:', mutation.target.getAttribute(mutation.attributeName || ''));
+                console.log('Element:', mutation.target);
+            }
+        });
+    });
+
+    observer.observe(parentNode, { attributes: true, subtree: true, attributeOldValue: true });
+}

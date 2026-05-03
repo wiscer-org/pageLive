@@ -6,3 +6,4 @@ export const sayHi = () => { }
 export const log = (...args: any[]) => { }
 export const observeAddedElements = () => { }
 export const observeRemovedElements = () => { }
+export const observeAttributeChanges = () => { }
