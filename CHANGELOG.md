@@ -8,6 +8,7 @@
 - ChatGPT: Announce when ChatGPT's keyboard shortcut is open
 - ChatGPT: Fix unreadable keyboard shortcut in the ChatGPT's shortcut dialog
 - ChatGPT: Announce when ChatGPT's chat list dialog is closed
+- ChatGPT: Announce number of chats in the ChatGPT's chat list dialogM
 
 ### On Progress
 

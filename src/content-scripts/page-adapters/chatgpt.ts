@@ -1,5 +1,6 @@
 import PageLive from "../pagelive";
 import ElementObserver from "../element-observer";
+import adaptChatGPTChatListDialog from "./chatgpt-chat-list-dialog";
 
 const chatgptAdapter = async () => {
     const pl = new PageLive();
@@ -7,7 +8,9 @@ const chatgptAdapter = async () => {
     const construct = async () => {
 
         observeForShortcutModal();
-        observeForChatListModal();
+        adaptChatGPTChatListDialog(pl);
+
+        pl.dev.observeAddedElements();
 
         await pl.page.ready();
     }
@@ -63,31 +66,6 @@ const chatgptAdapter = async () => {
             }
         });
     };
-
-    const observeForChatListModal = () => {
-
-        // An element div[data-testid="modal-fanny-pack"] will be added to the DOM whe the chat list modal is opened.
-        // The `div` contains a `dialog` element.
-
-        const chatListModal = new ElementObserver(
-            async () => document.querySelector('[data-testid="modal-fanny-pack"]'),
-            onChatListModalOpen,
-            null,
-            // Callback when dialog is closed.
-            async (element) => {
-                pl.speak("Chat list dialog is closed");
-            }
-        );
-        chatListModal.observe();
-    };
-
-    /**
-    * Callback when chat list modal is opened
-    */
-    const onChatListModalOpen = async (element: Element) => {
-        // No need to announce to users since SR will automatically announce the dialog when it is opened. In fact, announcing here will cause duplicate announcements which can be annoying for users.
-
-    }
 
     await construct();
 }
