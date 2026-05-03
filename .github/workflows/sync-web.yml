@@ -1,0 +1,47 @@
+name: Sync web docs to PageLive
+
+on:
+  push:
+    paths:
+      - 'docs/web/**'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-web
+  cancel-in-progress: true
+
+env:
+  TARGET_REPO: wiscer-org/wiscer-org.github.io
+  TARGET_DIR: pagelive
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+
+      - name: Checkout target web repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TARGET_REPO }}
+          token: ${{ secrets.WEB_REPO_TOKEN }}
+          path: web
+
+      - name: Copy web docs
+        run: |
+          mkdir -p "web/${TARGET_DIR}"
+          rsync -av --delete docs/web/ "web/${TARGET_DIR}/"
+
+      - name: Create Pull Request in web repo
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.WEB_REPO_TOKEN }}
+          path: web
+          branch: chore/sync-pagelive-web
+          commit-message: 'chore: sync PageLive web assets'
+          title: 'chore: sync PageLive web assets'
+          body: 'Automated sync from PageLive docs/web to the target repository.'
+          labels: |
+            auto-sync
+            documentation
