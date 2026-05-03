@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PageLive for ChatGPT</title>
+    <meta name="description"
+        content="PageLive features for ChatGPT, including keyboard workflows for power users and screen reader-focused reading and event announcements.">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+    <nav class="top-nav">
+        <ul>
+            <li><a href="/pagelive">Home</a></li>
+            <li><a href="/pagelive/about">About</a></li>
+            <li><a href="/pagelive/posts/getting-started">Getting Started</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+
+        <header class="hero">
+            <h1>PageLive for ChatGPT</h1>
+            <p>Keyboard-first workflows and accessibility-friendly announcements to make ChatGPT navigation faster,
+                clearer, and more predictable.</p>
+
+            <a href="/pagelive" class="cta-button">
+                ← Go to PageLive Home
+            </a>
+        </header>
+
+        <section class="section-content">
+            <h2>ChatGPT Default Features</h2>
+            <p>
+                For ChatGPT's default shortcuts can be viewed by pressing
+                <kbd>Ctrl</kbd>+<kbd>/</kbd>
+            </p>
+        </section>
+
+        <!-- 
+        <section class="section-content">
+            <h2>For Power Users</h2>
+            <dl>
+                <dt>
+                    <h3>Focus Chat Input</h3>
+                </dt>
+                <dd>
+                    Press <code>Shift + Esc</code> to jump directly to the chat input and continue typing without
+                    breaking flow.
+                </dd>
+
+                <dt>
+                    <h3>Start New Chat</h3>
+                </dt>
+                <dd>
+                    Press <code>Ctrl + Alt + O</code> to open a fresh chat immediately.
+                </dd>
+
+                <dt>
+                    <h3>Delete Current Chat</h3>
+                </dt>
+                <dd>
+                    Press <code>Ctrl + Shift + Backspace</code> to trigger the delete flow for the active chat.
+                    This opens a confirmation dialog where you can confirm deletion or cancel.
+                </dd>
+
+                <dt>
+                    <h3>Page Info Dialog</h3>
+                </dt>
+                <dd>
+                    Press <code>Alt + /</code> to open Page Info for active chat metadata and quick navigation context.
+                </dd>
+            </dl>
+        </section>
+    -->
+
+        <section class="section-content">
+            <h2>For Screen Reader Users</h2>
+            <dl>
+                <!-- 
+                <dt>
+                    <h3>Read Last Response</h3>
+                </dt>
+                <dd>
+                    Press <code>Ctrl + Shift + Enter</code> to hear the most recent ChatGPT response on demand.
+                </dd>
+
+                <dt>
+                    <h3>New Response Announcement</h3>
+                </dt>
+                <dd>
+                    PageLive announces when a new assistant response is available, so you know when new content is
+                    ready to read.
+                </dd>
+            -->
+
+                <dt>
+                    <h3>Shortcut Dialog Close Announcement</h3>
+                </dt>
+                <dd>
+                    When ChatGPT shortcut dialog opens, screen reader announces it.
+                    However when you close the dialog, either by pressing <code>Escape</code> or pressing the
+                    close button, the dialog is closed without an announcement, which can be confusing.
+                    PageLive announces when the shortcut dialog is closed, so you have clear feedback.
+                </dd>
+                <dt>
+                    <h3>Fix Unreadable Keyboard Shortcuts</h3>
+                </dt>
+                <dd>
+                    ChatGPT's keyboard shortcuts in the dialog can not be read by screen reader.
+                    PageLive copy append each keyboard shortcut to its corresponding label so they can be erad by screen
+                    reader.
+                    PageLive also translate some keyboard symbols to be readable, for example Enter key symbol and
+                    Escape key symbol.
+                </dd>
+            </dl>
+        </section>
+
+        <!-- 
+        <section class="section-content">
+            <h2>Use Cases</h2>
+            <dl>
+                <dt>
+                    <h3>Jump from Page Info to Chat List</h3>
+                </dt>
+                <dd>
+                    Open Page Info with <kbd>Alt + /</kbd>, then press <kbd>Enter</kbd> on the chat title control to
+                    move focus to the current chat in the side list.
+                </dd>
+
+                <dt>
+                    <h3>Read Last Response Without Context Switch</h3>
+                </dt>
+                <dd>
+                    Press <kbd>Ctrl + Shift + Enter</kbd> to read the most recent ChatGPT response without changing
+                    navigation context.
+                </dd>
+            </dl>
+        </section>
+        -->
+
+        <footer class="footer">
+            <div class="docs-nav">
+                <p>Documentation:</p>
+                <ul class="docs-list">
+                    <li><a href="/pagelive">PageLive Home</a></li>
+                    <li><a href="/pagelive/gemini">PageLive for Gemini</a></li>
+                    <li><a href="/pagelive/grok">PageLive for Grok</a></li>
+                    <li><a href="/pagelive/claude">PageLive for Claude</a></li>
+                    <li><a href="/pagelive/chatgpt">PageLive for ChatGPT</a></li>
+                </ul>
+            </div>
+            <p>&copy; 2026 PageLive. All rights reserved.</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>
