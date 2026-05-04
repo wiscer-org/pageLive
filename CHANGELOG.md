@@ -9,10 +9,10 @@
 - ChatGPT: Fix unreadable keyboard shortcut in the ChatGPT's shortcut dialog
 - ChatGPT: Announce when ChatGPT's chat list dialog is closed
 - ChatGPT: Announce number of chats in the ChatGPT's chat list dialogM
+- ChatGPT: Announce chat title in chat list dialog when user press up / down arrow
 
 ### On Progress
 
-- ChatGPT: Fix unreadable chat title in the ChatGPT's chat list dialog
 
 ### Planned
 

@@ -71,6 +71,48 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
     }
 
     /**
+     * Observer to observe changes in the chat item highlight. When the highlight changes, we will announce the title of the highlighted chat.
+     */
+    const chatItemHighlightObserver = new MutationObserver((mutations) => {
+        let highlightedChatItem: HTMLElement | null = null;
+        for (const mutation of mutations) {
+            if (mutation.type === "attributes"
+                && mutation.attributeName === "class") {
+                const target = mutation.target as HTMLElement;
+                const parentTarget = target.parentElement;
+
+                // Check if the parent element contains [href^="/c/"], which indicates the `element` is a chat item.
+                if (parentTarget && parentTarget.matches('a[href^="/c/"]')) {
+                    // Check if the target element has more classes than before
+                    if (mutation.oldValue) {
+                        const oldClassList = mutation.oldValue.split(" ").filter(c => c);
+                        const newClassList = target.classList;
+                        if (newClassList.length > oldClassList.length) {
+                            // Limit the characters to avoid announcing too long chat title.
+                            const chatTitle = parentTarget.textContent?.slice(0, 80) || "";
+                            scheduleToAnnounceChatItemHighlight(chatTitle);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Timeout id for announcing chat item highlight
+    let announceChatItemHighlightTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleToAnnounceChatItemHighlight = (chatTitle: string) => {
+        if (announceChatItemHighlightTimeoutId) clearTimeout(announceChatItemHighlightTimeoutId);
+
+        announceChatItemHighlightTimeoutId = setTimeout(() => {
+            pl.speak(`Chat: ${chatTitle}. Press enter to load chat or type to filter chats.`);
+            announceChatItemHighlightTimeoutId = null;
+        }, 500);
+
+    }
+
+    /**
     * Callback when chat list modal is opened
     */
     const onChatListModalOpen = async (element: HTMLElement) => {
@@ -82,7 +124,18 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
         announceNumberOfChats();
         // Observe changes in the chat list and announce the updated list 
         chatListChangesObserver.observe(element, { childList: true, subtree: true });
-        // observeChatListChanges();
+
+        // ChatGPT provides a feature that users can press up / down, making the highlight to move different chat items in the list, allowing users to quickly swich to different chat.
+        // Note: When the chat list dialog is open, the focus move to the search bar in the dialog.
+        // Note the focus is not changing, only the class of the chat item is changing. Let's call it 'pseudo focus'.
+        // The highlighted chat item will have more classes. 
+        // We will assume the chat is highlighted when it receives more classes.
+        chatItemHighlightObserver.observe(element, {
+            attributes: true,
+            attributeFilter: ["class"],
+            attributeOldValue: true,
+            subtree: true
+        });
     }
 
     const chatListModalConnectObserver = new ElementObserver(
@@ -92,7 +145,8 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
         // Callback when dialog is closed.
         async (element) => {
             pl.speak("Chat list dialog is closed");
-            // chatListChangesObserver.disconnect();
+            chatListChangesObserver.disconnect();
+            chatItemHighlightObserver.disconnect();
         }
     );
     chatListModalConnectObserver.observe();
