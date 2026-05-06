@@ -4,13 +4,7 @@
 
 ### Updated
 
-- Init Planned Support for 13 web apps.
-- ChatGPT: init support
-- ChatGPT: Announce when ChatGPT's keyboard shortcut is open
-- ChatGPT: Fix unreadable keyboard shortcut in the ChatGPT's shortcut dialog
-- ChatGPT: Announce when ChatGPT's chat list dialog is closed
-- ChatGPT: Announce number of chats in the ChatGPT's chat list dialogM
-- ChatGPT: Announce chat title in chat list dialog when user press up / down arrow
+- none
 
 ### On Progress
 
@@ -27,6 +21,16 @@
 ### Future Ideas
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v4.0.0
+
+- Init Planned Support for 13 web apps.
+- ChatGPT: init support
+- ChatGPT: Announce when ChatGPT's keyboard shortcut is open
+- ChatGPT: Fix unreadable keyboard shortcut in the ChatGPT's shortcut dialog
+- ChatGPT: Announce when ChatGPT's chat list dialog is closed
+- ChatGPT: Announce number of chats in the ChatGPT's chat list dialogM
+- ChatGPT: Announce chat title in chat list dialog when user press up / down arrow
 
 ## v3.4.1
 
