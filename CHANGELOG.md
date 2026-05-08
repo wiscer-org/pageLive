@@ -2,6 +2,8 @@
 
 ## Next Version
 
+- ChatGPT: When sidebar collapsed or expanded, announce and manage focus
+
 ### Updated
 
 - none

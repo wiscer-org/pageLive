@@ -1,6 +1,9 @@
 import PageLive from "../pagelive";
 import ElementObserver from "../element-observer";
 import adaptChatGPTChatListDialog from "./chatgpt-chat-list-dialog";
+import adaptChatGPTSidebar from "./chatgpt-sidebar";
+import ChatGPTChatSection from "./chatgpt-chat";
+import ChatGPTSidebar from "./chatgpt-sidebar";
 
 const chatgptAdapter = async () => {
     const pl = new PageLive();
@@ -8,9 +11,10 @@ const chatgptAdapter = async () => {
     const construct = async () => {
 
         observeForShortcutModal();
-        adaptChatGPTChatListDialog(pl);
+        const chatSectionAdapter = new ChatGPTChatSection(pl);
+        const sidebarAdapter = new ChatGPTSidebar(pl, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter)); 
 
-        pl.dev.observeAddedElements();
+        adaptChatGPTChatListDialog(pl);
 
         await pl.page.ready();
     }

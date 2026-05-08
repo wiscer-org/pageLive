@@ -342,7 +342,10 @@ export default class PageLive {
      * Function to give consistency when focusing chat input element. 
      * @param chatInput The chat input element to be focused.
      */
-    async focusChatInput(chatInput: HTMLElement | null) {
+    async focusChatInput(
+        chatInput: HTMLElement | null
+        , focusMsg?: string
+    ) {
         if (!chatInput || !chatInput.isConnected) {
             this.announce({ msg: "Chat input not found", o: false })
             return;
@@ -360,7 +363,11 @@ export default class PageLive {
             await new Promise(r => setTimeout(r, 50));
 
             chatInput.focus();
-            // No need to announce, since screen reader will read the focused element automatically.
+
+            // Eventhough SR announce the textbox, we will still announce it to user to make it clearer
+            // Wait a little because SR still read the textbox due to the focus
+            await new Promise(r => setTimeout(r, 1e3));
+            this.speak(focusMsg ? focusMsg : 'Chat input');
         }
     }
     /**
