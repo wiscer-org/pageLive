@@ -1,5 +1,5 @@
-import ElementObserver from "../element-observer";
-import PageLive from "../pagelive";
+import ElementObserver from "../../element-observer";
+import PageLive from "../../pagelive";
 
 /**
  * This file is responsible for adapting the chat list dialog in ChatGPT.
@@ -7,10 +7,16 @@ import PageLive from "../pagelive";
  * - Announce when the chat list dialog is closed.
  * - Announces how many chats are in the dialog when it is opened or updated.
  */
-export default function adaptChatGPTChatListDialog(pl: PageLive) {
+export default class ChatGPTChatListDialog {
 
+    pl!: PageLive;
     // The chat list dialog element
-    let chatListDialogElement: HTMLElement | null = null;
+    chatListDialogElement: HTMLElement | null = null;
+
+    constructor(pl: PageLive) {
+        this.pl = pl;
+        this.chatListModalConnectObserver.observe();
+    }
 
     // An element div[data-testid="modal-fanny-pack"] will be added to the DOM when the chat list modal is opened.
     // The `div` contains a `dialog` element.
@@ -18,7 +24,7 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
     /**
     * Observer to observer changes in the chat list. When there are changes, we will announce the updated number of chats in the dialog.
     */
-    const chatListChangesObserver = new MutationObserver((mutations) => {
+    chatListChangesObserver = new MutationObserver((mutations) => {
         let shouldAnnounce = false;
         // Should announce if any element, or contain element, `a[href^="/c/"]` is added or removed.
         mutations.forEach((mutation) => {
@@ -41,39 +47,40 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
         });
 
         if (shouldAnnounce) {
-            pl.speak("Chat list is updated.");
-            scheduleToAnnounceNumberOfChats();
+            this.pl.speak("Chat list is updated.");
+            this.scheduleToAnnounceNumberOfChats();
         }
     });
 
     /**
      * Schedule to announce the number of chats in the dialog. This is used to debounce the announcements when there are multiple changes in a short period of time.
      */
-    let announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    const scheduleToAnnounceNumberOfChats = () => {
-        if (announceTimeoutId) clearTimeout(announceTimeoutId);
+    announceTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    scheduleToAnnounceNumberOfChats = () => {
+        if (this.announceTimeoutId) clearTimeout(this.announceTimeoutId);
 
-        announceTimeoutId = setTimeout(() => {
-            announceNumberOfChats();
-            announceTimeoutId = null;
+        this.announceTimeoutId = setTimeout(() => {
+            this.announceNumberOfChats();
+            this.announceTimeoutId = null;
         }, 1e3);
     };
+
 
     /**
      * Announce how many chats in the dialog.
      */
-    const announceNumberOfChats = () => {
-        if (!chatListDialogElement) return;
+    announceNumberOfChats = () => {
+        if (!this.chatListDialogElement) return;
 
         // Chat item selector `a[href^="/c/"]` is used to find the chat items in the dialog.
-        const chatItems = chatListDialogElement.querySelectorAll('a[href^="/c/"]');
-        pl.speak(`There are ${chatItems.length} chats in the chat list dialog.`);
+        const chatItems = this.chatListDialogElement.querySelectorAll('a[href^="/c/"]');
+        this.pl.speak(`There are ${chatItems.length} chats in the chat list dialog.`);
     }
 
     /**
      * Observer to observe changes in the chat item highlight. When the highlight changes, we will announce the title of the highlighted chat.
      */
-    const chatItemHighlightObserver = new MutationObserver((mutations) => {
+    chatItemHighlightObserver = new MutationObserver((mutations) => {
         let highlightedChatItem: HTMLElement | null = null;
         for (const mutation of mutations) {
             if (mutation.type === "attributes"
@@ -90,7 +97,7 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
                         if (newClassList.length > oldClassList.length) {
                             // Limit the characters to avoid announcing too long chat title.
                             const chatTitle = parentTarget.textContent?.slice(0, 80) || "";
-                            scheduleToAnnounceChatItemHighlight(chatTitle);
+                            this.scheduleToAnnounceChatItemHighlight(chatTitle);
                             break;
                         }
                     }
@@ -100,37 +107,36 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
     });
 
     // Timeout id for announcing chat item highlight
-    let announceChatItemHighlightTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    announceChatItemHighlightTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    const scheduleToAnnounceChatItemHighlight = (chatTitle: string) => {
-        if (announceChatItemHighlightTimeoutId) clearTimeout(announceChatItemHighlightTimeoutId);
+    scheduleToAnnounceChatItemHighlight = (chatTitle: string) => {
+        if (this.announceChatItemHighlightTimeoutId) clearTimeout(this.announceChatItemHighlightTimeoutId);
 
-        announceChatItemHighlightTimeoutId = setTimeout(() => {
-            pl.speak(`Chat: ${chatTitle}. Press enter to load chat or type to filter chats.`);
-            announceChatItemHighlightTimeoutId = null;
+        this.announceChatItemHighlightTimeoutId = setTimeout(() => {
+            this.pl.speak(`Chat: ${chatTitle}. Press enter to load chat or type to filter chats.`);
+            this.announceChatItemHighlightTimeoutId = null;
         }, 500);
-
     }
 
     /**
     * Callback when chat list modal is opened
     */
-    const onChatListModalOpen = async (element: HTMLElement) => {
+    async onChatListModalOpen(element: HTMLElement) {
         // No need to announce to users since SR will automatically announce the dialog when it is opened. In fact, announcing here will cause duplicate announcements which can be annoying for users.
 
         // Store ref to the chat list dialog element
-        chatListDialogElement = element;
+        this.chatListDialogElement = element;
 
-        announceNumberOfChats();
+        this.announceNumberOfChats();
         // Observe changes in the chat list and announce the updated list 
-        chatListChangesObserver.observe(element, { childList: true, subtree: true });
+        this.chatListChangesObserver.observe(element, { childList: true, subtree: true });
 
         // ChatGPT provides a feature that users can press up / down, making the highlight to move different chat items in the list, allowing users to quickly swich to different chat.
         // Note: When the chat list dialog is open, the focus move to the search bar in the dialog.
         // Note the focus is not changing, only the class of the chat item is changing. Let's call it 'pseudo focus'.
         // The highlighted chat item will have more classes. 
         // We will assume the chat is highlighted when it receives more classes.
-        chatItemHighlightObserver.observe(element, {
+        this.chatItemHighlightObserver.observe(element, {
             attributes: true,
             attributeFilter: ["class"],
             attributeOldValue: true,
@@ -138,26 +144,16 @@ export default function adaptChatGPTChatListDialog(pl: PageLive) {
         });
     }
 
-    const chatListModalConnectObserver = new ElementObserver(
+    chatListModalConnectObserver = new ElementObserver(
         async () => document.querySelector('[data-testid="modal-fanny-pack"]'),
-        onChatListModalOpen,
+        this.onChatListModalOpen.bind(this),
         null,
         // Callback when dialog is closed.
         async (element) => {
-            pl.speak("Chat list dialog is closed");
-            chatListChangesObserver.disconnect();
-            chatItemHighlightObserver.disconnect();
+            this.pl.speak("Chat list dialog is closed");
+            this.chatListChangesObserver.disconnect();
+            this.chatItemHighlightObserver.disconnect();
         }
     );
-    chatListModalConnectObserver.observe();
+
 }
-
-
-
-// const observeForChatListModal = () => {
-
-// An element div[data-testid="modal-fanny-pack"] will be added to the DOM when the chat list modal is opened.
-// The `div` contains a `dialog` element.
-
-
-// };

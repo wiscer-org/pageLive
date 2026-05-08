@@ -1,5 +1,5 @@
-import PageLive from "../pagelive";
-import ElementObserver from "../element-observer";
+import PageLive from "../../pagelive";
+import ElementObserver from "../../element-observer";
 
 /**
  * This file is responsible for adapting the sidebar in ChatGPT.

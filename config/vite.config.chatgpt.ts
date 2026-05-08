@@ -9,7 +9,7 @@ export default defineConfig({
         rollupOptions: {
             ...baseConfig.build?.rollupOptions,
             input: {
-                chatgpt: resolve(__dirname, '../src/content-scripts/page-adapters/chatgpt.ts'),
+                chatgpt: resolve(__dirname, '../src/content-scripts/page-adapters/chatgpt/chatgpt.ts'),
             },
         },
     },

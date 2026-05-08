@@ -1,4 +1,4 @@
-import PageLive from "../pagelive";
+import PageLive from "../../pagelive";
 
 /**
  * This file is responsible for adapting the main chat interface in ChatGPT.

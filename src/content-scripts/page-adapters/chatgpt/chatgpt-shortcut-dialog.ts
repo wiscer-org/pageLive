@@ -1,32 +1,29 @@
-import PageLive from "../pagelive";
-import ElementObserver from "../element-observer";
-import adaptChatGPTChatListDialog from "./chatgpt-chat-list-dialog";
-import adaptChatGPTSidebar from "./chatgpt-sidebar";
-import ChatGPTChatSection from "./chatgpt-chat";
-import ChatGPTSidebar from "./chatgpt-sidebar";
+import PageLive from '../../pagelive';
+import ElementObserver from '../../element-observer';
 
-const chatgptAdapter = async () => {
-    const pl = new PageLive();
+/**
+ * Responsible to adapt the ChatGPT's keyboard shortcut dialog
+ * Features:
+ * - Announce when closed
+ * - Fix the inaccessible keyboard keys sequence by appending to the corresponding label
+ */
+export default class ChatGptShortcutDialog {
+    pl!: PageLive;
 
-    const construct = async () => {
-
-        observeForShortcutModal();
-        const chatSectionAdapter = new ChatGPTChatSection(pl);
-        const sidebarAdapter = new ChatGPTSidebar(pl, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter)); 
-
-        adaptChatGPTChatListDialog(pl);
-
-        await pl.page.ready();
+    constructor(pl: PageLive) {
+        this.pl = pl;
+        this.observeForShortcutModal();
     }
-    const observeForShortcutModal = () => {
+
+    observeForShortcutModal = () => {
 
         const shortcutModal = new ElementObserver(
             async () => document.querySelector('[data-testid="keyboard-shortcuts-dialog"]'),
-            onShortcutModalOpen,
+            this.onShortcutModalOpen.bind(this),
             null,
             // Callback when dialog is closed.
             async (element) => {
-                pl.speak("Keyboard shortcuts dialog is closed");
+                this.pl.speak("Keyboard shortcuts dialog is closed");
             },
         );
         shortcutModal.observe();
@@ -35,7 +32,7 @@ const chatgptAdapter = async () => {
     /**
     * Callback when shortcut modal is opened
     */
-    const onShortcutModalOpen = async (element: Element) => {
+    onShortcutModalOpen = async (element: Element) => {
         // No need to announce to users since SR will automatically announce the dialog when it is opened. In fact, announcing here will cause duplicate announcements which can be annoying for users.
 
         // Modify the shortcut to be accessible for SR users.
@@ -70,15 +67,4 @@ const chatgptAdapter = async () => {
             }
         });
     };
-
-    await construct();
 }
-
-// Note: The callback is guaranteed to run because we set "document_start" in manifest.json
-document.addEventListener('DOMContentLoaded', () => {
-    chatgptAdapter().catch((err) => {
-        console.error("Error initializing ChatGPT page adapter:", err);
-    });
-});
-
-
