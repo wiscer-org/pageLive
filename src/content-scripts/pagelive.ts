@@ -337,64 +337,6 @@ export default class PageLive {
         }
         return el;
     }
-
-    /**
-     * Function to give consistency when focusing chat input element. 
-     * @param chatInput The chat input element to be focused.
-     */
-    async focusChatInput(
-        chatInput: HTMLElement | null
-        , focusMsg?: string
-    ) {
-        if (!chatInput || !chatInput.isConnected) {
-            this.announce({ msg: "Chat input not found", o: false })
-            return;
-        }
-        if (chatInput) {
-            // Close any dialogs / modals first
-            this.pageInfoDialog?.close();
-            // contentMapper.close();
-
-            // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
-            // By change focus to other element first, before change focus to the input, will force the SR change to Form/Input mode. Thus, user can type right away without having to change SR mode.
-            this.dummySpanElement.focus();
-
-            // Wait very very quick
-            await new Promise(r => setTimeout(r, 50));
-
-            chatInput.focus();
-
-            // Eventhough SR announce the textbox, we will still announce it to user to make it clearer
-            // Wait a little because SR still read the textbox due to the focus
-            await new Promise(r => setTimeout(r, 1e3));
-            this.speak(focusMsg ? focusMsg : 'Chat input');
-        }
-    }
-    /**
-     * This function will announce the last response.
-     */
-    async announceLastResponse(responseElement: HTMLElement | null) {
-        this.utils.devLog('Announcing last response');
-
-        // A bit of notification that the last response is goig to be announced.
-        // This seems to be useful while waiting to find the last response element (if needed).
-        this.announce({
-            msg: "Reading last response.",
-            // No need to preannounce, since this is a user triggered action.
-            o: true
-        });
-
-        // Get the last response element        // Prepare the message to be announced.
-        let toBeAnnounced = "No response element is found.";
-        if (responseElement) {
-            toBeAnnounced = responseElement.innerHTML || '';
-        }
-
-        // Announce
-        this.announce({
-            msg: toBeAnnounced, o: true,
-        });
-    }
 }
 
 

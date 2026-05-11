@@ -2,7 +2,8 @@
 import { Chat, ChatUnit } from "../../types/chat";
 import ChatInfo from "../chat-info";
 import PageLive from "../pagelive";
-
+import featureReadLastResponse from './features/read-last-response';
+import featureFocusChatInput from './features/focus-chat-input';
 
 // Define page adapter to be executed on DOMContentLoaded
 const geminiPageAdapter = async () => {
@@ -173,6 +174,18 @@ const geminiPageAdapter = async () => {
                 , intent
             );
             return toggleSidebarButton;
+        }, chatInput: async (intent: string) => {
+            const element = await pl.resolve(
+                chatInputElement
+                , '.new-input-ui[role="textbox"]'
+                , "Chat input"
+                , intent
+            );
+            // Convert
+            if (element instanceof HTMLElement) chatInputElement = element as HTMLInputElement;
+            else chatInputElement = null;
+
+            return chatInputElement;
         }
     }
 
@@ -256,14 +269,17 @@ const geminiPageAdapter = async () => {
      * This function will focus the chat input element.
      */
     async function focusChatInput() {
+        await resolve.chatInput("Focus chat input");
+
         if (!chatInputElement) {
             pl.utils.prodWarn("Chat input element not found. Re-querying the element.");
-            chatInputElement = getChatInputElement();
+            pl.speak('Chat input is not found');
+            return;
         }
 
         if (!chatInputElement?.isConnected) {
             pl.utils.prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
-            pl.announce({ msg: "Chat input element not found." });
+            pl.speak("Chat input element not connected.");
             return;
         }
 
@@ -272,17 +288,7 @@ const geminiPageAdapter = async () => {
             pl.pageInfoDialog.close();
             contentMapper.close();
 
-            // In SR browse mode, SR will not read the input eventhough the focus is at the input element.
-            // By change focus to other element first, before change focus to the input, will force the SR change to Form/Input mode. Thus, user can type right away without having to change SR mode.
-
-            const toggleButton = await getSideNavToggleButton();
-            toggleButton?.focus();
-
-            // Wait very very quick
-            await new Promise(r => setTimeout(r, 50));
-
-            chatInputElement.focus();
-            // No need to announce, since screen reader will read the focused element automatically.
+            featureFocusChatInput(pl, chatInputElement);
         }
     }
 
@@ -1941,31 +1947,10 @@ class GeminiAdapterChat {
      * It will check if the lastGeminiResponseElement is available, and if so, it will announce its content.
      */
     async announceLastResponse() {
-        console.log('[PageLive][Gemini] Announcing last response');
-
-        // A bit of notification that the last response is goig to be announced.
-        // This seems to be useful while waiting to find the last response element (if needed).
-        this.pl.announce({
-            msg: "Reading last response.",
-            // No need to preannounce, since this is a user triggered action.
-            o: true
-        });
-
         const lastGeminiResponseElement = this.getLastResponseElement();
-
-        // Prepare the message to be announced.
-        let toBeAnnounced = "No response element is found.";
-        if (lastGeminiResponseElement) {
-            toBeAnnounced = lastGeminiResponseElement.innerHTML || '';
-        }
-
-        // Announce
-        this.pl.announce({
-            msg: toBeAnnounced
-            // User triggered action, no need to preannounce
-            , o: true,
-        });
+        featureReadLastResponse(this.pl, lastGeminiResponseElement);
     }
+
 }
 
 // Run the adapter. This is a bit tricky, because we need to run this after PageLive is ready. But PageReady is waiting for the some elements exist in DOM.

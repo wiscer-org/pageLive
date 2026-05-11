@@ -264,11 +264,7 @@ export default class KeybindManager {
             // Modify the action based on the `Keybinds` type
             switch (keybind) {
                 case Keybinds.FocusChatInput:
-                    // Announce here to have unified announcement style between page adapters
-                    this.pageLive.announce({
-                        msg: "Chat input",
-                        o: true, // User triggered, no need to preannounce
-                    });
+                    // Do nothing. For consistency use `features/focus-chat-input.ts`
                     break;
                 default:
                     // do nothing

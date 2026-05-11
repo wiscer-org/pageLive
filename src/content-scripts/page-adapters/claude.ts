@@ -3,6 +3,8 @@ import PageLive from '../pagelive';
 import ChatObserverV3 from '../chat-observer-v3';
 import ElementObserver from '../element-observer';
 import ChatInfo from '../chat-info';
+import featureFocusChatInput from './features/focus-chat-input';
+import featureReadLastReponse from './features/read-last-response';
 
 const claudeAdapter = async () => {
     const pl = new PageLive();
@@ -766,7 +768,7 @@ const claudeAdapter = async () => {
 
     const focusChatInput = async () => {
         await resolve.chatInput("focusChatInput");
-        pl.focusChatInput(chatInput);
+        featureFocusChatInput(pl, chatInput);
     }
     /**
      * Start new chat, by clicking a button on side nav.
@@ -950,7 +952,6 @@ const claudeAdapter = async () => {
 
         // In case there is no chat container
         if (!chatContainer || chatContainer.children.length === 0) {
-            pl.speak("There is no responses to read.");
             return;
         }
 
@@ -983,17 +984,7 @@ const claudeAdapter = async () => {
             return;
         }
 
-        // Announce all segments from all response elements, one by one
-        pl.speak("Reading the last response...");
-        for (const responseElement of responseElements) {
-            for (let i = 0; i < responseElement.children.length; i++) {
-                const node = responseElement.children[i];
-                pl.speak(node.outerHTML);
-                // Wait a little to ease SR queue
-                await new Promise(r => setTimeout(r, 2e3));
-            }
-        }
-        pl.speak("End of last response.");
+        featureReadLastReponse(pl, responseElements);
     }
 
     function closeAllDialogsAndModals() {

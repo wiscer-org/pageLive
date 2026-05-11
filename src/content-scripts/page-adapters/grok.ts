@@ -2,7 +2,8 @@ import { Keybinds } from "../keybind-manager";
 import PageLive from "../pagelive";
 import ChatObserver from "../chat-observer";
 import ChatInfo from "../chat-info";
-import { exit } from "process";
+import featureFocusChatInput from "./features/focus-chat-input";
+import featureReadLastResponse from './features/read-last-response';
 
 const grokAdapter = async () => {
     const pl = new PageLive();
@@ -417,7 +418,7 @@ const grokAdapter = async () => {
     }
     const focusChatInput = async () => {
         await resolve.chatInput();
-        pl.focusChatInput(chatInput);
+        featureFocusChatInput(pl, chatInput);
     }
     /**
      * Get all chat unit elements in the chat container
@@ -454,15 +455,13 @@ const grokAdapter = async () => {
         const lastResponseContainer = lastReplayContainer.children[1] as HTMLElement;
         // Use `.response-content-markdown` directly as Grok does not use `.message-bubble` on multiple responses
         // const messageBubble = lastResponseContainer.querySelector('div.message-bubble');
-        const responseContentMarkdown = lastResponseContainer.querySelector('div.response-content-markdown')
+        const responseContentMarkdown = lastResponseContainer.querySelector('div.response-content-markdown') as HTMLElement;
         if (responseContentMarkdown) {
             let msg = responseContentMarkdown.innerHTML || '';
             pl.utils.devLog("Reading last response");
-            pl.announce({ msg: "Reading last response.", o: true });
-            pl.announce({ msg, o: true });
-            pl.announce({ msg: "End of last response.", o: true });
+            featureReadLastResponse(pl, [responseContentMarkdown]);
         } else {
-            pl.announce({ msg: "No last response is found.", o: true });
+            pl.speak('No last response is found.');
             pl.utils.devLog("Latest response element does not contain response-content-markdown - 982");
         }
     }
