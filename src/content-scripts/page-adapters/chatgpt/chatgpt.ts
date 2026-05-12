@@ -4,6 +4,7 @@ import ChatGPTChatListDialog from "./chatgpt-chat-list-dialog";
 import ChatGPTChatSection from "./chatgpt-chat";
 import ChatGPTSidebar from "./chatgpt-sidebar";
 import ChatGptShortcutDialog from "./chatgpt-shortcut-dialog";
+import { Keybinds } from "../../keybind-manager";
 
 const chatgptAdapter = async () => {
     const pl = new PageLive();
@@ -11,12 +12,31 @@ const chatgptAdapter = async () => {
     const construct = async () => {
 
         const chatShortcutDialog = new ChatGptShortcutDialog(pl);
-        const chatSectionAdapter = new ChatGPTChatSection(pl);
+        const chatSectionAdapter = new ChatGPTChatSection(pl, {
+            isNewChat
+        });
         const sidebarAdapter = new ChatGPTSidebar(pl, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter));
         const chatListDialogAdapter = new ChatGPTChatListDialog(pl);
 
+        // Implement keybinds
+        pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, chatSectionAdapter.announceLastResponse.bind(chatSectionAdapter));
+        pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter));
+
         await pl.page.ready();
     }
+    /**
+     * Check if this is a new chat based on URL
+     */
+    const isNewChat = (url?: string | undefined): boolean => {
+        if (!url) url = window.location.href;
+        // If url is the base url, it is an empty chat
+        const baseUrlPattern = /^https:\/\/chatgpt\.com\/?$/;
+        if (baseUrlPattern.test(url)) {
+            return true;
+        }
+        return false;
+    }
+
     await construct();
 }
 

@@ -4,6 +4,8 @@
 
 ### Updated
 
+- ChatGPT: add feature 'read last response'
+- ChatGPT: add feature 'focus chat input'
 - ChatGPT: When sidebar collapsed or expanded, announce and manage focus
 
 ### On Progress

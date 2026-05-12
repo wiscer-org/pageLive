@@ -21,8 +21,8 @@ export default async (
     let toBeAnnounced: string[] = [];
 
     if (!responseElements) toBeAnnounced.push("No response element is found.");
-    else if (Array.isArray(responseElements)) toBeAnnounced = responseElements.map(el => el.innerHTML);
-    else if (!Array.isArray(responseElements)) toBeAnnounced.push(responseElements.innerHTML || '');
+    else if (Array.isArray(responseElements)) toBeAnnounced = responseElements.map(el => el.outerHTML);
+    else if (!Array.isArray(responseElements)) toBeAnnounced.push(responseElements.outerHTML || '');
 
     // Announce, add time gap to reduce computer load
     for (let i = 0; i < toBeAnnounced.length; i++) {
