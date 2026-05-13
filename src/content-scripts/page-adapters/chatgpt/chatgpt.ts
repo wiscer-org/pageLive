@@ -1,10 +1,10 @@
 import PageLive from "../../pagelive";
-import ElementObserver from "../../element-observer";
 import ChatGPTChatListDialog from "./chatgpt-chat-list-dialog";
 import ChatGPTChatSection from "./chatgpt-chat";
 import ChatGPTSidebar from "./chatgpt-sidebar";
 import ChatGptShortcutDialog from "./chatgpt-shortcut-dialog";
 import { Keybinds } from "../../keybind-manager";
+import featureStartNewChat from "../features/start-new-chat";
 
 const chatgptAdapter = async () => {
     const pl = new PageLive();
@@ -21,9 +21,11 @@ const chatgptAdapter = async () => {
         // Implement keybinds
         pl.keybindManager.registerKeybind(Keybinds.AnnounceLastResponse, chatSectionAdapter.announceLastResponse.bind(chatSectionAdapter));
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter));
+        pl.keybindManager.registerKeybind(Keybinds.NewChat, () => featureStartNewChat(pl, null, '/'))
 
         await pl.page.ready();
     }
+
     /**
      * Check if this is a new chat based on URL
      */

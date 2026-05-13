@@ -4,13 +4,14 @@
 
 ### Updated
 
+- ChatGPT: add feature 'start new chat'
 - ChatGPT: add feature 'read last response'
 - ChatGPT: add feature 'focus chat input'
 - ChatGPT: When sidebar collapsed or expanded, announce and manage focus
 
 ### On Progress
 
-- none
+- ChatGPT: Show number of responses in PageInfo dialog
 
 ### Planned
 

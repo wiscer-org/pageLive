@@ -32,7 +32,6 @@ export default class ChatGPTSidebar {
                 , 'ChatListHeader'
                 , intent
             );
-            console.log("is chat lst header found", this.chatlistHeader);
         }
     }
 
