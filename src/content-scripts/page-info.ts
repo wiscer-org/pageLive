@@ -1,4 +1,3 @@
-import { timeStamp } from "console";
 import PageLive from "./pagelive"
 
 
@@ -50,9 +49,20 @@ export class PageInfoDialog {
     /**
      * Same functionality as the native HTMLDialogElement.showModal() method.
      */
-    public showModal() {
-        this.dialog.showModal();
+    public async showModal() {
+        // If there is a callback function to be run on the next open, run it and clear the callback
+        // Need to be awaited, in case the callback function has async operations, e.g. update the dialog content
+        if (typeof this.onNextOpenCallback === "function") {
+            await this.onNextOpenCallback();
+            this.onNextOpenCallback = null;
+        }
+        // If there is a callback function to be run every time the dialog is opened, run it
+        if (this.onEveryOpenCallback !== null) {
+            await this.onEveryOpenCallback();
+            await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure content is rendered before showing the dialog
+        }
 
+        this.dialog.showModal();
         // Note: Do not announce anything when the modal is opened, because the screen reader will read the dialog content automatically.
     }
     /**
@@ -304,18 +314,6 @@ export class PageInfoDialog {
         if (this.dialog.open) {
             await this.close();
         } else {
-            // If there is a callback function to be run on the next open, run it and clear the callback
-            // Need to be awaited, in case the callback function has async operations, e.g. update the dialog content
-            if (typeof this.onNextOpenCallback === "function") {
-                await this.onNextOpenCallback();
-                this.onNextOpenCallback = null;
-            }
-            // If there is a callback function to be run every time the dialog is opened, run it
-            if (this.onEveryOpenCallback !== null) {
-                await this.onEveryOpenCallback();
-                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure content is rendered before showing the dialog
-            }
-
             this.showModal();
         }
     }
