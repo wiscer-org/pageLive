@@ -302,7 +302,7 @@ export class PageInfoDialog {
             <h2>About PageLive Extension</h2>
             <p>PageLive is a free chrome extension to help screen reader users to interact with specified web apps.</p>
             <p>Visit PageLive chrome web store to get more info about PageLive and the supported web pages.</p>
-            <p>To close this modal, use Esc key or the shortcut Ctrl + /</p>
+            <p>To close this modal, use <kbd>Esc</kbd> key or the shortcut <kbd>Alt</kbd> + <kbd>/</kbd></p>
         `;
         this.dialog.appendChild(infoContent);
     }
