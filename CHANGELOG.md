@@ -4,6 +4,7 @@
 
 ### Updated
 
+- ChatGPT: Show chat title and number of responses in PageInfo dialog
 - ChatGPT: add feature 'start new chat'
 - ChatGPT: add feature 'read last response'
 - ChatGPT: add feature 'focus chat input'
@@ -11,7 +12,7 @@
 
 ### On Progress
 
-- ChatGPT: Show number of responses in PageInfo dialog
+- ChatGPT: Announce response once completely rendered
 
 ### Planned
 

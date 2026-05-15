@@ -5,15 +5,18 @@ import ChatGPTSidebar from "./chatgpt-sidebar";
 import ChatGptShortcutDialog from "./chatgpt-shortcut-dialog";
 import { Keybinds } from "../../keybind-manager";
 import featureStartNewChat from "../features/start-new-chat";
+import AIChatHelper from "../features/ai-chat-helper";
 
 const chatgptAdapter = async () => {
     const pl = new PageLive();
+    const aiChatHelper = new AIChatHelper();
 
     const construct = async () => {
 
         const chatShortcutDialog = new ChatGptShortcutDialog(pl);
         const chatSectionAdapter = new ChatGPTChatSection(pl, {
             isNewChat
+            , setResponsesCount
         });
         const sidebarAdapter = new ChatGPTSidebar(pl, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter));
         const chatListDialogAdapter = new ChatGPTChatListDialog(pl);
@@ -23,7 +26,24 @@ const chatgptAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter));
         pl.keybindManager.registerKeybind(Keybinds.NewChat, () => featureStartNewChat(pl, null, '/'))
 
+
+        handleChatTitle();
+        await handlePageInfo();
+
         await pl.page.ready();
+    }
+
+    /**
+     * Parse and display chat title to related element
+     */
+    const handleChatTitle = () => {
+        pl.pageInfoDialog.onEveryOpenCallback = async () => {
+            // Get the title
+            let chatTitle = `Chat Title: ${document.title}`;
+            if (isNewChat()) chatTitle = 'New Chat';
+            else if (!chatTitle) chatTitle = 'Chat Title: Unknown';
+            pl.pageInfoDialog.setTitle(chatTitle);
+        };
     }
 
     /**
@@ -39,7 +59,20 @@ const chatgptAdapter = async () => {
         return false;
     }
 
+    const setResponsesCount = (rCount: number) => {
+        aiChatHelper.setResponsesCount(rCount);
+    }
+
+    /**
+     * Handle interaction with PageInfo
+     */
+    const handlePageInfo = async () => {
+        // Append
+        pl.pageInfoDialog.pageAdapterContainer.appendChild(aiChatHelper.getPageInfoTop());
+    }
+
     await construct();
+
 }
 
 // Note: The callback is guaranteed to run because we set "document_start" in manifest.json

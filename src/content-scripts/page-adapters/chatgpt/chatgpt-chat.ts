@@ -1,4 +1,5 @@
 import PageLive from "../../pagelive";
+import ElementObserver from "../../element-observer";
 import featureFocusChatInput from '../features/focus-chat-input';
 import featureReadLastResponse from '../features/read-last-response';
 
@@ -7,24 +8,90 @@ import featureReadLastResponse from '../features/read-last-response';
  * Features:
  * - Focus on the chat input
  */
-// Shared functions from initiator
-type SharedFunctions = {
-    isNewChat(url?: string): boolean
+// Functions required by `ChatGPTSection` class
+type requiredFunctions = {
+    isNewChat(url?: string): boolean;
+    setResponsesCount(rCount: number): void;
 }
 
 export default class ChatGPTChatSection {
     private pl!: PageLive;
-    private shared!: SharedFunctions;
+    private requiredFunctions!: requiredFunctions;
     private chatInput: HTMLElement | null = null;
+
+    // Strategy to keep track of the number of responses:
+    // Observe for chat container. After found, set observer for response container addition / removal.
+    private responsesCount: number = 0;
+    // Chat container don't have reliable selector, that is why it's hard to be observed
+    // Thus, we go 3 level up that has selector `.composer-parent`.
+    // This element will be called `chatContainerParent`. `chatContainerParent` is rendered earlier than `chatContainer`.
+    private chatContainerParent: HTMLElement | null = null;
+    // Chat container
+    private chatContainer: HTMLElement | null = null;
+    // The chat container observer
+    private chatContainerParentObserver = new ElementObserver(
+        async () => document.querySelector('.composer-parent')
+        , (chatContainerParent) => {
+            // Important: This `element` is the 4th level parent of prompt/response containers
+            this.chatContainerParent = chatContainerParent;
+
+            // Get the existing RCS 
+            const rcs = this.getRCsWithin(chatContainerParent);
+            this.setResponsesCount(rcs.length);
+
+            // Observe when RCs are added / removed
+            this.rcObserver.observe(chatContainerParent, {
+                childList: true,
+                subtree: true
+            });
+
+        }, null
+        , () => {
+            this.rcObserver.disconnect();
+        }
+    );
+    // The observer for response container
+    private rcObserver = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+            // Detect additions
+            for (const node of m.addedNodes) {
+                if (!(node instanceof HTMLElement)) break;
+                // If node an RC ?
+                if (this.isRC(node)) {
+                    this.setResponsesCount(this.responsesCount + 1);
+                    break;
+                }
+
+                // If node contain RCs ?
+                const rcs = this.getRCsWithin(node);
+                if (rcs.length > 0) {
+                    this.setResponsesCount(this.responsesCount + rcs.length);
+                }
+            }
+
+            // Detect RC removals
+            for (const node of m.removedNodes) {
+                if (!(node instanceof HTMLElement)) break;
+
+                // Is node a RC ?
+                if (this.isRC(node)) this.setResponsesCount(this.responsesCount - 1);
+                else {
+                    const rcs = this.getRCsWithin(node);
+                    if (rcs.length > 0) this.setResponsesCount(this.responsesCount - rcs.length);
+                }
+            }
+        }
+    });
 
     /**
      * @param pl {PageLive}
-     * @param shared - Shared functions
+     * @param requiredFunctions - Functions required by this class
      */
-    constructor(pl: PageLive, shared: SharedFunctions) {
+    constructor(pl: PageLive, requiredFunctions: requiredFunctions) {
         this.pl = pl;
-        this.shared = shared;
+        this.requiredFunctions = requiredFunctions;
         this.resolve.chatInput();
+        this.chatContainerParentObserver.observe();
     }
     resolve = {
         chatInput: async () => {
@@ -41,6 +108,37 @@ export default class ChatGPTChatSection {
         if (this.chatInput) {
             await featureFocusChatInput(this.pl, this.chatInput);
         }
+    }
+
+    isRC(node: HTMLElement): boolean {
+        // Node is a RC if has 'data-turn-id-container' attribute and has decendant that has `data-turn` attribute        
+        return node.classList.contains('data-turn-id-container')
+            && !!node.querySelector('[data-turn]');
+    }
+
+    isContainRC(node: HTMLElement): boolean {
+        return !!node.querySelector('[data-turn-id-container]');
+    }
+
+    /**
+     * Get the response container elements within a node
+     * @param node 
+     */
+    getRCsWithin(node: HTMLElement): HTMLElement[] {
+        // Get the children of each RCs
+        const possibleRCs = node.querySelectorAll('[data-turn-id-container]');
+
+        // The RCs
+        let rCs: HTMLElement[] = [];
+
+        // RC has decendant that has `data-turn` attribute
+        possibleRCs.forEach((el) => {
+            if (el.querySelector('[data-turn="assistant"]')) {
+                rCs.push(el as HTMLElement);
+            }
+        });
+
+        return rCs;
     }
 
     /**
@@ -88,9 +186,8 @@ export default class ChatGPTChatSection {
      * Announce last response
      */
     async announceLastResponse() {
-
         // Is this new / empty chat ?
-        if (this.shared.isNewChat()) {
+        if (this.requiredFunctions.isNewChat()) {
             this.pl.speak('This is a new chat. No response available.');
             return;
         }
@@ -104,4 +201,8 @@ export default class ChatGPTChatSection {
         else featureReadLastResponse(this.pl, lastResponseSegments);
     }
 
+    setResponsesCount(n: number): void {
+        this.responsesCount = n;
+        this.requiredFunctions.setResponsesCount(this.responsesCount);
+    }
 }
