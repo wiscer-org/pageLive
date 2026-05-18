@@ -4,6 +4,7 @@
 
 ### Updated
 
+- Claude: Fix broken feature of reading last response
 - ChatGPT: Add the 'More Shortcuts' section contentp in PageInfo
 - ChatGPT: Show chat title and number of responses in PageInfo dialog
 - ChatGPT: add feature 'start new chat'

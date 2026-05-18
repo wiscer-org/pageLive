@@ -149,7 +149,10 @@ const claudeAdapter = async () => {
                 const chatUnit = mainContent.querySelector('[data-test-render-count]');
                 if (!chatUnit) return null;
 
-                const cc = chatUnit.parentElement;
+                // Go up 1 more level
+                if (!chatUnit.parentElement) return null;
+
+                const cc = chatUnit.parentElement.parentElement;
                 return cc;
             }
 
@@ -236,43 +239,43 @@ const claudeAdapter = async () => {
      */
     const parseResponseContainer = (node: Node): HTMLElement | null => {
         // !IMPORTANT: The new response container when added is only: 
-        // `<div data-test-render-count="1"></div>`
+        // `<div ...><div data-test-render-count="1"></div></div>`
         // So it does not have any children when added.
         //
         // So we can tell if the added node is a response container by checking one of:
-        // 1. `div[data-test-render-count]` that has descendant `[data-is-streaming]`
-        // 2. `div[data-test-render-count="1"]` without any children
+        // 1. `div > div[data-test-render-count]` that has descendant `[data-is-streaming]`
+        // 2. `div > div[data-test-render-count="1"]` without any children
 
-        // There is a chance when prev prompts and responses are loaded, all has `[data-test-render-count="1"]` 
-        // [Assumption] But then will be changed to `[data-test-render-count="2"]` by Claude UI after a while.
-        // So we can not decide solely based on `[data-test-render-count="1"]`. Thus we also check if it has children.
+        // There is a chance when prev prompts and responses are loaded, all has `div > [data-test-render-count="1"]` 
+        // [Assumption] But then will be changed to `div > [data-test-render-count="2"]` by Claude UI after a while.
+        // So we can not decide solely based on `div > [data-test-render-count="1"]`. Thus we also check if it has children.
 
-        // [Assumption] The `[data-test-render-count="1"]` is the new RC,
-        // while `[data-test-render-count="2"]` is prev / updated RCs    
-
-        // console.log("[PageLive][1] Parsing response container from added node:", node);
+        // [Assumption] The `div > [data-test-render-count="1"]` is the new RC,
+        // while `div > [data-test-render-count="2"]` is prev / updated RCs    
+        // IMPORTANT: The RC is the parent `div` not the `[data-test-render-count]`
 
         // Note: 
         // `node` is a prompt container if has attribute `data-test-render-count` & has descendant [data-testid="user-message"]
         // `node` is a response container if has attribute `data-test-render-count` & has descendant [data-is-streaming]
-        if (node instanceof HTMLElement
-            && node.hasAttribute('data-test-render-count')) {
-            // return node.querySelector('[data-is-streaming]') as HTMLElement;
-            // console.log(node.outerHTML);
 
-            if (node.getAttribute('data-test-render-count') === '1' && node.children.length === 0) {
-                // console.log("[PageLive][1] Found response container node (no children):", node);
-                return node as HTMLElement
-            }
+        if (!(node instanceof HTMLElement)) return null;
 
-            if (node.querySelector('[data-is-streaming]') != null) {
-                // console.log("[PageLive][1] Found response container node:");
-                // console.log(node);
-                return node;
-            }
+        // Get the child of RC as the point of work.
+        const child = node.querySelector('[data-test-render-count]');
+
+        if (!child) return null;
+
+        if (child.getAttribute('data-test-render-count') === '1' && node.children.length === 0) {
+            return child as HTMLElement
         }
+
+        if (child.querySelector('[data-is-streaming]') != null) {
+            return child as HTMLElement;
+        }
+
         return null;
     }
+    
     /**
      * Parse response elements from a given node. 
      * The node can be the response container itself, or any node that contains response element(s).
@@ -957,6 +960,8 @@ const claudeAdapter = async () => {
 
         // Find the last response container
         let lastResponseContainer: HTMLElement | null = null;
+        console.log('chat container: ');
+        console.log(chatContainer.cloneNode(true));
         for (let i = chatContainer.children.length - 1; i >= 0; i--) {
             const child = chatContainer.children[i] as HTMLElement;
             if (parseResponseContainer(child)) {
