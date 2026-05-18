@@ -26,6 +26,12 @@ const chatgptAdapter = async () => {
         pl.keybindManager.registerKeybind(Keybinds.FocusChatInput, chatSectionAdapter.focusChatInput.bind(chatSectionAdapter));
         pl.keybindManager.registerKeybind(Keybinds.NewChat, () => featureStartNewChat(pl, null, '/'))
 
+        // Add 'More Keybinds'
+        pl.pageInfoDialog.addMoreKeybind('Ctrl + / ', 'Toggle Keyboard Shortcuts');
+        pl.pageInfoDialog.addMoreKeybind('Ctrl + Shift + K', 'Open Search Chat Dialog');
+        pl.pageInfoDialog.addMoreKeybind('Ctrl + Shift + S', 'Toggle sidebar');
+        pl.pageInfoDialog.addMoreKeybind('Ctrl + Shift + ;', 'Copy Last Code Block');
+        pl.pageInfoDialog.addMoreKeybind('Ctrl + Shift + Backspace', 'Delete Current Chat');
 
         handleChatTitle();
         await handlePageInfo();

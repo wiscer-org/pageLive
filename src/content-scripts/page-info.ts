@@ -270,7 +270,7 @@ export class PageInfoDialog {
         this.moreKeybindsContainer.innerHTML = '';
 
         // If there is no more keybinds to show, do not render the container
-        // if (this.moreKeybinds.length === 0) return;
+        if (this.moreKeybinds.length === 0) return;
 
         const header = document.createElement('h2');
         header.textContent = 'More Keybinds / Shortcuts';

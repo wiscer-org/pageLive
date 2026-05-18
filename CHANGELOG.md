@@ -4,6 +4,7 @@
 
 ### Updated
 
+- ChatGPT: Add the 'More Shortcuts' section contentp in PageInfo
 - ChatGPT: Show chat title and number of responses in PageInfo dialog
 - ChatGPT: add feature 'start new chat'
 - ChatGPT: add feature 'read last response'
@@ -12,10 +13,11 @@
 
 ### On Progress
 
-- ChatGPT: Announce response once completely rendered
+- empty
 
 ### Planned
 
+- ChatGPT: Announce response once completely rendered
 - Add tests for page adapters' DOM hierarchy
 - Gemini: Fix: Chat title not updated in the case of long delay with the side nav.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
