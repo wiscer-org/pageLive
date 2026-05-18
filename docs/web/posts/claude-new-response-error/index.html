@@ -12,47 +12,52 @@
 
 <body>
 	<nav class="top-nav">
-        <ul>
-            <li><a href="/pagelive">Home</a></li>
-            <li><a href="/pagelive/about">About</a></li>
+		<ul>
+			<li><a href="/pagelive">Home</a></li>
+			<li><a href="/pagelive/about">About</a></li>
 			<li><a href="/pagelive/posts/getting-started">Getting Started</a></li>
-        </ul>
+		</ul>
 	</nav>
 	<div class="container">
-		<header class="hero">
-			<h1>Claude New Response Reading Issue</h1>
-			<p><strong>Date:</strong> 9 March 2026</p>
-			<p>Update for screen reader users about repeated response announcements in Claude.</p>
-		</header>
+		<main>
+			<header class="hero">
+				<h1>Claude New Response Reading Issue</h1>
+				<p><strong>Date:</strong> 9 March 2026</p>
+				<p>Update for screen reader users about repeated response announcements in Claude.</p>
+			</header>
 
-		<section class="section-content">
-			<h2>Who This Post Is For</h2>
-			<p>This post is intended for screen reader users only, not power users.</p>
-		</section>
+			<aside class="page-note" aria-label="Target audience note">
+				<p><strong>Note:</strong> This post is intended for screen reader users and is not aimed at power users.
+				</p>
+			</aside>
 
-		<section class="section-content">
-			<h2>What Changed</h2>
-			<p>Before March 6, 2026, Claude did not announce newly received responses. Because of that, PageLive
-				provided a feature to read new responses.</p>
-			<p>On March 7, I realized Claude implemented this feature. However, Claude repeatedly reads the response
-				over and over again incrementally while the response is still being generated.</p>
-			<p>The feature to read a new response should only read finalized parts and should not repeat the same words
-				again. When Claude keeps reading incrementally and PageLive also reads the response, it can make screen
-				reader users confused.</p>
-		</section>
+			<section class="section-content">
+				<h2>What Changed</h2>
+				<p>Before March 6, 2026, Claude did not announce newly received responses. Because of that, PageLive
+					provided a feature to read new responses.</p>
+				<p>On March 7, I realized Claude implemented this feature. However, Claude repeatedly reads the response
+					over and over again incrementally while the response is still being generated.</p>
+				<p>The feature to read a new response should only read finalized parts and should not repeat the same
+					words
+					again. When Claude keeps reading incrementally and PageLive also reads the response, it can make
+					screen
+					reader users confused.</p>
+			</section>
 
-		<section class="section-content">
-			<h2>Suggested Workaround</h2>
-			<p>Occasionally press <kbd>Esc</kbd> to make the screen reader stop reading the response. Once the screen
-				reader is no longer reading anything, press <kbd>Ctrl + Shift + Enter</kbd> to read the last response.</p>
-		</section>
+			<section class="section-content">
+				<h2>Suggested Workaround</h2>
+				<p>Occasionally press <kbd>Esc</kbd> to make the screen reader stop reading the response. Once the
+					screen
+					reader is no longer reading anything, press <kbd>Ctrl + Shift + Enter</kbd> to read the last
+					response.</p>
+			</section>
 
-		<section class="section-content">
-			<h2>Back to PageLive</h2>
-			<p><a href="/pagelive">Return to the PageLive landing page</a></p>
-			<p><a href="/pagelive/about">Read the About page</a></p>
-		</section>
-
+			<section class="section-content">
+				<h2>Back to PageLive</h2>
+				<p><a href="/pagelive">Return to the PageLive landing page</a></p>
+				<p><a href="/pagelive/about">Read the About page</a></p>
+			</section>
+		</main>
 		<footer class="footer">
 			<div class="docs-nav">
 				<p>Documentation:</p>
@@ -64,6 +69,7 @@
 			</div>
 			<p>&copy; 2026 PageLive. All rights reserved.</p>
 		</footer>
+
 	</div>
 </body>
 

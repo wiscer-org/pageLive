@@ -19,26 +19,26 @@
         </ul>
     </nav>
     <div class="container">
+        <main>
+            <header class="hero">
+                <h1>PageLive for ChatGPT</h1>
+                <p>Keyboard-first workflows and accessibility-friendly announcements to make ChatGPT navigation faster,
+                    clearer, and more predictable.</p>
 
-        <header class="hero">
-            <h1>PageLive for ChatGPT</h1>
-            <p>Keyboard-first workflows and accessibility-friendly announcements to make ChatGPT navigation faster,
-                clearer, and more predictable.</p>
+                <a href="/pagelive" class="cta-button">
+                    ← Go to PageLive Home
+                </a>
+            </header>
 
-            <a href="/pagelive" class="cta-button">
-                ← Go to PageLive Home
-            </a>
-        </header>
+            <section class="section-content">
+                <h2>ChatGPT Default Features</h2>
+                <p>
+                    For ChatGPT's default shortcuts can be viewed by pressing
+                    <kbd>Ctrl</kbd>+<kbd>/</kbd>
+                </p>
+            </section>
 
-        <section class="section-content">
-            <h2>ChatGPT Default Features</h2>
-            <p>
-                For ChatGPT's default shortcuts can be viewed by pressing
-                <kbd>Ctrl</kbd>+<kbd>/</kbd>
-            </p>
-        </section>
-
-        <!-- 
+            <!-- 
         <section class="section-content">
             <h2>For Power Users</h2>
             <dl>
@@ -75,10 +75,10 @@
         </section>
     -->
 
-        <section class="section-content">
-            <h2>For Screen Reader Users</h2>
-            <dl>
-                <!-- 
+            <section class="section-content">
+                <h2>For Screen Reader Users</h2>
+                <dl>
+                    <!-- 
                 <dt>
                     <h3>Read Last Response</h3>
                 </dt>
@@ -95,52 +95,55 @@
                 </dd>
             -->
 
-                <dt>
-                    <h3>Shortcut Dialog Close Announcement</h3>
-                </dt>
-                <dd>
-                    When ChatGPT shortcut dialog opens, screen reader announces it.
-                    However when you close the dialog, either by pressing <code>Escape</code> or pressing the
-                    close button, the dialog is closed without an announcement, which can be confusing.
-                    PageLive announces when the shortcut dialog is closed, so you have clear feedback.
-                </dd>
-                <dt>
-                    <h3>Fix Unreadable Keyboard Shortcuts</h3>
-                </dt>
-                <dd>
-                    ChatGPT's keyboard shortcuts in the dialog can not be read by screen reader.
-                    To solve the issue, PageLive will append each keyboard shortcut to its corresponding label so they can be read by screen
-                    reader.
-                    PageLive also translate some keyboard symbols to be readable, for example Enter key symbol and
-                    Escape key symbol.
-                </dd>
-            </dl>
+                    <dt>
+                        <h3>Shortcut Dialog Close Announcement</h3>
+                    </dt>
+                    <dd>
+                        When ChatGPT shortcut dialog opens, screen reader announces it.
+                        However when you close the dialog, either by pressing <code>Escape</code> or pressing the
+                        close button, the dialog is closed without an announcement, which can be confusing.
+                        PageLive announces when the shortcut dialog is closed, so you have clear feedback.
+                    </dd>
+                    <dt>
+                        <h3>Fix Unreadable Keyboard Shortcuts</h3>
+                    </dt>
+                    <dd>
+                        ChatGPT's keyboard shortcuts in the dialog can not be read by screen reader.
+                        To solve the issue, PageLive will append each keyboard shortcut to its corresponding label so
+                        they can be read by screen
+                        reader.
+                        PageLive also translate some keyboard symbols to be readable, for example Enter key symbol and
+                        Escape key symbol.
+                    </dd>
+                </dl>
 
-            <h3>Chat List Dialog</h3>
-            <p>
-                ChatGPT has a chat list dialog, keyboard shortcut <kbd>Ctrl</kbd> + <kbd>K</kbd>,
-                allows users to search and quickly navigate between chats and start new ones.
-                Below are PageLive's improvements related to the chat list dialog
-            </p>
-            <ul>
-                <li>
-                    When the chat list dialog opens or when the chat list is updated, PageLive announces the total
-                    number of chats in the list, so you have a clear overview of your chat history.
-                </li>
-                <li>
-                    When you navigate through the chat list with up / down keys, PageLive announces the title of each
-                    chat
-                    as you focus it, so you can easily find the chat you're looking for.
-                    You either can press <kbd>Enter</kbd> to open the announced chat or continue typing to filter the
-                    chat list with the search box, without needing to switch focus to the search box first.
-                </li>
-                <li>
-                    PageLive announces when the chat list dialog is closed.
-                </li>
-            </ul>
-        </section>
+                <h3>Chat List Dialog</h3>
+                <p>
+                    ChatGPT has a chat list dialog, keyboard shortcut <kbd>Ctrl</kbd> + <kbd>K</kbd>,
+                    allows users to search and quickly navigate between chats and start new ones.
+                    Below are PageLive's improvements related to the chat list dialog
+                </p>
+                <ul>
+                    <li>
+                        When the chat list dialog opens or when the chat list is updated, PageLive announces the total
+                        number of chats in the list, so you have a clear overview of your chat history.
+                    </li>
+                    <li>
+                        When you navigate through the chat list with up / down keys, PageLive announces the title of
+                        each
+                        chat
+                        as you focus it, so you can easily find the chat you're looking for.
+                        You either can press <kbd>Enter</kbd> to open the announced chat or continue typing to filter
+                        the
+                        chat list with the search box, without needing to switch focus to the search box first.
+                    </li>
+                    <li>
+                        PageLive announces when the chat list dialog is closed.
+                    </li>
+                </ul>
+            </section>
 
-        <!-- 
+            <!-- 
         <section class="section-content">
             <h2>Use Cases</h2>
             <dl>
@@ -162,6 +165,7 @@
             </dl>
         </section>
         -->
+        </main>
 
         <footer class="footer">
             <div class="docs-nav">
