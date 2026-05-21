@@ -4,6 +4,7 @@
 
 ### Updated
 
+- Claude: Fix: Broken feature delete current chat
 - Claude: Fix broken feature of reading last response
 - ChatGPT: Add the 'More Shortcuts' section contentp in PageInfo
 - ChatGPT: Show chat title and number of responses in PageInfo dialog
@@ -14,6 +15,7 @@
 
 ### On Progress
 
+- Gemini: Fix: Broken feature start new chat
 - empty
 
 ### Planned

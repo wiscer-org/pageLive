@@ -275,7 +275,7 @@ const claudeAdapter = async () => {
 
         return null;
     }
-    
+
     /**
      * Parse response elements from a given node. 
      * The node can be the response container itself, or any node that contains response element(s).
@@ -882,7 +882,7 @@ const claudeAdapter = async () => {
         }
 
         // Observe added nodes to find the Chat-menu pop up, containing 'Delete' button
-        let observer = new MutationObserver(async (mutations, obs) => {
+        let deleteButtonObserver = new MutationObserver(async (mutations, obs) => {
             // Chat menu to find has [role="menu"]
             let chatMenu: HTMLElement | null = null;
             for (const mutation of mutations) {
@@ -921,21 +921,31 @@ const claudeAdapter = async () => {
         });
 
         // Start observing the body for added nodes (pop ups)
-        observer.observe(document.body, {
+        deleteButtonObserver.observe(document.body, {
             childList: true,
             subtree: true
         });
 
+        // Schedule to stop observing. Note: Can't pass `observer.disconnect`, it will not work. Has to be encapsulated in a function
+        setTimeout(() => {
+            deleteButtonObserver.disconnect();
+        }, 2e3);
+
         // Click the 'chat menu' trigger / button to open the pop up
         // Note: Use 3 events below to make sure it's working. On grok it works on "pointerdown", not works on "click".
-        ["pointerdown", "pointerup", "click"].forEach(type => {
-            if (!chatMenuTrigger) return;
+        // Update: Using 3 events causing not work as expected. Just use 'click' works
+        // ["pointerdown", "pointerup", "click"].forEach(type => {
+        ["click"].forEach(type => {
+            if (!chatMenuTrigger) {
+                pl.speak('Can not find the trigger button');
+                return;
+            }
             chatMenuTrigger.dispatchEvent(
                 new PointerEvent(type, {
                     bubbles: true,
                     cancelable: true,
                     pointerType: "mouse",
-                    clientX: 100,              // fake position sometimes helps
+                    clientX: 100, // fake position sometimes helps
                     clientY: 100
                 })
             );
