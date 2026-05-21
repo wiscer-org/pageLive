@@ -4,11 +4,14 @@ import ChatInfo from "../chat-info";
 import PageLive from "../pagelive";
 import featureReadLastResponse from './features/read-last-response';
 import featureFocusChatInput from './features/focus-chat-input';
+import AIChatHelper from "./features/ai-chat-helper";
 
 // Define page adapter to be executed on DOMContentLoaded
 const geminiPageAdapter = async () => {
 
     const pl = new PageLive();
+
+    const aiChatHelper = new AIChatHelper();
 
     // Selector for chat item container, per chat item, on the right side navigation
     const CHAT_ITEM_CONTAINER_SELECTOR = '.conversation-items-container';
@@ -651,43 +654,44 @@ const geminiPageAdapter = async () => {
     }
 
     /**
+     * Test is current chat is a new / empty chat based on URL
+     */
+    async function isNewChat(url?: string | undefined): Promise<boolean> {
+        if (!url) url = window.location.href;
+        // If url is the base url, it is an empty chat
+        const baseUrlPattern = /^https:\/\/gemini.google.com\/app?$/;
+        if (baseUrlPattern.test(url)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Start new chat, by clicking a button on side nav.
      */
     async function startNewChat() {
-        pl.announce({ msg: "Start new chat", o: true });
-
-        // Make sure side nav is opened
-        const isSideNavOpened = await checkIsSideNavOpened();
-        if (!isSideNavOpened) {
-            const sideNavToggleButton = await getSideNavToggleButton();
-            // Click the toogle button and wait a little
-            sideNavToggleButton?.click();
-            await new Promise(r => setTimeout(r, 250));
-        }
+        // pl.announce({ msg: "Start new chat", o: true });
 
         // Find the start-new-chat button. Selector below
-        // const newChatButton = document.querySelector('[data-test-id="new-chat-button"]') as HTMLElement | null;
-        // const newChatButton = document.querySelector('[data-test-id="expanded-button"]') as HTMLElement | null;
-        const newChatButton = document.querySelector('[data-test-id="new-chat-button"] button') as HTMLElement | null;
+        const newChatButton = document.querySelector('[data-test-id="new-chat-button"] a') as HTMLElement | null;
 
         if (newChatButton === null) {
             const msg = "Failed to find the new chat button";
             pl.utils.prodWarn(msg);
-            pl.announce({ msg });
+            pl.speak(msg);
             return;
-        } else {
-            // Close all dialogs / modals first
-            await closeAllDialogsAndModals();
-            newChatButton.click();
         }
 
-        // After the button is clicked, the UI will be re-rendered, causing `chatContainer` element to be disconnected.
-        // Wait a little for the UI to be re-rendered, then re-query the key elements
-        await new Promise(r => setTimeout(r, 4000)); // 4 seconds is long enough for the UI to be re-rendered, and quick enough before user finish typing the first input.
-        await init();
-        // chatAdapter.init();
-        // contentMapper.init(0);
+        aiChatHelper.startNewChat(
+            pl
+            , isNewChat
+            , newChatButton
+            , async() => {
+                closeAllDialogsAndModals();
+            }
+        );
     }
+    
     /**
      * Parse the current active chat info from the document, if possible.
      * If successfull parsed, save the result to `activeChat` and will attach to `pageLive.page.activeChat`.

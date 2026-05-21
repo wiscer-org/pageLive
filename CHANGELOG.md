@@ -4,6 +4,7 @@
 
 ### Updated
 
+- Gemini: Fix: Broken feature 'start new chat'
 - Claude: Fix: Broken feature delete current chat
 - Claude: Fix broken feature of reading last response
 - ChatGPT: Add the 'More Shortcuts' section contentp in PageInfo
@@ -15,7 +16,8 @@
 
 ### On Progress
 
-- Gemini: Fix: Broken feature start new chat
+- Gemini: Fix: Broken feature 'toggle sidebar' when window maximize
+- Gemini: No notification 'collapsing sidebar' when collapsing sidebar
 - empty
 
 ### Planned

@@ -9,7 +9,7 @@ export default class AIChatHelper {
     // `HTMLElement` appended to the top of `PageInfo`
     pageInfoTop: HTMLDivElement = document.createElement('div');
 
-    construct() {
+    constructor() {
 
     }
     setChatTitle(chatTitle: string) {
@@ -30,5 +30,54 @@ export default class AIChatHelper {
     }
     getPageInfoTop() {
         return this.pageInfoTop
+    }
+    /**
+     * Wrap the process of starting a new chat
+     * @param {PageLive} pl - PageLive instance
+     * @param isNewChat - To decide is current page is new / empty
+     * @param trigger - Button or function to start new chat
+     * @param preAction - Callback before starting new chat
+     * @param postAction - Callback after starting new chat
+     */
+    async startNewChat(
+        pl: PageLive
+        , isNewChat: (() => Promise<boolean>) | null
+        , trigger: HTMLElement | (() => Promise<void>)
+        , preAction?: (() => Promise<void>) | undefined
+        , postAction?: (() => Promise<void>) | undefined
+    ) {
+        // Check if current chat is a new / empty chat 
+        if (isNewChat && await isNewChat()) {
+            pl.speak('Already a new chat.');
+            return;
+        }
+
+        // Check if the trigger element valid
+        if (typeof trigger !== 'function') {
+            if (typeof trigger.click !== 'function') {
+                pl.speak('Trigger button notn valid');
+                return;
+            }
+            if (trigger.isConnected === false) {
+                pl.speak('Trigger button not found');
+                return;
+            }
+        }
+
+        // Execute pre-action
+        if (typeof preAction === 'function') await preAction();
+
+        // Announce
+        pl.speak('Start new chat');
+        // Wait a little to allow SR to announce first
+        await new Promise(r => setTimeout(r, 1e3));
+
+        // Action
+        if (typeof trigger === 'function') await trigger();
+        else trigger.click();
+
+        // Execute post-action
+        if (typeof postAction === 'function') await postAction();
+
     }
 }
