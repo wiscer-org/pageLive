@@ -9,7 +9,7 @@ export default defineConfig({
         rollupOptions: {
             ...baseConfig.build?.rollupOptions,
             input: {
-                gemini: resolve(__dirname, '../src/content-scripts/page-adapters/gemini.ts'),
+                gemini: resolve(__dirname, '../src/content-scripts/page-adapters/gemini/gemini.ts'),
                 background: resolve(__dirname, '../src/background.ts'),
             },
         },

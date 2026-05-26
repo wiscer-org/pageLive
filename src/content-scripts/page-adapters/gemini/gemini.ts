@@ -1,16 +1,19 @@
 // gemini.ts - Injected only on gemini.google.com
-import { Chat, ChatUnit } from "../../types/chat";
-import ChatInfo from "../chat-info";
-import PageLive from "../pagelive";
-import featureReadLastResponse from './features/read-last-response';
-import featureFocusChatInput from './features/focus-chat-input';
-import AIChatHelper from "./features/ai-chat-helper";
+import { Chat, ChatUnit } from "../../../types/chat";
+import ChatInfo from "../../chat-info";
+import PageLive from "../../pagelive";
+import featureReadLastResponse from '../features/read-last-response';
+import featureFocusChatInput from '../features/focus-chat-input';
+import AIChatHelper from "../features/ai-chat-helper";
+import GeminiSidebar from '../gemini/gemini-sidebar';
 
 // Define page adapter to be executed on DOMContentLoaded
 const geminiPageAdapter = async () => {
 
     const pl = new PageLive();
 
+    // Chat section adapters
+    const geminiSidebar = new GeminiSidebar(pl, closeAllDialogsAndModals, focusChatInput);
     const aiChatHelper = new AIChatHelper();
 
     // Selector for chat item container, per chat item, on the right side navigation
@@ -115,883 +118,915 @@ const geminiPageAdapter = async () => {
         // Add keybind 'toggle sidebar'
         pl.keybindManager.registerKeybind(
             PageLive.KeybindManager.Keybinds.ToggleSidebar,
-            toggleSidebar
+            // toggleSidebar
+            geminiSidebar.toggleSidebar.bind(geminiSidebar)
         );
-        // Add keybind 'copy last code block'
-        pl.keybindManager.registerKeybind(
-            PageLive.KeybindManager.Keybinds.CopyLastCodeBlock,
-            copyLastCodeBlock
-        );
-        // Add 'more' keybinds to page info dialog. These are native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
-        pl.pageInfoDialog.addMoreKeybind("Ctrl + Shift + K", "Open dialog to search chat");
+// Add keybind 'copy last code block'
+pl.keybindManager.registerKeybind(
+    PageLive.KeybindManager.Keybinds.CopyLastCodeBlock,
+    copyLastCodeBlock
+);
+// Add 'more' keybinds to page info dialog. These are native keybinds / shortcuts that are not provided by PageLive, but are still useful for users to know.
+pl.pageInfoDialog.addMoreKeybind("Ctrl + Shift + K", "Open dialog to search chat");
 
-        // Add callback to be executed the next time dialog is shown
-        pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen
+// Add callback to be executed the next time dialog is shown
+pl.pageInfoDialog.onEveryOpenCallback = onDialogOpen
 
-        // Notify PageLive that the page adapter is fully loaded
-        pl.page.ready();
+// Notify PageLive that the page adapter is fully loaded
+pl.page.ready();
 
-        start();
+start();
 
-        // Init the child objects
-        chatAdapter.init();
-        contentMapper.init(0);
-        await contentRevealer.init(chatContainer);
+// Init the child objects
+chatAdapter.init();
+contentMapper.init(0);
+await contentRevealer.init(chatContainer);
     }
 
-    /**
-     * Start the page adapter process
-     * @todo Move more initialization code here
-     */
-    async function start() {
-        // TODO later
-    }
+/**
+ * Start the page adapter process
+ * @todo Move more initialization code here
+ */
+async function start() {
+    // TODO later
+}
 
-    /**
-     * Common element resolvers
-     */
-    const resolve = {
-        chatContainer: async (intent: string) => {
-            chatContainer = await pl.resolve(
-                chatContainer
-                , "chat-window infinite-scroller.chat-history"
-                , "Chat Container"
-                , intent
-            );
-            return chatContainer;
-        },
-        sidebar: async (intent: string) => {
-            sidebar = await pl.resolve(
-                sidebar
-                , '.sidenav-with-history-container'
-                , "Sidebar element"
-                , intent
-            );
-            return sidebar;
-        },
-        toggleSidebarButton: async (intent: string) => {
+/**
+ * Common element resolvers
+ */
+const resolve = {
+    chatContainer: async (intent: string) => {
+        chatContainer = await pl.resolve(
+            chatContainer
+            , "chat-window infinite-scroller.chat-history"
+            , "Chat Container"
+            , intent
+        );
+        return chatContainer;
+    },
+    sidebar: async (intent: string) => {
+        sidebar = await pl.resolve(
+            sidebar
+            , '.sidenav-with-history-container'
+            , "Sidebar element"
+            , intent
+        );
+        return sidebar;
+    },
+    toggleSidebarButton: async (intent: string) => {
+        // Toggle sidebar button is different on large width and medium / small width
+        // Try selector for large width first, then medium/small width
+        const selectors = [
+            '[data-test-id="side-nav-sparkle-button"]',
+            '[data-test-id="side-nav-menu-button"]'
+        ];
+
+        for (const selector of selectors) {
             toggleSidebarButton = await pl.resolve(
                 toggleSidebarButton
-                , '[data-test-id="side-nav-menu-button"]'
+                , selector
                 , "Toggle Sidebar Button"
                 , intent
             );
-            return toggleSidebarButton;
-        }, chatInput: async (intent: string) => {
-            const element = await pl.resolve(
-                chatInputElement
-                , '.new-input-ui[role="textbox"]'
-                , "Chat input"
-                , intent
-            );
-            // Convert
-            if (element instanceof HTMLElement) chatInputElement = element as HTMLInputElement;
-            else chatInputElement = null;
-
-            return chatInputElement;
+            if (toggleSidebarButton) break;
         }
-    }
-
-    /**
-     * This function to requery the 'persisted' elements, such as `chatListContainer`.
-     * Note: On window resize, references to 'persisted' elements seems invalid, thus the feature is not working.
-     * For instance, after resized, the function `getActiveChatMenuButton` can not find the button. However it does not raise any error message.
-     * That's why the references need to be updated.
-     * The event handler set below will be debounced.
-     */
-    async function addWindowResizeListener() {
-        // The timer id. We will debounce the event handler to avoid rapid execution during window resizing.
-        let resizeTimer: ReturnType<typeof setTimeout>;
-        const DEBOUNCE_DELAY = 300;
-
-        window.addEventListener('resize', () => {
-            // Clear the previous timer (if it exists)
-            clearTimeout(resizeTimer);
-
-            // Set a new timer
-            resizeTimer = setTimeout(async () => {
-                // Requery the key / persisted HTMLElements
-                await getKeyElements();
-                chatInputElement = getChatInputElement();
-
-                // Execute GeminiChat.onWindowResize() to let GeminiChat handle the resize event
-                chatAdapter.onWindowResized();
-            }, DEBOUNCE_DELAY);
-        });
-    }
-
-    /**
-     * Return the `Container` element. If null, try to query from the document.
-     * If failed query the element, announce the result and return false.
-     * @param {boolean} reQuery If set true, will re-parse / re-query the element.
-     * @returns {Promise<boolean>} if the `chatListContainer` exist.
-     */
-    // async function ensureChatListContainerElement(reQuery = false): Promise<boolean> {
-    //     // If null or need to re-query again
-    //     if (chatListContainer === null || reQuery) {
-    //         // Get the chat list container
-    //         // chatListContainer = document.querySelector('[data-test-id="all-conversations"]') as HTMLElement | null;
-    //         chatListContainer = document.querySelector('.chat-history');
-    //     }
-
-    //     if (!chatListContainer) {
-    //         const msg = "Chat list container not found";
-    //         pageLive.utils.prodWarn(msg);
-    //         pageLive.announce({ msg });
-    //         return false;
-    //     }
-    //     return true;
-    // }
-
-    /**
-     * Get the HTML element that if clicked will toggle the side nav
-     * @return {Promise<HTMLElement|null>} The element if found
-     */
-    async function getSideNavToggleButton(): Promise<HTMLElement | null> {
-        // Query the document
-        // 'button.[data-test-id="side-nav-menu-button"]
-        const sideNavToogleButton = document.querySelector('[data-test-id="side-nav-menu-button"]') as HTMLElement | null;
-
-        // If still not exist, notify
-        if (!sideNavToogleButton) {
-            const msg = "Failed to find side nav toggle button";
-            pl.utils.prodWarn(msg);
-            pl.announce({ msg });
-        }
-        return sideNavToogleButton;
-    }
-
-    /**
-     * Get reference to the chat input element.
-     */
-    function getChatInputElement(): HTMLInputElement | null {
-        return document.querySelector('.new-input-ui[role="textbox"]');
-    }
-
-    /**
-     * This function will focus the chat input element.
-     */
-    async function focusChatInput() {
-        await resolve.chatInput("Focus chat input");
-
-        if (!chatInputElement) {
-            pl.utils.prodWarn("Chat input element not found. Re-querying the element.");
-            pl.speak('Chat input is not found');
-            return;
-        }
-
-        if (!chatInputElement?.isConnected) {
-            pl.utils.prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
-            pl.speak("Chat input element not connected.");
-            return;
-        }
-
-        if (chatInputElement) {
-            // Close any dialogs / modals first
-            pl.pageInfoDialog.close();
-            contentMapper.close();
-
-            featureFocusChatInput(pl, chatInputElement);
-        }
-    }
-
-    /**
-     * Open Gemini's chat menu on the side nav.
-     * @param {string} chatId The id of the chat. If is an empty string will open the current active chat.
-     * @return {Promise<void>}
-     */
-    async function openChatActionsMenu(chatId: string): Promise<void> {
-        // FIXME currently left empty. In the future, delete of refactor other functions that uses this function.
-    }
-
-    /**
-     * Get the chat actions menu element. It is the chat context pop up menu.
-     * The chat actions menu needs to be opened first, like the effect of `openChatActionsMenu` function
-     */
-    async function getChatActionsMenuElement(): Promise<HTMLElement | null> {
-        // This is for the large width screen.
-        let chatActionsMenu = document.querySelector('.conversation-actions-menu') as HTMLElement | null;
-
-        // If not found, maybe currently is small width screen.
-        if (chatActionsMenu === null) {
-            // For the small screen, no rational suitable selector can be found.
-            // Below is the closest one
-            chatActionsMenu = document.querySelector('mat-bottom-sheet-container[role="dialog"]');
-        }
-
-        if (chatActionsMenu === null) {
-            const msg = "Failed to find chat actions menu element";
-            pl.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
-            pl.announce({ msg });
-        }
-
-        return chatActionsMenu;
-    }
-
-    /**
-     * Get the delete button from the opened chat actions menu
-     */
-    async function getDeleteButton(): Promise<HTMLElement | null> {
-        const chatActionsMenu = await getChatActionsMenuElement();
-        if (chatActionsMenu === null) return null;
-
-        const deleteButton = chatActionsMenu?.querySelector('[data-test-id="delete-button"]') as HTMLElement | null;
-        if (deleteButton === null) {
-            const msg = "Failed to find delete button";
-            pl.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
-            pl.announce({ msg });
-        }
-
-        return deleteButton;
-    }
-
-    /**
-     * Checks if the current page is an unsaved chat.
-     * Unsaved chat is identified by the path being exactly '/app' or '/app/'.
-     * @returns {boolean} True if the path matches, otherwise false.
-     */
-    function isThisUnsavedChat(): boolean {
-        const path = window.location.pathname;
-        return path === '/app' || path === '/app/';
-    }
-
-    /** 
-     * Delete the current chat, if possible 
-     */
-    async function currentChatDelete() {
-        // Detect if this is a new chat. If yes, cannot find the chat menu button, thus cannot continue. Announce so the user knows.
-        const isUnsavedChat = isThisUnsavedChat();
-        if (isUnsavedChat) {
-            pl.announce({ msg: "This is a new chat. Nothing to delete." })
-            return;
-        }
-
-        // Find the button that will show the chat-context menu
-        const menuButton: HTMLElement | null = await getActiveChatMenuButton();
-
-        // If still can not find chat menu button, cannot continue. Announce so the user knows
-        if (!menuButton) {
-            // console.warn('[PageLive][Gemini] Chat menu button not found. Unable to delete current chat.');
-            return;
-        }
-
-        // Activate the button, then wait for the animation to complete
-        menuButton.click();
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        // Find the delete button in the menu
-        const deleteButton = await getDeleteButton();
-
-        // Activate the delete button
-        deleteButton?.click();
-
-        // Done. Delete confirmation and action will be handled by the page itself.
-    };
-
-    /**
-     * Note: Chat menu button is the button to show the chat context menu, which contains rename and delete chat buttons.
-     * In the small/medium screen, there is only one chat menu button: at the top right which show menu for the current active chat.
-     * In the large screen, there are multiple chat menu buttons: on the right side of each chat in the chat list on the right side navigation.
-     *
-     * This function will return the chat menu button for the current active chat.
-     * Steps to find the button:
-     * 1. Assume the browser is currently in small/medium screen, get the single chat menu button.
-     * 2. If not found, assume the browser is in large screen. We need to find the active chat from the chat list, then locate the chat menu button in the active chat element.
-     *
-     * Since the browser size might change any time, we will not save the reference to the button. Instead, we will find it every time this function is called.
-     */
-    async function getActiveChatMenuButton(): Promise<HTMLElement | null> {
-        // Try to find the chat menu button for small/medium screen
-        let chatMenuButton = document.querySelector('[data-test-id="conversation-actions-button"]') as HTMLElement | null;
-
-        // If found, return the chat menu button right away
-        if (chatMenuButton) return chatMenuButton;
-
-        // If not found, try to find the chat menu button for large screen
-        // On large screens, the active chat menu button will be on side nav.
-
-        // Ensure the side nav is opened
-        await ensureSideNavOpened();
-
-        // Trigger the chat list until the active / selected chat is in the list
-        await populateChatList(true);
-
-        // Find the active chat element in the chat list
-        const selectedChatActionsElement = await getSelectedChatActionsContainerElement();
-
-        // Locate the chat menu button in the active chat element
-        chatMenuButton = await getChatActionsMenuButton(selectedChatActionsElement);
-
-        return chatMenuButton;
-    }
-
-    /**
-     * Ensure the side navigation, containing chat list, is opened.
-     * If the side nav is closed, it will be opened by clicking the side nav toggle button.
-     * @returns 
-     */
-    async function ensureSideNavOpened(): Promise<boolean> {
-        // Is side nav open ?
-        const isSideNavOpened = await checkIsSideNavOpened();
-
-        // If the side nav is closed, we need to open it by clicking the side nav toogle button
-        if (!isSideNavOpened) {
-            const sideNavToggleButton = await getSideNavToggleButton();
-            // If the toogle button not exist, we can't continue
-            if (!sideNavToggleButton) return false;
-
-            // Click to open the side nav. No need to be closed back.
-            await sideNavToggleButton.click();
-            // Announce about the current activity
-            pl.announce({ msg: "Opening side navigation" });
-        }
-
-        // wait a little for animation to finish
-        await new Promise(r => setTimeout(r, 250));
-        return true;
-    }
-
-    /**
-     * Check if the side navigation (chat list) is opened.
-     */
-    async function checkIsSideNavOpened(): Promise<boolean> {
-        // When the side nav is opened,
-        // the elements '.conversation-items-container' and '.conversation-actions-container' will have 'side-nav-opened' class.
-        // Side nav considered opened if there is element '.side-nav-opened' in the chat list container
-
-        // DELETE below: Ensure the `chatListContainer` exist
-        // await ensureChatListContainerElement();
-
-        return chatListContainer?.querySelector('.side-nav-opened') !== null;
-    }
-
-    /**
-     * Chat list is not fully populated until the chat list is scrolled to the bottom.
-     * So, there is a chance that the active chat is not in the DOM yet.
-     * To handle this, this function will scroll the chat list to the bottom to meet 2 criterias : Until the active chat is visible or all chats are loaded.
-     * @param {boolean} findActiveChat If active chat is found, this function no longer scroll down on the chat list container / scroller
-     * @param {boolean} shouldCloseBackNavBar Set to false if the side nav need to be closed back in the case this function automatically open the side nav.
-     * @return {Promise<void>}
-     */
-    async function populateChatList(findActiveChat = false, shouldCloseBackNavBar = true) {
-        // DELETE: Chat list is required to continue
-        // await ensureChatListContainerElement();
-        // Type checking
-        if (!chatListContainer) return;
-
-        // Required: Loading image to be observed
-        const isLoadingElement = chatListContainer.querySelector('.loading-history-spinner-container');
-        if (!isLoadingElement) {
-            const msg = "Unable to find loading-history-spinner-container element";
-            pl.utils.prodWarn(msg);
-            pl.announce({ msg });
-            return;
-        }
-        // Required: Scroller element that need to be scrolled down
-        const scrollerElement = chatListContainer.closest('infinite-scroller');
-        if (!scrollerElement) {
-            const msg = "Failed to find the closest infinite-scroller element";
-            pl.utils.prodWarn(msg);
-            pl.announce({ msg });
-            return;
-        }
-
-        // The class used to show the loading spinner element
-        const IS_LOADING_CLASS = 'is-loading';
-
-        // Loop until any of 2 conditions found: chat active or fully loaded (no more 'is-loading' image)
-        let failSafe = 0;
-        while (true) {
-            // Break if we want to find active chat and it is already loaded
-            const activeSelectedChat = await getSelectedChatElement();
-            if (findActiveChat && activeSelectedChat !== null) {
-                // pageLive.announce({ msg: "Active chat is found. Number of scroll : " + failSafe });
-                return true;
-            }
-
-            // Note: After scroll down, one of 2 things might happen:
-            // 1. If there are more chats can be loaded, loading image will appear and will be hidden after some chats are loaded.
-            // 2. If there are no more chats can be loaded, the loading image will not appear at all.
-            // So we need to wait very shorlty until the loading image appears. If not appears, that means all chats are already loaded.
-            // If the loading image appears, mark with `loadingStarted`. When the image hidden, mark with `loadingFinished`.
-
-            // Use Promise until 1 of the conditions met
-            await new Promise(async (resolve) => {
-                // DELETE below: Check chat list container again
-                // await ensureChatListContainerElement();
-                // if (!chatListContainer) return;
-
-                // Flags for 'is loading' state
-                let loadingStarted = false;
-
-                // Timeout to resolve and exit the process of populating the chat list, if the 'is-loading' image not shown. That means all chats has been loaded
-                setTimeout(() => {
-                    // If loading has not started, that means all chats has been loaded
-                    if (!loadingStarted) {
-                        resolve(null);
-                        pl.announce({ msg: "Not loading anymore. All chats has been loaded" });
-                        // We can not return here, since this is inside setTimeout.
-                        // Instead, we will set the `failSafe` to a large number to break the while loop below
-                        failSafe = 999;
-                    }
-                }, 400);
-
-                // Prepare observer to observe the loading image.
-                const isLoadingObserver = new MutationObserver((mutationsList, observer) => {
-                    // Flag whether loading class is added or removed
-                    let isLoadingClassAdded = false;
-                    let isLoadingClassRemoved = false;
-
-                    for (const mutation of mutationsList) {
-
-                        // Check if the mutation is an attribute change on the 'class' attribute
-                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                            // Cast target to HTMLElement
-                            const target = mutation.target as HTMLElement;
-
-                            // Does prev class has 'isLoading' class ?
-                            const prevHasLoadingClass = mutation.oldValue?.includes(IS_LOADING_CLASS);
-                            // Does the current class has 'isLoading' class ?
-                            // Get the class attribute's value AT THE MOMENT OF THE MUTATION
-                            const currentHasLoadingClass = target.classList.contains(IS_LOADING_CLASS);
-
-                            if (!prevHasLoadingClass && currentHasLoadingClass) {
-                                // Flagging the loading has started is useful to cancel timeout above (the case when all chats has been loaded)
-                                loadingStarted = true;
-                                pl.announce({ msg: "Loading previous chats" });
-                            } else if (prevHasLoadingClass && !currentHasLoadingClass) {
-                                // Loading has finished. Disconnect `isLoadingObserver` and resolve.
-                                observer.disconnect();
-                                resolve(null);
-                                // pageLive.announce({ msg: "Loading sign is hidden" });
-                            }
-                        }
-                    }
-                });
-                isLoadingObserver.observe(isLoadingElement, {
-                    attributes: true,             // Watch for attribute changes
-                    attributeFilter: ['class'],   // Only watch the 'class' attribute for efficiency
-                    attributeOldValue: true,       // Not strictly needed here, but useful for debugging
-                    subtree: true,
-                });
-
-                // Scroll to the bottom
-                scrollerElement.scrollTop = scrollerElement.scrollHeight;
-                // Wait a little for the UI to be updated
-                await new Promise(r => setTimeout(r, 400));
-            });
-
-            // Fail safe
-            failSafe++;
-            if (failSafe > 10) break;
-        }
-    }
-
-    /**
-     * Get the active chat element from one of the parent elements.
-     * Note: The chat element basicly contains the chat title. For the actions menu, used the `getSelectedChatActionsContainerElement`.
-     * @returns {HTMLElement|null} Get the active chat items container
-     */
-    async function getSelectedChatElement(): Promise<HTMLElement | null> {
-        // DELETE: Make sure the chat list container exist
-        // await ensureChatListContainerElement();
-
-        return chatListContainer?.querySelector(`.conversation${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
-    }
-
-    /**
-     * Get the title of the active chat from the chat list. If not found, return empty string.
-     * @returns
-     */
-    async function parseSelectedChatTitle(): Promise<string> {
-        // Get the active chat element
-        const selectedChatElement = await getSelectedChatElement();
-        if (selectedChatElement === null) return "";
-
-        // Get the title element inside the active chat element
-        const titleElement = selectedChatElement.querySelector(CHAT_TITLE_SELECTOR);
-        if (titleElement === null) return "";
-
-        return titleElement.textContent?.trim() || "";
-    }
-
-    /**
-     * Get the active chat actions element in the chat list.
-     */
-    async function getSelectedChatActionsContainerElement(): Promise<HTMLElement | null> {
-        // DELETE: The chat list container is required
-        // await ensureChatListContainerElement();
-
-        // Find the active chat item element in the chat list
-        return chatListContainer?.
-            querySelector(`.${CHAT_ACTIONS_CONTAINER_CLASS}${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
-    }
-
-    /**
-     * Get the button that will open chat context menu, which contains: rename button, delete button, etc.
-     * @param {HTMLElement | null} chatActionsContainer The container element of the button. This element must have class 'conversation-actions-container'
-     * @return {Promise<HTMLElement |null>} The chat actions menu button
-     */
-    async function getChatActionsMenuButton(chatActionsContainer: HTMLElement | null): Promise<HTMLElement | null> {
-        // The parent element must not null
-        if (chatActionsContainer === null) {
-            const msg = "Chat actions container is null";
-            console.warn(`[PageLive][Gemini] ${msg}`);
-            pl.announce({ msg });
-            return null;
-        }
-
-        // The parent element must have the required class
-        if (!chatActionsContainer.classList.contains(CHAT_ACTIONS_CONTAINER_CLASS)) {
-            const msg = "Chat actions container does not have the required class";
-            console.warn(`PageLive][Gemini] ${msg}`);
-            pl.announce({ msg });
-            return null;
-        }
-
-        // The more complete selector: `.conversation-actions-menu-button.[data-test-id="actions-menu-button]`
-        return chatActionsContainer.querySelector('[data-test-id="actions-menu-button"]') as HTMLElement | null;
-    }
-
-    /**
-     * Test is current chat is a new / empty chat based on URL
-     */
-    async function isNewChat(url?: string | undefined): Promise<boolean> {
-        if (!url) url = window.location.href;
-        // If url is the base url, it is an empty chat
-        const baseUrlPattern = /^https:\/\/gemini.google.com\/app?$/;
-        if (baseUrlPattern.test(url)) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Start new chat, by clicking a button on side nav.
-     */
-    async function startNewChat() {
-        // pl.announce({ msg: "Start new chat", o: true });
-
-        // Find the start-new-chat button. Selector below
-        const newChatButton = document.querySelector('[data-test-id="new-chat-button"] a') as HTMLElement | null;
-
-        if (newChatButton === null) {
-            const msg = "Failed to find the new chat button";
-            pl.utils.prodWarn(msg);
-            pl.speak(msg);
-            return;
-        }
-
-        aiChatHelper.startNewChat(
-            pl
-            , isNewChat
-            , newChatButton
-            , async() => {
-                closeAllDialogsAndModals();
-            }
+        // Selector for closing sidebar '.close-sidenav-button'
+        return toggleSidebarButton;
+    }, chatInput: async (intent: string) => {
+        const element = await pl.resolve(
+            chatInputElement
+            , '.new-input-ui[role="textbox"]'
+            , "Chat input"
+            , intent
         );
+        // Convert
+        if (element instanceof HTMLElement) chatInputElement = element as HTMLInputElement;
+        else chatInputElement = null;
+
+        return chatInputElement;
     }
-    
-    /**
-     * Parse the current active chat info from the document, if possible.
-     * If successfull parsed, save the result to `activeChat` and will attach to `pageLive.page.activeChat`.
-     * @param {boolean} shouldUpdateDialog If set true, will update the dialog with everything related to the parsed chat info.
-     * @returns {Promise<boolean>} Return true is successfully parsed, false otherwise.
-     */
-    async function parseActiveChatInfo(shouldUpdateDialog = true): Promise<boolean> {
-        // If this is a new chat, there is no active chat info in the URL or document
-        if (isThisUnsavedChat() === true) {
-            activeChat = { ...EMPTY_CHAT };
-        } else {
-            // Parse the id
-            activeChat.id = await parseChatId();
+}
 
-            // Parse the title from the chat list
-            await ensureSideNavOpened();
-            // Populate the chat list until the active chat is found
-            await populateChatList(true);
-            activeChat.title = await parseSelectedChatTitle();
+/**
+ * This function to requery the 'persisted' elements, such as `chatListContainer`.
+ * Note: On window resize, references to 'persisted' elements seems invalid, thus the feature is not working.
+ * For instance, after resized, the function `getActiveChatMenuButton` can not find the button. However it does not raise any error message.
+ * That's why the references need to be updated.
+ * The event handler set below will be debounced.
+ */
+async function addWindowResizeListener() {
+    // The timer id. We will debounce the event handler to avoid rapid execution during window resizing.
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    const DEBOUNCE_DELAY = 300;
 
-            // Parse the prompt count. For Gemini, we will consider each user prompt as a 'prompt'
-            const promptResponseElements = await chatAdapter.getPromptResponseElements();
-            if (promptResponseElements === null) {
-                activeChat.promptCount = -2; // -2 means failed to parse
-            } else {
-                activeChat.promptCount = promptResponseElements.length;
-            }
-        }
+    window.addEventListener('resize', () => {
+        // Clear the previous timer (if it exists)
+        clearTimeout(resizeTimer);
 
-        // Update dialog if shouldUpdateDialog is set true
-        if (shouldUpdateDialog) updateDialogWithChatInfo();
+        // Set a new timer
+        resizeTimer = setTimeout(async () => {
+            // Requery the key / persisted HTMLElements
+            await getKeyElements();
+            chatInputElement = getChatInputElement();
 
-        // Attach to global var if `activeChat.id` is found and not yet attached to `pageLive.page.activeChat`:
-        if (activeChat.id && pl.page.activeChat === null) {
-            // pageLive.page.activeChat = activeChat;
-            pl.page.activeChat = new ChatInfo(
-                activeChat.id
-                , activeChat.title
-                , activeChat.promptCount
-                , activeChat.id === "" ? true : false
-                , activeChat.promptCount === -2 ? true : false
-            );
-        }
-        return true;
+            // Execute GeminiChat.onWindowResize() to let GeminiChat handle the resize event
+            chatAdapter.onWindowResized();
+        }, DEBOUNCE_DELAY);
+    });
+}
+
+/**
+ * Return the `Container` element. If null, try to query from the document.
+ * If failed query the element, announce the result and return false.
+ * @param {boolean} reQuery If set true, will re-parse / re-query the element.
+ * @returns {Promise<boolean>} if the `chatListContainer` exist.
+ */
+// async function ensureChatListContainerElement(reQuery = false): Promise<boolean> {
+//     // If null or need to re-query again
+//     if (chatListContainer === null || reQuery) {
+//         // Get the chat list container
+//         // chatListContainer = document.querySelector('[data-test-id="all-conversations"]') as HTMLElement | null;
+//         chatListContainer = document.querySelector('.chat-history');
+//     }
+
+//     if (!chatListContainer) {
+//         const msg = "Chat list container not found";
+//         pageLive.utils.prodWarn(msg);
+//         pageLive.announce({ msg });
+//         return false;
+//     }
+//     return true;
+// }
+
+/**
+ * Get the HTML element that if clicked will toggle the side nav
+ * @return {Promise<HTMLElement|null>} The element if found
+ */
+async function getSideNavToggleButton(): Promise<HTMLElement | null> {
+    // Query the document
+    // 'button.[data-test-id="side-nav-menu-button"]
+    const sideNavToogleButton = document.querySelector('[data-test-id="side-nav-menu-button"]') as HTMLElement | null;
+
+    // If still not exist, notify
+    if (!sideNavToogleButton) {
+        const msg = "Failed to find side nav toggle button";
+        pl.utils.prodWarn(msg);
+        pl.announce({ msg });
     }
-    /**
-     * Parse chat id from the URL path or document. Return empty string if not found.
-     * @returns {Promise<string>} The chat id if found, otherwise empty string.
-     */
-    async function parseChatId(): Promise<string> {
-        let chatId = "";
+    return sideNavToogleButton;
+}
 
-        // Parse from URL path
-        const path = window.location.pathname;
-        // Match the path after '/app/' and capture the next segment (the chat id)
-        const pathMatch = path.match(/^\/app\/([^\/]+)/);
-        if (pathMatch) {
-            chatId = pathMatch[1];
-        }
-        return chatId;
-    }
+/**
+ * Get reference to the chat input element.
+ */
+function getChatInputElement(): HTMLInputElement | null {
+    return document.querySelector('.new-input-ui[role="textbox"]');
+}
 
-    /**
-     * Update the dialog with everything related to the current active chat info.
-     */
-    function updateDialogWithChatInfo(shouldUpdateDialogTitle = true) {
-        if (shouldUpdateDialogTitle) updateDialogTitle();
+/**
+ * This function will focus the chat input element.
+ */
+async function focusChatInput() {
+    await resolve.chatInput("Focus chat input");
 
-        // Create snapshot about the number of prompts in the chat
-        if (activeChat.promptCount >= 0) {
-
-            // let snapshotInfos = [`This chat has ${activeChat.promptCount} prompt${activeChat.promptCount !== 1 ? 's' : ''}.`];
-            let snapshotInfos = [];
-            if (activeChat.promptCount == 0) snapshotInfos = ["This chat has no response yet."];
-            else {
-                const remainder = activeChat.promptCount % 10;
-                if (remainder === 0) snapshotInfos = [`This chat has ${activeChat.promptCount} or more responses.`];
-                else snapshotInfos = [`This chat has ${activeChat.promptCount} responses.`];
-            }
-            pl.pageInfoDialog.setSnapshotInfos(snapshotInfos);
-        }
-    }
-
-    /**
-     * Update the dialog title with the current active chat info.
-     */
-    function updateDialogTitle() {
-        // Event handler when the title element is clicked
-        const focusChatInSideNav = async () => {
-            await ensureSideNavOpened();
-            // Find the active chat element
-            const activeChatElement = await getSelectedChatElement();
-            // Focus the active chat element
-            if (!activeChatElement) {
-                // Find the first H1 in the side nav
-                const firstHeading = chatListContainer?.querySelector("h1");
-                if (firstHeading) {
-                    firstHeading.setAttribute("tabindex", "-1");
-                    firstHeading.focus();
-                    pl.announce({ msg: "Focus moved to side nav" });
-                } else {
-                    const msg = "Failed to find active chat element in the chat list.";
-                    pl.utils.prodWarn(msg); pl.announce({ msg });
-                }
-            } else {
-                // Force SR to browse mode by focus on non-form element first
-                const dummyElement = pl.dummySpanElement;
-                if (typeof dummyElement?.focus === 'function') {
-                    dummyElement.focus();
-                    await new Promise(r => setTimeout(r, 1e3));
-                } else pl.utils.prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
-                if (typeof activeChatElement.focus === "function") activeChatElement.focus();
-                else pl.utils.prodWarn('active chat element missing focus method - 81');
-            }
-        }
-
-        let title = "Gemini";
-        let attributes = {
-            ariaLabel: "",
-            onclick: focusChatInSideNav
-        };
-
-        const isUnsavedChat = isThisUnsavedChat();
-        if (isUnsavedChat) {
-            title += " new chat.";
-            attributes.ariaLabel = `${title}, click to select chats on side nav.`;
-        } else if (activeChat.title) {
-            // If active chat title exist, add to the dialog snapshot info
-            title = ` ${activeChat.title}.`;
-            attributes.ariaLabel = activeChat.title + ", click to focus the chat in the chat list.";
-        } else {
-            // Either chat info yet not parsed, or no title found
-            // No title, maybe a new chat
-            title += " chat, title not available.";
-            attributes.ariaLabel = `${title}, click to select chats on side nav.`;
-        }
-
-        // Update the dialog
-        pl.pageInfoDialog.setTitle(title, attributes);
-    }
-    /**
-     * Update the active chat info. 
-     * Mostly used by external entity, e.g.: When `ContentMapper` receives older chat units
-     */
-    function updateActiveChatInfo(chat: Partial<Chat>) {
-        activeChat = {
-            id: chat.id ?? activeChat.id ?? '',
-            title: chat.title ?? activeChat.title ?? '',
-            promptCount: chat.promptCount ?? activeChat.promptCount ?? -2,
-        };
-
-        // Expose to global page if we have a valid id
-        if (activeChat.id) {
-            // pageLive.page.activeChat = activeChat;
-            pl.page.activeChat = new ChatInfo(
-                activeChat.id
-                , activeChat.title
-                , activeChat.promptCount
-                , activeChat.id === "" ? true : false
-                , activeChat.promptCount === -2 ? true : false
-            );
-        }
-
-        updateDialogWithChatInfo(false);
-    }
-    /**
-     * Synchronize the active chat info with the URL & document, if possible.
-     */
-    async function syncActiveChatInfo(): Promise<void> {
-        // Parse the chat id from the URL
-        const chatId = await parseChatId();
-
-        // If not yet parsed, parse it
-        if (activeChat.id === null
-            || activeChat.id !== chatId
-        ) {
-            await parseActiveChatInfo();
-        }
+    if (!chatInputElement) {
+        pl.utils.prodWarn("Chat input element not found. Re-querying the element.");
+        pl.speak('Chat input is not found');
+        return;
     }
 
-    async function onDialogOpen(): Promise<void> {
-        // Close Cotent Mapper dialog if opened
-        contentMapper.close();
-        // Synchronize the active chat info
-        await syncActiveChatInfo();
+    if (!chatInputElement?.isConnected) {
+        pl.utils.prodWarn("Chat input element is disconnected. Re-querying the element. - 29a0");
+        pl.speak("Chat input element not connected.");
+        return;
     }
 
-    async function closeAllDialogsAndModals(): Promise<void> {
+    if (chatInputElement) {
+        // Close any dialogs / modals first
         pl.pageInfoDialog.close();
         contentMapper.close();
-        // To avoid too many announcements, each dialog will handle its own announcement if needed
+
+        featureFocusChatInput(pl, chatInputElement);
+    }
+}
+
+/**
+ * Open Gemini's chat menu on the side nav.
+ * @param {string} chatId The id of the chat. If is an empty string will open the current active chat.
+ * @return {Promise<void>}
+ */
+async function openChatActionsMenu(chatId: string): Promise<void> {
+    // FIXME currently left empty. In the future, delete of refactor other functions that uses this function.
+}
+
+/**
+ * Get the chat actions menu element. It is the chat context pop up menu.
+ * The chat actions menu needs to be opened first, like the effect of `openChatActionsMenu` function
+ */
+async function getChatActionsMenuElement(): Promise<HTMLElement | null> {
+    // This is for the large width screen.
+    let chatActionsMenu = document.querySelector('.conversation-actions-menu') as HTMLElement | null;
+
+    // If not found, maybe currently is small width screen.
+    if (chatActionsMenu === null) {
+        // For the small screen, no rational suitable selector can be found.
+        // Below is the closest one
+        chatActionsMenu = document.querySelector('mat-bottom-sheet-container[role="dialog"]');
     }
 
-    async function toggleSidebar() {
-        await resolve.toggleSidebarButton("toggleSidebarButton");
-        if (!toggleSidebarButton) {
-            const msg = "Failed to find the toggle sidebar button";
-            pl.utils.prodWarn(msg);
-            pl.speak(msg);
-            return;
+    if (chatActionsMenu === null) {
+        const msg = "Failed to find chat actions menu element";
+        pl.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
+        pl.announce({ msg });
+    }
+
+    return chatActionsMenu;
+}
+
+/**
+ * Get the delete button from the opened chat actions menu
+ */
+async function getDeleteButton(): Promise<HTMLElement | null> {
+    const chatActionsMenu = await getChatActionsMenuElement();
+    if (chatActionsMenu === null) return null;
+
+    const deleteButton = chatActionsMenu?.querySelector('[data-test-id="delete-button"]') as HTMLElement | null;
+    if (deleteButton === null) {
+        const msg = "Failed to find delete button";
+        pl.utils.prodWarn(`[PageLive][Gemini] ${msg}`);
+        pl.announce({ msg });
+    }
+
+    return deleteButton;
+}
+
+/**
+ * Checks if the current page is an unsaved chat.
+ * Unsaved chat is identified by the path being exactly '/app' or '/app/'.
+ * @returns {boolean} True if the path matches, otherwise false.
+ */
+function isThisUnsavedChat(): boolean {
+    const path = window.location.pathname;
+    return path === '/app' || path === '/app/';
+}
+
+/** 
+ * Delete the current chat, if possible 
+ */
+async function currentChatDelete() {
+    // Detect if this is a new chat. If yes, cannot find the chat menu button, thus cannot continue. Announce so the user knows.
+    const isUnsavedChat = isThisUnsavedChat();
+    if (isUnsavedChat) {
+        pl.announce({ msg: "This is a new chat. Nothing to delete." })
+        return;
+    }
+
+    // Find the button that will show the chat-context menu
+    const menuButton: HTMLElement | null = await getActiveChatMenuButton();
+
+    // If still can not find chat menu button, cannot continue. Announce so the user knows
+    if (!menuButton) {
+        // console.warn('[PageLive][Gemini] Chat menu button not found. Unable to delete current chat.');
+        return;
+    }
+
+    // Activate the button, then wait for the animation to complete
+    menuButton.click();
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Find the delete button in the menu
+    const deleteButton = await getDeleteButton();
+
+    // Activate the delete button
+    deleteButton?.click();
+
+    // Done. Delete confirmation and action will be handled by the page itself.
+};
+
+/**
+ * Note: Chat menu button is the button to show the chat context menu, which contains rename and delete chat buttons.
+ * In the small/medium screen, there is only one chat menu button: at the top right which show menu for the current active chat.
+ * In the large screen, there are multiple chat menu buttons: on the right side of each chat in the chat list on the right side navigation.
+ *
+ * This function will return the chat menu button for the current active chat.
+ * Steps to find the button:
+ * 1. Assume the browser is currently in small/medium screen, get the single chat menu button.
+ * 2. If not found, assume the browser is in large screen. We need to find the active chat from the chat list, then locate the chat menu button in the active chat element.
+ *
+ * Since the browser size might change any time, we will not save the reference to the button. Instead, we will find it every time this function is called.
+ */
+async function getActiveChatMenuButton(): Promise<HTMLElement | null> {
+    // Try to find the chat menu button for small/medium screen
+    let chatMenuButton = document.querySelector('[data-test-id="conversation-actions-button"]') as HTMLElement | null;
+
+    // If found, return the chat menu button right away
+    if (chatMenuButton) return chatMenuButton;
+
+    // If not found, try to find the chat menu button for large screen
+    // On large screens, the active chat menu button will be on side nav.
+
+    // Ensure the side nav is opened
+    await ensureSideNavOpened();
+
+    // Trigger the chat list until the active / selected chat is in the list
+    await populateChatList(true);
+
+    // Find the active chat element in the chat list
+    const selectedChatActionsElement = await getSelectedChatActionsContainerElement();
+
+    // Locate the chat menu button in the active chat element
+    chatMenuButton = await getChatActionsMenuButton(selectedChatActionsElement);
+
+    return chatMenuButton;
+}
+
+/**
+ * Ensure the side navigation, containing chat list, is opened.
+ * If the side nav is closed, it will be opened by clicking the side nav toggle button.
+ * @returns 
+ */
+async function ensureSideNavOpened(): Promise<boolean> {
+    // Is side nav open ?
+    const isSideNavOpened = await checkIsSideNavOpened();
+
+    // If the side nav is closed, we need to open it by clicking the side nav toogle button
+    if (!isSideNavOpened) {
+        const sideNavToggleButton = await getSideNavToggleButton();
+        // If the toogle button not exist, we can't continue
+        if (!sideNavToggleButton) return false;
+
+        // Click to open the side nav. No need to be closed back.
+        await sideNavToggleButton.click();
+        // Announce about the current activity
+        pl.announce({ msg: "Opening side navigation" });
+    }
+
+    // wait a little for animation to finish
+    await new Promise(r => setTimeout(r, 250));
+    return true;
+}
+
+/**
+ * Check if the sidebar / side navigation (chat list) is expanded.
+ */
+async function checkIsSideNavOpened(): Promise<boolean> {
+    // const topBarActions = document.querySelector('top-bar-actions');
+    // if (!topBarActions) return false;
+    // else return topBarActions.classList.contains('side-nav-expanded');
+    await resolve.sidebar('Check If Sidebar Expanded');
+    if (!sidebar) return false;
+    else return sidebar.classList.contains('expanded');
+}
+
+/**
+ * Chat list is not fully populated until the chat list is scrolled to the bottom.
+ * So, there is a chance that the active chat is not in the DOM yet.
+ * To handle this, this function will scroll the chat list to the bottom to meet 2 criterias : Until the active chat is visible or all chats are loaded.
+ * @param {boolean} findActiveChat If active chat is found, this function no longer scroll down on the chat list container / scroller
+ * @param {boolean} shouldCloseBackNavBar Set to false if the side nav need to be closed back in the case this function automatically open the side nav.
+ * @return {Promise<void>}
+ */
+async function populateChatList(findActiveChat = false, shouldCloseBackNavBar = true) {
+    // DELETE: Chat list is required to continue
+    // await ensureChatListContainerElement();
+    // Type checking
+    if (!chatListContainer) return;
+
+    // Required: Loading image to be observed
+    const isLoadingElement = chatListContainer.querySelector('.loading-history-spinner-container');
+    if (!isLoadingElement) {
+        const msg = "Unable to find loading-history-spinner-container element";
+        pl.utils.prodWarn(msg);
+        pl.announce({ msg });
+        return;
+    }
+    // Required: Scroller element that need to be scrolled down
+    const scrollerElement = chatListContainer.closest('infinite-scroller');
+    if (!scrollerElement) {
+        const msg = "Failed to find the closest infinite-scroller element";
+        pl.utils.prodWarn(msg);
+        pl.announce({ msg });
+        return;
+    }
+
+    // The class used to show the loading spinner element
+    const IS_LOADING_CLASS = 'is-loading';
+
+    // Loop until any of 2 conditions found: chat active or fully loaded (no more 'is-loading' image)
+    let failSafe = 0;
+    while (true) {
+        // Break if we want to find active chat and it is already loaded
+        const activeSelectedChat = await getSelectedChatElement();
+        if (findActiveChat && activeSelectedChat !== null) {
+            // pageLive.announce({ msg: "Active chat is found. Number of scroll : " + failSafe });
+            return true;
         }
 
-        // Close all dialogs / modals first
-        await closeAllDialogsAndModals();
+        // Note: After scroll down, one of 2 things might happen:
+        // 1. If there are more chats can be loaded, loading image will appear and will be hidden after some chats are loaded.
+        // 2. If there are no more chats can be loaded, the loading image will not appear at all.
+        // So we need to wait very shorlty until the loading image appears. If not appears, that means all chats are already loaded.
+        // If the loading image appears, mark with `loadingStarted`. When the image hidden, mark with `loadingFinished`.
 
-        // Click the toogle button and wait a little
-        toggleSidebarButton.click();
-        await new Promise(r => setTimeout(r, 250));
+        // Use Promise until 1 of the conditions met
+        await new Promise(async (resolve) => {
+            // DELETE below: Check chat list container again
+            // await ensureChatListContainerElement();
+            // if (!chatListContainer) return;
 
-        // Handle sidebar
-        await resolve.sidebar("Toggling sidebar");
-        if (!sidebar) {
-            const msg = "Failed to find the sidebar element";
-            pl.utils.prodWarn(msg);
-            pl.toast(msg);
-            return;
-        }
+            // Flags for 'is loading' state
+            let loadingStarted = false;
 
-        // If sidebar is expanded, the element will has 'expanded' class, otherwise will has 'collapsed' class.
-        let isExpanded = sidebar.classList.contains('expanded') ? true : false;
-        const stateMsg = isExpanded ? "Expanding sidebar" : "Collapsing sidebar";
-        pl.speak(stateMsg);
-
-        // If sidebar is collapsing, focus on the chat input
-        if (!isExpanded) {
-            await focusChatInput();
-        } else {
-            // If sidebar is expanding, manage the focus for better accessibility
-
-            // Try to focus on the chat list heading in the sidebar
-            let chatListHeading: HTMLElement | null = sidebar.querySelector("conversations-list h1, conversations-list > *");
-            if (chatListHeading) {
-                // Add `tabindex="-1"` to make it focusable, and focus on it
-                chatListHeading.setAttribute("tabindex", "-1");
-                await chatListHeading.focus();
-                pl.toast("Focused on the chat list in the sidebar");
-            } else {
-                // Try to focus on the first anchor, button, or input inside the sidebar if 'History' heading is not found
-                const focusableSelector = 'a, button, input, [tabindex]:not([tabindex="-1"])';
-                const firstFocusable = sidebar.querySelector(focusableSelector) as HTMLElement;
-                if (firstFocusable) {
-                    firstFocusable.focus();
-                    pl.toast("Focused on the first focusable element in the sidebar");
+            // Timeout to resolve and exit the process of populating the chat list, if the 'is-loading' image not shown. That means all chats has been loaded
+            setTimeout(() => {
+                // If loading has not started, that means all chats has been loaded
+                if (!loadingStarted) {
+                    resolve(null);
+                    pl.announce({ msg: "Not loading anymore. All chats has been loaded" });
+                    // We can not return here, since this is inside setTimeout.
+                    // Instead, we will set the `failSafe` to a large number to break the while loop below
+                    failSafe = 999;
                 }
+            }, 400);
+
+            // Prepare observer to observe the loading image.
+            const isLoadingObserver = new MutationObserver((mutationsList, observer) => {
+                // Flag whether loading class is added or removed
+                let isLoadingClassAdded = false;
+                let isLoadingClassRemoved = false;
+
+                for (const mutation of mutationsList) {
+
+                    // Check if the mutation is an attribute change on the 'class' attribute
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        // Cast target to HTMLElement
+                        const target = mutation.target as HTMLElement;
+
+                        // Does prev class has 'isLoading' class ?
+                        const prevHasLoadingClass = mutation.oldValue?.includes(IS_LOADING_CLASS);
+                        // Does the current class has 'isLoading' class ?
+                        // Get the class attribute's value AT THE MOMENT OF THE MUTATION
+                        const currentHasLoadingClass = target.classList.contains(IS_LOADING_CLASS);
+
+                        if (!prevHasLoadingClass && currentHasLoadingClass) {
+                            // Flagging the loading has started is useful to cancel timeout above (the case when all chats has been loaded)
+                            loadingStarted = true;
+                            pl.announce({ msg: "Loading previous chats" });
+                        } else if (prevHasLoadingClass && !currentHasLoadingClass) {
+                            // Loading has finished. Disconnect `isLoadingObserver` and resolve.
+                            observer.disconnect();
+                            resolve(null);
+                            // pageLive.announce({ msg: "Loading sign is hidden" });
+                        }
+                    }
+                }
+            });
+            isLoadingObserver.observe(isLoadingElement, {
+                attributes: true,             // Watch for attribute changes
+                attributeFilter: ['class'],   // Only watch the 'class' attribute for efficiency
+                attributeOldValue: true,       // Not strictly needed here, but useful for debugging
+                subtree: true,
+            });
+
+            // Scroll to the bottom
+            scrollerElement.scrollTop = scrollerElement.scrollHeight;
+            // Wait a little for the UI to be updated
+            await new Promise(r => setTimeout(r, 400));
+        });
+
+        // Fail safe
+        failSafe++;
+        if (failSafe > 10) break;
+    }
+}
+
+/**
+ * Get the active chat element from one of the parent elements.
+ * Note: The chat element basicly contains the chat title. For the actions menu, used the `getSelectedChatActionsContainerElement`.
+ * @returns {HTMLElement|null} Get the active chat items container
+ */
+async function getSelectedChatElement(): Promise<HTMLElement | null> {
+    // DELETE: Make sure the chat list container exist
+    // await ensureChatListContainerElement();
+
+    return chatListContainer?.querySelector(`.conversation${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
+}
+
+/**
+ * Get the title of the active chat from the chat list. If not found, return empty string.
+ * @returns
+ */
+async function parseSelectedChatTitle(): Promise<string> {
+    // Get the active chat element
+    const selectedChatElement = await getSelectedChatElement();
+    if (selectedChatElement === null) return "";
+
+    // Get the title element inside the active chat element
+    const titleElement = selectedChatElement.querySelector(CHAT_TITLE_SELECTOR);
+    if (titleElement === null) return "";
+
+    return titleElement.textContent?.trim() || "";
+}
+
+/**
+ * Get the active chat actions element in the chat list.
+ */
+async function getSelectedChatActionsContainerElement(): Promise<HTMLElement | null> {
+    // DELETE: The chat list container is required
+    // await ensureChatListContainerElement();
+
+    // Find the active chat item element in the chat list
+    return chatListContainer?.
+        querySelector(`.${CHAT_ACTIONS_CONTAINER_CLASS}${CHAT_SELECTED_TAG_SELECTOR}`) as HTMLElement | null;
+}
+
+/**
+ * Get the button that will open chat context menu, which contains: rename button, delete button, etc.
+ * @param {HTMLElement | null} chatActionsContainer The container element of the button. This element must have class 'conversation-actions-container'
+ * @return {Promise<HTMLElement |null>} The chat actions menu button
+ */
+async function getChatActionsMenuButton(chatActionsContainer: HTMLElement | null): Promise<HTMLElement | null> {
+    // The parent element must not null
+    if (chatActionsContainer === null) {
+        const msg = "Chat actions container is null";
+        console.warn(`[PageLive][Gemini] ${msg}`);
+        pl.announce({ msg });
+        return null;
+    }
+
+    // The parent element must have the required class
+    if (!chatActionsContainer.classList.contains(CHAT_ACTIONS_CONTAINER_CLASS)) {
+        const msg = "Chat actions container does not have the required class";
+        console.warn(`PageLive][Gemini] ${msg}`);
+        pl.announce({ msg });
+        return null;
+    }
+
+    // The more complete selector: `.conversation-actions-menu-button.[data-test-id="actions-menu-button]`
+    return chatActionsContainer.querySelector('[data-test-id="actions-menu-button"]') as HTMLElement | null;
+}
+
+/**
+ * Test is current chat is a new / empty chat based on URL
+ */
+async function isNewChat(url?: string | undefined): Promise<boolean> {
+    if (!url) url = window.location.href;
+    // If url is the base url, it is an empty chat
+    const baseUrlPattern = /^https:\/\/gemini.google.com\/app?$/;
+    if (baseUrlPattern.test(url)) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Start new chat, by clicking a button on side nav.
+ */
+async function startNewChat() {
+    // pl.announce({ msg: "Start new chat", o: true });
+
+    // Find the start-new-chat button. Selector below
+    const newChatButton = document.querySelector('[data-test-id="new-chat-button"] a') as HTMLElement | null;
+
+    if (newChatButton === null) {
+        const msg = "Failed to find the new chat button";
+        pl.utils.prodWarn(msg);
+        pl.speak(msg);
+        return;
+    }
+
+    aiChatHelper.startNewChat(
+        pl
+        , isNewChat
+        , newChatButton
+        , async () => {
+            closeAllDialogsAndModals();
+        }
+    );
+}
+
+/**
+ * Parse the current active chat info from the document, if possible.
+ * If successfull parsed, save the result to `activeChat` and will attach to `pageLive.page.activeChat`.
+ * @param {boolean} shouldUpdateDialog If set true, will update the dialog with everything related to the parsed chat info.
+ * @returns {Promise<boolean>} Return true is successfully parsed, false otherwise.
+ */
+async function parseActiveChatInfo(shouldUpdateDialog = true): Promise<boolean> {
+    // If this is a new chat, there is no active chat info in the URL or document
+    if (isThisUnsavedChat() === true) {
+        activeChat = { ...EMPTY_CHAT };
+    } else {
+        // Parse the id
+        activeChat.id = await parseChatId();
+
+        // Parse the title from the chat list
+        await ensureSideNavOpened();
+        // Populate the chat list until the active chat is found
+        await populateChatList(true);
+        activeChat.title = await parseSelectedChatTitle();
+
+        // Parse the prompt count. For Gemini, we will consider each user prompt as a 'prompt'
+        const promptResponseElements = await chatAdapter.getPromptResponseElements();
+        if (promptResponseElements === null) {
+            activeChat.promptCount = -2; // -2 means failed to parse
+        } else {
+            activeChat.promptCount = promptResponseElements.length;
+        }
+    }
+
+    // Update dialog if shouldUpdateDialog is set true
+    if (shouldUpdateDialog) updateDialogWithChatInfo();
+
+    // Attach to global var if `activeChat.id` is found and not yet attached to `pageLive.page.activeChat`:
+    if (activeChat.id && pl.page.activeChat === null) {
+        // pageLive.page.activeChat = activeChat;
+        pl.page.activeChat = new ChatInfo(
+            activeChat.id
+            , activeChat.title
+            , activeChat.promptCount
+            , activeChat.id === "" ? true : false
+            , activeChat.promptCount === -2 ? true : false
+        );
+    }
+    return true;
+}
+/**
+ * Parse chat id from the URL path or document. Return empty string if not found.
+ * @returns {Promise<string>} The chat id if found, otherwise empty string.
+ */
+async function parseChatId(): Promise<string> {
+    let chatId = "";
+
+    // Parse from URL path
+    const path = window.location.pathname;
+    // Match the path after '/app/' and capture the next segment (the chat id)
+    const pathMatch = path.match(/^\/app\/([^\/]+)/);
+    if (pathMatch) {
+        chatId = pathMatch[1];
+    }
+    return chatId;
+}
+
+/**
+ * Update the dialog with everything related to the current active chat info.
+ */
+function updateDialogWithChatInfo(shouldUpdateDialogTitle = true) {
+    if (shouldUpdateDialogTitle) updateDialogTitle();
+
+    // Create snapshot about the number of prompts in the chat
+    if (activeChat.promptCount >= 0) {
+
+        // let snapshotInfos = [`This chat has ${activeChat.promptCount} prompt${activeChat.promptCount !== 1 ? 's' : ''}.`];
+        let snapshotInfos = [];
+        if (activeChat.promptCount == 0) snapshotInfos = ["This chat has no response yet."];
+        else {
+            const remainder = activeChat.promptCount % 10;
+            if (remainder === 0) snapshotInfos = [`This chat has ${activeChat.promptCount} or more responses.`];
+            else snapshotInfos = [`This chat has ${activeChat.promptCount} responses.`];
+        }
+        pl.pageInfoDialog.setSnapshotInfos(snapshotInfos);
+    }
+}
+
+/**
+ * Update the dialog title with the current active chat info.
+ */
+function updateDialogTitle() {
+    // Event handler when the title element is clicked
+    const focusChatInSideNav = async () => {
+        await ensureSideNavOpened();
+        // Find the active chat element
+        const activeChatElement = await getSelectedChatElement();
+        // Focus the active chat element
+        if (!activeChatElement) {
+            // Find the first H1 in the side nav
+            const firstHeading = chatListContainer?.querySelector("h1");
+            if (firstHeading) {
+                firstHeading.setAttribute("tabindex", "-1");
+                firstHeading.focus();
+                pl.announce({ msg: "Focus moved to side nav" });
+            } else {
+                const msg = "Failed to find active chat element in the chat list.";
+                pl.utils.prodWarn(msg); pl.announce({ msg });
+            }
+        } else {
+            // Force SR to browse mode by focus on non-form element first
+            const dummyElement = pl.dummySpanElement;
+            if (typeof dummyElement?.focus === 'function') {
+                dummyElement.focus();
+                await new Promise(r => setTimeout(r, 1e3));
+            } else pl.utils.prodWarn(`Dummy not found (tag 64): ${dummyElement}`);
+            if (typeof activeChatElement.focus === "function") activeChatElement.focus();
+            else pl.utils.prodWarn('active chat element missing focus method - 81');
+        }
+    }
+
+    let title = "Gemini";
+    let attributes = {
+        ariaLabel: "",
+        onclick: focusChatInSideNav
+    };
+
+    const isUnsavedChat = isThisUnsavedChat();
+    if (isUnsavedChat) {
+        title += " new chat.";
+        attributes.ariaLabel = `${title}, click to select chats on side nav.`;
+    } else if (activeChat.title) {
+        // If active chat title exist, add to the dialog snapshot info
+        title = ` ${activeChat.title}.`;
+        attributes.ariaLabel = activeChat.title + ", click to focus the chat in the chat list.";
+    } else {
+        // Either chat info yet not parsed, or no title found
+        // No title, maybe a new chat
+        title += " chat, title not available.";
+        attributes.ariaLabel = `${title}, click to select chats on side nav.`;
+    }
+
+    // Update the dialog
+    pl.pageInfoDialog.setTitle(title, attributes);
+}
+/**
+ * Update the active chat info. 
+ * Mostly used by external entity, e.g.: When `ContentMapper` receives older chat units
+ */
+function updateActiveChatInfo(chat: Partial<Chat>) {
+    activeChat = {
+        id: chat.id ?? activeChat.id ?? '',
+        title: chat.title ?? activeChat.title ?? '',
+        promptCount: chat.promptCount ?? activeChat.promptCount ?? -2,
+    };
+
+    // Expose to global page if we have a valid id
+    if (activeChat.id) {
+        // pageLive.page.activeChat = activeChat;
+        pl.page.activeChat = new ChatInfo(
+            activeChat.id
+            , activeChat.title
+            , activeChat.promptCount
+            , activeChat.id === "" ? true : false
+            , activeChat.promptCount === -2 ? true : false
+        );
+    }
+
+    updateDialogWithChatInfo(false);
+}
+/**
+ * Synchronize the active chat info with the URL & document, if possible.
+ */
+async function syncActiveChatInfo(): Promise<void> {
+    // Parse the chat id from the URL
+    const chatId = await parseChatId();
+
+    // If not yet parsed, parse it
+    if (activeChat.id === null
+        || activeChat.id !== chatId
+    ) {
+        await parseActiveChatInfo();
+    }
+}
+
+async function onDialogOpen(): Promise<void> {
+    // Close Cotent Mapper dialog if opened
+    contentMapper.close();
+    // Synchronize the active chat info
+    await syncActiveChatInfo();
+}
+
+async function closeAllDialogsAndModals(): Promise<void> {
+    pl.pageInfoDialog.close();
+    contentMapper.close();
+    // To avoid too many announcements, each dialog will handle its own announcement if needed
+}
+
+async function toggleSidebar() {
+
+    // Note: To toggle sidebar, different elements are used by 2 factors:
+    // expanding vs collapsing, and layout width.
+    // Button selector to collapse for all screen sizes : '.close-sidenav-button'
+    // Button to expand for small / medium screen : 'side-nav-sparkle-button button'
+    // Button selector to expand for large screen: 'side-nav-sparkle-button button'
+
+    // Know the sidebar state
+    let
+        isCollapsing = await checkIsSideNavOpened();
+
+    let toggleButton: HTMLElement | null = null;
+    if (isCollapsing) {
+        toggleButton = document.querySelector('.close-sidenav-button');
+    } else {
+        // Find button for large width first
+        toggleButton = document.querySelector('side-nav-menu-button button');
+
+        // If not found, maybe this is medium / small width
+        if (!toggleButton) toggleButton = document.querySelector('side-nav-sparkle-button button');
+    }
+
+    if (!toggleButton) {
+        const msg = `Failed to find the button to ${isCollapsing ? 'collapse' : 'expand'} sidebar`;
+        pl.utils.prodWarn(msg);
+        pl.speak(msg);
+        return;
+    }
+
+    // Close all dialogs / modals first
+    await closeAllDialogsAndModals();
+
+    // Click the toggle button and wait a little
+    toggleButton.click();
+    await new Promise(r => setTimeout(r, 250));
+
+    // Handle sidebar
+    await resolve.sidebar("Toggling sidebar");
+    if (!sidebar) {
+        const msg = "Failed to find the sidebar element";
+        pl.utils.prodWarn(msg);
+        pl.toast(msg);
+        return;
+    }
+
+    const stateMsg = isCollapsing ? "Collapsing sidebar" : "Expanding sidebar";
+    pl.speak(stateMsg);
+
+    // If sidebar is collapsing, focus on the chat input
+    if (isCollapsing) {
+        await focusChatInput();
+    } else {
+        // If sidebar is expanding, manage the focus for better accessibility
+
+        // Try to focus on the chat list heading in the sidebar
+        // let chatListHeading: HTMLElement | null = sidebar.querySelector("conversations-list h1, conversations-list > *");
+        let chatListHeading: HTMLElement | null = sidebar.querySelector('[data-test-id="chats-expandable-section"] button');
+        if (chatListHeading) {
+            // Add `tabindex="-1"` to make it focusable, and focus on it
+            // chatListHeading.setAttribute("tabindex", "-1");
+            // Await a little, to allow SR to focus on the first focusable element in the sidebar when expanded
+            await new Promise(r => setTimeout(r, 500));
+            chatListHeading.focus();
+            pl.toast("Focused on the chat list in the sidebar");
+        } else {
+            // Try to focus on the first anchor, button, or input inside the sidebar if 'History' heading is not found
+            const focusableSelector = 'a, button, input, [tabindex]:not([tabindex="-1"])';
+            const firstFocusable = sidebar.querySelector(focusableSelector) as HTMLElement;
+            if (firstFocusable) {
+                firstFocusable.focus();
+                pl.toast("Focused on the first focusable element in the sidebar");
             }
         }
     }
+}
 
-    // Add keybind 'copy last code block'
-    async function copyLastCodeBlock() {
-        // Strategy: Instead of directly copy the content, we will trigger the click event on the copy button of the last code block, since Gemini already has the logic to copy the content and show the confirmation toast.
+// Add keybind 'copy last code block'
+async function copyLastCodeBlock() {
+    // Strategy: Instead of directly copy the content, we will trigger the click event on the copy button of the last code block, since Gemini already has the logic to copy the content and show the confirmation toast.
 
-        // Use `chatContainer` as the root to query the last copy button for performance.If not exist, use `document`.
-        await resolve.chatContainer("Copying last code block");
-        let root: HTMLElement | Document = document;
-        if (chatContainer) {
-            root = chatContainer;
-        } else {
-            const msg = "Failed to find the chat container element";
-            pl.utils.prodWarn(msg);
-        }
-
-        const buttonSel = "button.copy-button:last-child";
-        const lastCopyButton = root.querySelector(buttonSel) as HTMLElement | null;
-        if (!lastCopyButton) {
-            const msg = "Copy button not found. Unable to copy the last code block.";
-            pl.utils.prodWarn(msg);
-            pl.toast(msg);
-            return;
-        } else {
-            // Click the last copy button
-            lastCopyButton.click();
-            pl.toast("Last code block copied.");
-        }
+    // Use `chatContainer` as the root to query the last copy button for performance.If not exist, use `document`.
+    await resolve.chatContainer("Copying last code block");
+    let root: HTMLElement | Document = document;
+    if (chatContainer) {
+        root = chatContainer;
+    } else {
+        const msg = "Failed to find the chat container element";
+        pl.utils.prodWarn(msg);
     }
 
-    // References to HTML elements
-    let chatContainer: HTMLElement | null = null;
-    let chatInputElement: HTMLInputElement | null;
-    // Chat list container on the right side navigation
-    let chatListContainer: HTMLElement | null = null;
-    let toggleSidebarButton: HTMLElement | null = null;
-    // The sidebar / side nav element
-    let sidebar: HTMLElement | null = null;
+    const buttonSel = "button.copy-button:last-child";
+    const lastCopyButton = root.querySelector(buttonSel) as HTMLElement | null;
+    if (!lastCopyButton) {
+        const msg = "Copy button not found. Unable to copy the last code block.";
+        pl.utils.prodWarn(msg);
+        pl.toast(msg);
+        return;
+    } else {
+        // Click the last copy button
+        lastCopyButton.click();
+        pl.toast("Last code block copied.");
+    }
+}
 
-    // =============== Execution ===============
+// References to HTML elements
+let chatContainer: HTMLElement | null = null;
+let chatInputElement: HTMLInputElement | null;
+// Chat list container on the right side navigation
+let chatListContainer: HTMLElement | null = null;
+let toggleSidebarButton: HTMLElement | null = null;
+// The sidebar / side nav element
+let sidebar: HTMLElement | null = null;
 
-    // Object to handle chat container related features
-    const chatAdapter = new GeminiAdapterChat(pl);
-    // await chatAdapter.init();
+// =============== Execution ===============
 
-    // Content Mapper, to map chat units to a Modal
-    const contentMapper = new ContentMapper(pl, updateActiveChatInfo);
-    // await contentMapper.init()
+// Object to handle chat container related features
+const chatAdapter = new GeminiAdapterChat(pl);
+// await chatAdapter.init();
 
-    // Object to reveal hidden content
-    const contentRevealer = new ContentRevealer(pl);
+// Content Mapper, to map chat units to a Modal
+const contentMapper = new ContentMapper(pl, updateActiveChatInfo);
+// await contentMapper.init()
 
-    // Initialize the page adapter
-    init();
+// Object to reveal hidden content
+const contentRevealer = new ContentRevealer(pl);
+
+// Initialize the page adapter
+init();
 };
 
 /**

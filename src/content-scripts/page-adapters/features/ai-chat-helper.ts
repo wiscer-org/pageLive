@@ -78,6 +78,5 @@ export default class AIChatHelper {
 
         // Execute post-action
         if (typeof postAction === 'function') await postAction();
-
     }
 }
