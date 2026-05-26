@@ -38,63 +38,83 @@
                 </p>
             </section>
 
-            <!-- 
-        <section class="section-content">
-            <h2>For Power Users</h2>
-            <dl>
-                <dt>
-                    <h3>Focus Chat Input</h3>
-                </dt>
-                <dd>
-                    Press <code>Shift + Esc</code> to jump directly to the chat input and continue typing without
-                    breaking flow.
-                </dd>
+            <section class="section-content">
+                <h2>For Power Users</h2>
+                <dl>
+                    <dt>
+                        <h3>Focus Chat Input</h3>
+                    </dt>
+                    <dd>
+                        Press <kbd>Shift + Esc</kbd> to jump directly to the chat input and continue typing without
+                        breaking flow.
+                    </dd>
 
-                <dt>
-                    <h3>Start New Chat</h3>
-                </dt>
-                <dd>
-                    Press <code>Ctrl + Alt + O</code> to open a fresh chat immediately.
-                </dd>
+                    <dt>
+                        <h3>Start New Chat</h3>
+                    </dt>
+                    <dd>
+                        Press <kbd>Ctrl + Alt + O</kbd> to open a fresh chat immediately.
+                    </dd>
 
-                <dt>
-                    <h3>Delete Current Chat</h3>
-                </dt>
-                <dd>
-                    Press <code>Ctrl + Shift + Backspace</code> to trigger the delete flow for the active chat.
-                    This opens a confirmation dialog where you can confirm deletion or cancel.
-                </dd>
+                    <!-- 
+                    <dt>
+                        <h3>Delete Current Chat</h3>
+                    </dt>
+                    <dd>
+                        Press <code>Ctrl + Shift + Backspace</code> to trigger the delete flow for the active chat.
+                        This opens a confirmation dialog where you can confirm deletion or cancel.
+                    </dd> 
+                    -->
 
-                <dt>
-                    <h3>Page Info Dialog</h3>
-                </dt>
-                <dd>
-                    Press <code>Alt + /</code> to open Page Info for active chat metadata and quick navigation context.
-                </dd>
-            </dl>
-        </section>
-    -->
+                    <dt>
+                        <h3>Page Info Dialog</h3>
+                    </dt>
+                    <dd>
+                        Press <kbd>Alt + /</kbd> to open Page Info for active chat metadata and quick navigation
+                        context.
+                    </dd>
+                </dl>
+            </section>
 
             <section class="section-content">
                 <h2>For Screen Reader Users</h2>
                 <dl>
-                    <!-- 
-                <dt>
-                    <h3>Read Last Response</h3>
-                </dt>
-                <dd>
-                    Press <code>Ctrl + Shift + Enter</code> to hear the most recent ChatGPT response on demand.
-                </dd>
+                    <dt>
+                        <h3>Page Info Dialog</h3>
+                    </dt>
+                    <dd>
+                        Press <kbd>Alt + /</kbd> to open Page Info Dialog and press <kbd>Escape</kbd> to close.
+                        Quick info about the page, like the chat title and the number of responses, are located at the
+                        top
+                        of the dialog.
+                        The info is meant to give snapshot information to users saving users from the hassle to navigate
+                        through the page.
+                    </dd>
 
-                <dt>
-                    <h3>New Response Announcement</h3>
-                </dt>
-                <dd>
-                    PageLive announces when a new assistant response is available, so you know when new content is
-                    ready to read.
-                </dd>
-            -->
+                    <dt>
+                        <h3>Read Last Response</h3>
+                    </dt>
+                    <dd>
+                        Press <kbd>Ctrl + Shift + Enter</kbd> to hear the most recent ChatGPT response on demand.
+                    </dd>
 
+                    <dt>
+                        <h3>New Response Announcement</h3>
+                    </dt>
+                    <dd>
+                        PageLive announces when a new assistant response is available, so you know when new content is
+                        ready to read.
+                    </dd>
+                    <dt>
+                        <h3>Sidebar Toggle Announcement</h3>
+                    </dt>
+                    <dd>
+                        ChatGPT's native feature allows users to toggle sidebar by pressing <kbd>Ctrl + Shift+ S</kbd>.
+                        However the absence of announcement will leave screen reader users clueless about the sidebar's
+                        state.
+                        To overcome the issue PageLive announces the state of the sidebar everytime sidebar collapsed of
+                        expanded.
+                    </dd>
                     <dt>
                         <h3>Shortcut Dialog Close Announcement</h3>
                     </dt>
@@ -104,6 +124,7 @@
                         close button, the dialog is closed without an announcement, which can be confusing.
                         PageLive announces when the shortcut dialog is closed, so you have clear feedback.
                     </dd>
+
                     <dt>
                         <h3>Fix Unreadable Keyboard Shortcuts</h3>
                     </dt>
@@ -115,32 +136,34 @@
                         PageLive also translate some keyboard symbols to be readable, for example Enter key symbol and
                         Escape key symbol.
                     </dd>
-                </dl>
 
-                <h3>Chat List Dialog</h3>
-                <p>
-                    ChatGPT has a chat list dialog, keyboard shortcut <kbd>Ctrl</kbd> + <kbd>K</kbd>,
-                    allows users to search and quickly navigate between chats and start new ones.
-                    Below are PageLive's improvements related to the chat list dialog
-                </p>
-                <ul>
-                    <li>
-                        When the chat list dialog opens or when the chat list is updated, PageLive announces the total
-                        number of chats in the list, so you have a clear overview of your chat history.
-                    </li>
-                    <li>
-                        When you navigate through the chat list with up / down keys, PageLive announces the title of
-                        each
-                        chat
-                        as you focus it, so you can easily find the chat you're looking for.
-                        You either can press <kbd>Enter</kbd> to open the announced chat or continue typing to filter
-                        the
-                        chat list with the search box, without needing to switch focus to the search box first.
-                    </li>
-                    <li>
-                        PageLive announces when the chat list dialog is closed.
-                    </li>
-                </ul>
+                    <dt>
+                        <h3>Chat List Dialog</h3>
+                    </dt>
+                    <dd>
+                        <p>
+                            ChatGPT has a chat list dialog, keyboard shortcut <kbd>Ctrl</kbd> + <kbd>K</kbd>,
+                            allows users to search and quickly navigate between chats and start new ones.
+                            Below are PageLive's improvements related to the chat list dialog
+                        </p>
+                        <ul>
+                            <li>
+                                When the chat list dialog opens or when the chat list is updated, PageLive announces the
+                                total number of chats in the list, so you have a clear overview of your chat history.
+                            </li>
+                            <li>
+                                When you navigate through the chat list with up / down keys, PageLive announces the
+                                title of each chat as you focus it, so you can easily find the chat you're looking for.
+                                You either can press <kbd>Enter</kbd> to open the announced chat or continue typing to
+                                filter the chat list with the search box, without needing to switch focus to the search
+                                box first.
+                            </li>
+                            <li>
+                                PageLive announces when the chat list dialog is closed.
+                            </li>
+                        </ul>
+                    </dd>
+                </dl>
             </section>
 
             <!-- 
