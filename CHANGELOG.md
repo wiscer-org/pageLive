@@ -4,19 +4,11 @@
 
 ### Updated
 
-- Gemini: Fix: Broken features related to expanding / collapsing sidebar
-- Gemini: Fix: Broken feature 'start new chat'
-- Claude: Fix: Broken feature delete current chat
-- Claude: Fix: Broken feature of reading last response
-- ChatGPT: Add the 'More Shortcuts' section contentp in PageInfo
-- ChatGPT: Show chat title and number of responses in PageInfo dialog
-- ChatGPT: add feature 'start new chat'
-- ChatGPT: add feature 'read last response'
-- ChatGPT: add feature 'focus chat input'
-- ChatGPT: When sidebar collapsed or expanded, announce and manage focus
+- none
 
 ### On Progress
 
+- Gemini: Fix: Broken feature 'delete current chat'
 - empty
 
 ### Planned
@@ -31,6 +23,23 @@
 ### Future Ideas
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v4.1.0
+
+- empty
+
+## v4.1.0
+
+- Gemini: Fix: Broken features related to expanding / collapsing sidebar
+- Gemini: Fix: Broken feature 'start new chat'
+- Claude: Fix: Broken feature delete current chat
+- Claude: Fix: Broken feature of reading last response
+- ChatGPT: Add the 'More Shortcuts' section contentp in PageInfo
+- ChatGPT: Show chat title and number of responses in PageInfo dialog
+- ChatGPT: add feature 'start new chat'
+- ChatGPT: add feature 'read last response'
+- ChatGPT: add feature 'focus chat input'
+- ChatGPT: When sidebar collapsed or expanded, announce and manage focus
 
 ## v4.0.0
 
