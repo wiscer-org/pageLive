@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PageLive",
   "version": "4.1.0",
-  "description": "Screen Reader companion for Gemini, Grok, Claude",
+  "description": "Keyboard shortcuts and screen reader companion for ChatGPT, Gemini, Grok, and Claude",
   "permissions": [],
   "host_permissions": [
     "https://gemini.google.com/*",

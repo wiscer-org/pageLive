@@ -26,10 +26,6 @@
 
 ## v4.1.0
 
-- empty
-
-## v4.1.0
-
 - Gemini: Fix: Broken features related to expanding / collapsing sidebar
 - Gemini: Fix: Broken feature 'start new chat'
 - Claude: Fix: Broken feature delete current chat
