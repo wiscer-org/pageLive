@@ -4,8 +4,7 @@
 
 ### Updated
 
-- Update PageLive description
-- Gemini: Fix: Broken feature 'delete current chat'
+- none
 
 ### On Progress
 
@@ -23,6 +22,11 @@
 ### Future Ideas
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v4.1.1
+
+- Update PageLive description
+- Gemini: Fix: Broken feature 'delete current chat'
 
 ## v4.1.0
 

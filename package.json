@@ -1,6 +1,6 @@
 {
   "name": "pagelive",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Keyboard shortcuts and screen reader companion for ChatGPT, Gemini, Grok, and Claude",
   "scripts": {
     "dev": "vite",

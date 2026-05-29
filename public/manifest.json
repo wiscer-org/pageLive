@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PageLive",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Keyboard shortcuts and screen reader companion for ChatGPT, Gemini, Grok, and Claude",
   "permissions": [],
   "host_permissions": [
