@@ -4,11 +4,11 @@
 
 ### Updated
 
-- none
+- Update PageLive description
+- Gemini: Fix: Broken feature 'delete current chat'
 
 ### On Progress
 
-- Gemini: Fix: Broken feature 'delete current chat'
 - empty
 
 ### Planned
