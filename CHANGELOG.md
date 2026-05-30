@@ -4,11 +4,12 @@
 
 ### Updated
 
-- none
+- ChatGPT: Fix broken feature 'reading last response'
+- end
 
 ### On Progress
 
-- empty
+- end
 
 ### Planned
 

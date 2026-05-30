@@ -170,7 +170,8 @@ export default class ChatGPTChatSection {
         const parent = lastPromptContainer.parentElement;
         if (!parent) return null;
 
-        const responseContainers = parent.querySelectorAll(':scope > div[data-turn-id-container] > div > section[data-turn="assistant"]');
+        const responseContainers = parent.querySelectorAll(':scope > div[data-turn-id-container] section[data-turn="assistant"]');
+        if (responseContainers.length === 0) return null;
 
         // The last response container
         const lastResponseContainer = responseContainers[responseContainers.length - 1];
@@ -196,7 +197,7 @@ export default class ChatGPTChatSection {
         const lastResponseSegments = await this.getLastResponseSegment();
 
         // Announce
-        if (!lastResponseSegments) this.pl.speak("Something wrong. Can not find any resposes");
+        if (!lastResponseSegments) this.pl.speak("Something wrong. Cannot find any response.");
         else if (lastResponseSegments.length === 0) this.pl.speak('No responses found');
         else featureReadLastResponse(this.pl, lastResponseSegments);
     }
