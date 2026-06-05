@@ -9,7 +9,7 @@ export default defineConfig({
         rollupOptions: {
             ...baseConfig.build?.rollupOptions,
             input: {
-                grok: resolve(__dirname, '../src/content-scripts/page-adapters/grok.ts'),
+                grok: resolve(__dirname, '../src/content-scripts/page-adapters/grok/grok.ts'),
                 background: resolve(__dirname, '../src/background.ts'),
             },
         },

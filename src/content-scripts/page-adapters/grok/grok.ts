@@ -1,9 +1,9 @@
-import { Keybinds } from "../keybind-manager";
-import PageLive from "../pagelive";
-import ChatObserver from "../chat-observer";
-import ChatInfo from "../chat-info";
-import featureFocusChatInput from "./features/focus-chat-input";
-import featureReadLastResponse from './features/read-last-response';
+import { Keybinds } from "../../keybind-manager";
+import PageLive from "../../pagelive";
+import ChatObserver from "../../chat-observer";
+import ChatInfo from "../../chat-info";
+import featureFocusChatInput from "../features/focus-chat-input";
+import featureReadLastResponse from '../features/read-last-response';
 
 const grokAdapter = async () => {
     const pl = new PageLive();
