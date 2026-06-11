@@ -35,6 +35,8 @@ export async function untilElementIdle(el: HTMLElement, delay = 300,
     options: {
         childList?: boolean,
         subtree?: boolean,
+        attributes?: boolean
+        characterData?: boolean
     } = { childList: true, subtree: false }): Promise<void> {
     // The id of timeout to resolve
     let resolveTimeout: ReturnType<typeof setTimeout>;
@@ -63,6 +65,8 @@ export async function untilElementIdle(el: HTMLElement, delay = 300,
             // Use provided option or default to true
             childList: options.childList ?? true, // As the indication that the element is still busy
             subtree: options.subtree ?? false, // Whether to observe the subtree
+            attributes: options.attributes?? false,
+            characterData: options.characterData ?? false
         })
 
         // Schedule to resolve, useful if the element is already idle
