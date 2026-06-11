@@ -5,6 +5,7 @@ import * as utils from "./util";
 import * as dev from './general-dev';
 import * as devMock from './general-dev-mock';
 import './pagelive.css';
+import Signal from "./lib/signal";
 /**
 * This class is the connecting point for all the shared libraries in the PageLive extension.
 * This class will be initialized and used in the `PageAdapter` content scripts, e.g.: gemini.ts, grok.ts, reddit.ts, etc.
@@ -13,6 +14,8 @@ import './pagelive.css';
 export default class PageLive {
     // Provide types to be used in the PageAdapters.
     static KeybindManager = KeybindManager;
+
+    signal: Signal;
 
     // Definite assignment assertion
     pageLiveContainerId!: string;
@@ -46,6 +49,8 @@ export default class PageLive {
     dev = this.isDev ? devMock : dev;
 
     constructor() {
+        this.signal = new Signal(this);
+
         // Set the definite assigment
         this.pageLiveContainerId = 'pagelive';
         // this.announceContainerId = 'announce';

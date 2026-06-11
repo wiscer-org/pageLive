@@ -242,7 +242,6 @@ export default class ChatObserver {
         // Define observer
         let newRCs: HTMLElement[] = [];
         this.prevRCObserver = new MutationObserver(async (mutations, observer) => {
-            console.log("Prev RCs mutations... ",);
             for (const mutation of mutations) {
                 if (mutation.type === "childList") {
                     for (let c = 0; c < mutation.addedNodes.length; c++) {
