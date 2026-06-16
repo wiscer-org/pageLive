@@ -46,7 +46,8 @@ export default class GrokChatSection {
                 if (m.type !== 'childList') break;
 
                 // Check if the the `.thinking-container` is one of the added nodes.
-                for (const node of m.addedNodes) {
+                // Important: Use async loop as below so transition from busy to not-busy will not happen many times. This could happen on the page load since the page might have multiple busy indicator elements.
+                m.addedNodes.forEach(async (node) => {
                     const busyIndicatorElement = getBusyIndicator(node);
                     if (busyIndicatorElement) {
                         const busyId = await this.pl.signal.busy();
@@ -56,9 +57,8 @@ export default class GrokChatSection {
                         // No longer busy
                         this.pl.signal.busyStop(busyId);
                     }
-                }
+                });
             }
-            // Is 'busy' element is added ?
         });
 
         const getBusyIndicator = (node: Node): HTMLElement | null => {
