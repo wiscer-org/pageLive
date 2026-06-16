@@ -4,6 +4,7 @@
 
 ### Updated
 
+- Grok: Announce 'loading' when expecting new response
 - ChatGPT: Fix broken feature 'reading last response'
 - end
 

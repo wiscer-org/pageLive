@@ -4,9 +4,13 @@ import ChatObserver from "../../chat-observer";
 import ChatInfo from "../../chat-info";
 import featureFocusChatInput from "../features/focus-chat-input";
 import featureReadLastResponse from '../features/read-last-response';
+import GrokChatSection from './grok-chat';
 
 const grokAdapter = async () => {
     const pl = new PageLive();
+
+    // Section adapters
+    const chatSection = new GrokChatSection(pl);
 
     // Observer to handle incoming responses
     let chatObserver !: ChatObserver;
