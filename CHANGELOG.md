@@ -4,6 +4,7 @@
 
 ### Updated
 
+- Claude: Fix broken feature 'delete current chat'
 - Claude: Fix broken feature 'announce new response'
 - Grok: Announce 'loading' when expecting new response
 - ChatGPT: Fix broken feature 'reading last response'

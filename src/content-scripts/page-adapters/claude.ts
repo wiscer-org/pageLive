@@ -203,7 +203,12 @@ const claudeAdapter = async () => {
         }, chatMenuTrigger: async (intent: string) => {
             chatMenuTrigger = await pl.resolve(
                 chatMenuTrigger
-                , 'button[data-testid="chat-menu-trigger"]'
+                , async (): Promise<HTMLElement | null> => {
+                    // The trigger button is the second button
+                    const buttons = document.querySelectorAll('[data-testid="chat-title-split"] button');
+                    if (buttons[1]) return buttons[1] as HTMLElement;
+                    return null;
+                }
                 , "Chat Menu Trigger Button"
                 , intent
             );
