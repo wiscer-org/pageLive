@@ -42,24 +42,14 @@ const claudeAdapter = async () => {
         chatObserver = new ChatObserverV3(
             pl
             , async () => {
-                console.log("Finding chat observer");
-                await resolve.chatContainer("From ChatObserverV2");
+                // console.log("Finding chat observer");
+                await resolve.chatContainer("From ChatObserverV3");
                 if (chatContainer) return chatContainer;
                 return null
             }
             , mainContent
             , null
             , isPageEmptyChat
-            // , parseResponseContainer
-            // , parseResponseElements
-            // , parseAndWaitResponseElement
-            // , async () => pl.speak("Claude replies...")
-            // , async (rc) => {
-            //     pl.utils.devLog(`Response element is not found in:`);
-            //     console.log(rc);
-            // }
-            // , null
-            // , false
             , isRC
             , isNewRC
             , handleNewRC
@@ -397,16 +387,39 @@ const claudeAdapter = async () => {
      * The given node should be a child node of `chatContainer`. 
      */
     const isRC = (node: Node): boolean => {
-        if (!(node instanceof HTMLElement)) return false;
+        if (!(node instanceof HTMLElement)) {
+            return false;
+        }
 
         // If has [data-testid="user-message"], it's a prompt container, not RC
-        if (node.querySelector('[data-testid="user-message"]')) return false;
+        if (node.querySelector('[data-testid="user-message"]')) {
+            return false;
+        }
 
         // A RC must have attribute `data-test-render-count` 
-        // and have child `.group` > `.contents`
-        if (node.querySelector(':scope > .group > .contents')) return true;
+        // and have child `> [data-test-render-count] > .group` > `.contents`
+        if (node.querySelector(':scope > [data-test-render-count] > .group > .contents')) {
+            pl.utils.devLog('This node is a RC because of `:scope > [data-test-render-count] > .group > .contents` ');
+            return true;
+        }
+
         // This may be a RC if has `data-test-render-count` attribute and has no children
-        if (node.hasAttribute('data-test-render-count') && node.children.length === 0) return true;
+        if (node.hasAttribute('data-test-render-count') && node.children.length === 0) {
+            return true;
+        }
+
+        // Block below may replace block above due to change in Claude UI
+        // Node is a RC if has a single child `[data-test-render-count]` and it has no children
+        const theOnlyChild = node.children.length > 0 ? node.children[0] : null;
+        if (theOnlyChild
+            && theOnlyChild.hasAttribute('data-test-render-count')
+            && theOnlyChild instanceof (HTMLElement)
+            && theOnlyChild.children.length === 0) {
+            pl.utils.devLog('Node is a RC because `:scope > [data-test-render-count]` has no children');
+            return true;
+        }
+
+
         return false;
     }
 
@@ -439,19 +452,26 @@ const claudeAdapter = async () => {
         // That's why we are going to consider every RC is a new RC.
         // With the condition 3, `ChatObserverV3` will mistakenly recognize the new RC as prev RC.
 
-        let dataTestRenderCount = node.getAttribute('data-test-render-count');
+        // Claude's update: The `[data-test-render-count]` is no longer directly added but inside a `div` element
+        // Therefore we move the focus to the only child with `[data-test-render-count]`
+        const theOnlyChild = node.children.length > 0 ? node.children[0] : null;
+
+        // Not a new RC, if `node` don't have any children
+        if (!theOnlyChild) return false;
+
+        // `theOnlyChild` must have `[data-test-render-count="1"]`
+        let dataTestRenderCount = theOnlyChild.getAttribute('data-test-render-count');
         if (dataTestRenderCount !== '1') {
             return false;
         }
 
-        if (node.children.length > 0) {
+        if (theOnlyChild.children.length > 0) {
             // Find the descendant with selector `.contents > [data-is-streaming]`
-            const streamingElement = node.querySelector('.contents > [data-is-streaming]') as HTMLElement;
+            const streamingElement = theOnlyChild.querySelector('.contents > [data-is-streaming]') as HTMLElement;
             if (!streamingElement) {
-                // pl.speak("Found RC with children but no streaming element, not a new RC.");
-                // console.log("Found RC with children but no streaming element, not a new RC.");
-                // console.log(node.cloneNode(true));
-                // return false;
+                pl.utils.devLog("Found RC [data-test-render-count] with children but no streaming element, not a new RC.");
+                console.log(node.cloneNode(true));
+                return false;
             }
             // IMPORTANT: one the first response on the chat, newRC from empty chat, `data-is-streaming="false"` is set when added to the DOM.
             // This will mistakenly recognized as not new RC.
@@ -970,8 +990,8 @@ const claudeAdapter = async () => {
 
         // Find the last response container
         let lastResponseContainer: HTMLElement | null = null;
-        console.log('chat container: ');
-        console.log(chatContainer.cloneNode(true));
+        // console.log('chat container: ');
+        // console.log(chatContainer.cloneNode(true));
         for (let i = chatContainer.children.length - 1; i >= 0; i--) {
             const child = chatContainer.children[i] as HTMLElement;
             if (parseResponseContainer(child)) {

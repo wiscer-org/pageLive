@@ -4,13 +4,14 @@
 
 ### Updated
 
+- Claude: Fix broken feature 'announce new response'
 - Grok: Announce 'loading' when expecting new response
 - ChatGPT: Fix broken feature 'reading last response'
 - end
 
 ### On Progress
 
-- end
+- Claude: Fix broken feature announce 'loading' for new response
 
 ### Planned
 
