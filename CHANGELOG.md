@@ -4,11 +4,7 @@
 
 ### Updated
 
-- Claude: Fix broken feature 'delete current chat'
-- Claude: Fix broken feature 'announce new response'
-- Grok: Announce 'loading' when expecting new response
-- ChatGPT: Fix broken feature 'reading last response'
-- end
+- none
 
 ### On Progress
 
@@ -26,6 +22,14 @@
 ### Future Ideas
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v4.1.2
+
+- Claude: Fix broken feature 'delete current chat'
+- Claude: Fix broken feature 'announce new response'
+- Grok: Announce 'loading' when expecting new response
+- ChatGPT: Fix broken feature 'reading last response'
+- end
 
 ## v4.1.1
 
