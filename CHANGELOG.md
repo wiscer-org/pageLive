@@ -4,7 +4,7 @@
 
 ### Updated
 
-- none
+- Claude: Fix update title in PageInfo dialog
 
 ### On Progress
 

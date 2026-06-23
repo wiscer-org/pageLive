@@ -1125,27 +1125,18 @@ const claudeAdapter = async () => {
         if (!pl.page.activeChat) pl.page.activeChat = new ChatInfo();
 
         // Update title
-        if (title !== undefined) {
-            let toRenderTitle = "";
-            // In case of empty title
-            if (!title) {
-                // In case of new chat
-                if (isPageEmptyChat()) toRenderTitle = "New Chat";
-                // Title not found
-                else toRenderTitle = "Chat title not found";
-
-            } else {
-                toRenderTitle = "Chat title: " + title.trim();
-                // If dialog is open, notify users that title is found and updated
-                if (pl.pageInfoDialog.isOpen()) {
-                    pl.speak("Chat title found and updated.");
-                }
+        let toRenderTitle = 'Claude Chat title not found';
+        if (isPageEmptyChat()) toRenderTitle = 'Claude New Chat';
+        else {
+            let title = document.title;
+            if (title) {
+                // Strip the end part of the title started with '-' character
+                toRenderTitle = `Chat title: ${title.substring(0, title.search('\-'))}`;
             }
-
-            pl.page.activeChat.title = toRenderTitle;
-            // Update UI
-            pl.pageInfoDialog.setTitle(toRenderTitle);
         }
+        pl.page.activeChat.title = toRenderTitle;
+        // Update the PageInfo dialog
+        pl.pageInfoDialog.setTitle(toRenderTitle);
 
         // Update number of responses
         if (responseCount !== undefined) {
@@ -1162,8 +1153,8 @@ const claudeAdapter = async () => {
     }
     const onDialogOpen = async () => {
         // Note: Currently, number of responses is updated every time the dialog is opened. 
-
         // This method may be changed in future for performance consideration.
+
         // Count number of responses in current chat
         await chatObserver.mapResponseContainers();
         const responseCount = chatObserver.responseContainers.length;
