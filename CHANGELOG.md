@@ -5,10 +5,11 @@
 ### Updated
 
 - Claude: Fix update title in PageInfo dialog
+- Claude: Fix broken feature 'toogle sidebar'
+- Claude: Fix broken feature announce 'loading' for new response
 
 ### On Progress
 
-- Claude: Fix broken feature announce 'loading' for new response
 
 ### Planned
 

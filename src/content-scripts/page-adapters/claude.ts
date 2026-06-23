@@ -852,14 +852,18 @@ const claudeAdapter = async () => {
         toggleSidebarButton.click();
 
         // Inform users about the action
-        // The sidebar is expanded if the button has attribute `aria-pressed="true"`, else collapsed
         let msg = "Toggling sidebar";
-        let isExpanded: boolean | undefined; // Used to inform users later
-        const ariaPressedAttribute = toggleSidebarButton.getAttribute('aria-pressed');
-        if (ariaPressedAttribute === 'true') {
+        let isExpanded: boolean = false; // Used to inform users later
+
+        // Detect if the toggle button is to open or to close by the `aria-label`. If contains 'close' is to close and vice versa.
+        const ariaLabel = toggleSidebarButton.getAttribute('aria-label') || '';
+        const toExpand: boolean = ariaLabel.toLowerCase().includes('open');
+        const toCollapse: boolean = ariaLabel.toLowerCase().includes('close');
+
+        if (toCollapse) {
             msg = "Collapsing sidebar";
             isExpanded = false;
-        } else if (ariaPressedAttribute === 'false') {
+        } else if (toExpand) {
             msg = "Expanding sidebar";
             isExpanded = true;
         }
@@ -869,7 +873,7 @@ const claudeAdapter = async () => {
         // Focus on the 'Recent' button (h3)
         await resolve.sideNavElement("toggleSidebar");
         if (isExpanded && sideNavElement) {
-            const recentChatsHeadingSelector = 'h2[role="button"]';
+            const recentChatsHeadingSelector = 'h2.contents [role="button"]';
             const recentChatsHeading = sideNavElement.querySelector(recentChatsHeadingSelector) as HTMLElement;
             if (recentChatsHeading) {
                 recentChatsHeading.focus();
