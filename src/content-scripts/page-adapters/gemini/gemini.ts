@@ -85,7 +85,8 @@ const geminiPageAdapter = async () => {
         // Feed info to pageLive & pageLive.page
         pl.page.name = 'Gemini';
         // Update chat info to dialog title, even if the chat info is not yet parsed
-        updateDialogWithChatInfo();
+        updateActiveChatInfo({});
+        // updateDialogWithChatInfo();
         // Initial announce info
         // pageLive.initialAnnounceInfo.push("Gemini page");
 
@@ -162,6 +163,8 @@ const geminiPageAdapter = async () => {
                 , "Chat Container"
                 , intent
             );
+            // Also update `chatContainer` in the `chatAdapter`
+            chatAdapter.chatContainer = chatContainer;
             return chatContainer;
         },
         sidebar: async (intent: string) => {
@@ -714,13 +717,13 @@ const geminiPageAdapter = async () => {
             // Parse the id
             activeChat.id = await parseChatId();
 
-            // Parse the title from the chat list
-            await ensureSideNavOpened();
-            // Populate the chat list until the active chat is found
-            await populateChatList(true);
-            activeChat.title = await parseSelectedChatTitle();
+            // Get document title, ignoring string after '-'
+            const chatTitle = document.title.substring(0, document.title.search('-'));
+            if (chatTitle) activeChat.title = `Chat title: ${chatTitle}`;
+            else activeChat.title = 'Chat title not found';
 
             // Parse the prompt count. For Gemini, we will consider each user prompt as a 'prompt'
+            await resolve.chatContainer('Parse active chat info');
             const promptResponseElements = await chatAdapter.getPromptResponseElements();
             if (promptResponseElements === null) {
                 activeChat.promptCount = -2; // -2 means failed to parse
@@ -728,6 +731,8 @@ const geminiPageAdapter = async () => {
                 activeChat.promptCount = promptResponseElements.length;
             }
         }
+
+        // prompt(`activeChat count : ${activeChat.promptCount}`);
 
         // Update dialog if shouldUpdateDialog is set true
         if (shouldUpdateDialog) updateDialogWithChatInfo();
@@ -1959,6 +1964,7 @@ class GeminiAdapterChat {
             this.pl.utils.prodWarn("Chat container not found - 5821");
             return null;
         }
+        // console.log(' Counting prompt response elements');
         return this.chatContainer.querySelectorAll("div.conversation-container");
     }
 

@@ -7,15 +7,17 @@
 - Claude: Fix update title in PageInfo dialog
 - Claude: Fix broken feature 'toogle sidebar'
 - Claude: Fix broken feature announce 'loading' for new response
+- Gemini: Fix chat title and number of responses on PageInfo not updated
 
 ### On Progress
 
+- end
 
 ### Planned
 
+- Gemini: Content Map not updated after switch chat
 - ChatGPT: Announce response once completely rendered
 - Add tests for page adapters' DOM hierarchy
-- Gemini: Fix: Chat title not updated in the case of long delay with the side nav.
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
 - TODO: Play sound as sign that a response is being received.
 - TODO: New shortcut to copy the last response
