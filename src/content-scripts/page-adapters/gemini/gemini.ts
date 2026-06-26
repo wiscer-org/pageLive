@@ -1157,6 +1157,18 @@ class ContentMapper {
         threshold: 0.0,
     });
 
+    // Element resolvers
+    resolve = {
+        promptResponseParent: async (intent: string): Promise<HTMLElement | null> => {
+            return this.pl.resolve(
+                this.promptResponseParent
+                , 'infinite-scroller.chat-history'
+                , 'promptResponseParent'
+                , intent
+            );
+        }
+    };
+
     constructor(pl: PageLive, updateActiveChatInfo: (chat: Partial<Chat>) => void) {
         this.pl = pl;
         this.updateActiveChatInfo = updateActiveChatInfo;
@@ -1182,7 +1194,7 @@ class ContentMapper {
         // Thus, we need to use direct parent to observer if `PromptResponse` element has been added / removed.
         // The element will be called `PromptResponseParent`
 
-        // Note: below is the hierarcy down to chat / response.
+        // Note: below is the  hierarchy down to chat / response.
         // Note: There are 1 more `.chat-history` on the side nav.
         // div#chat-history.chat-history-scroll-container > 
         //      infinite-scroller.chat-history >
@@ -1191,7 +1203,8 @@ class ContentMapper {
         //              model-response
 
         // `promptResponseParent` is mandatory. If not available, cancel the whole process.
-        const el = await this.pl.utils.waitForAnElement("infinite-scroller.chat-history");
+        const el = await this.resolve.promptResponseParent('Init');
+        // const el = await this.pl.utils.waitForAnElement("infinite-scroller.chat-history");
         if (el === null) {
             this.pl.utils.prodWarn("[ContentMap] chat units parent is N/A - 89");
             return;
@@ -1223,7 +1236,7 @@ class ContentMapper {
             // After dialog is closed, browser automatically will focus on the last focus element. Thus, the 'dialog is closed' is not announced properly.
             // To increase being announced, wait few seconds.
             await new Promise(r => setTimeout(r, 500));
-            this.pl.announce({ msg: "Content Map is closed" });
+            this.pl.speak('Content map is closed');
         }
 
         // Create SR only container to announce when dialog is opened
@@ -1270,14 +1283,11 @@ class ContentMapper {
         const dialogHeaderObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    // alert("heading is entering viewport");
-                    console.log(`chat units count: ${this.chatUnits.length}`);
                     // Scroll the first chat unit into view to trigger Gemini to load previous prompt/ response if any
                     if (this.chatUnits.length > 0) {
                         const firstChatUnit = this.chatUnits[0];
                         firstChatUnit.contentElement.scrollIntoView({ behavior: "smooth", block: "start" });
 
-                        alert('scrolling to the first chat unit');
                     }
                 }
             });
@@ -1477,7 +1487,6 @@ class ContentMapper {
                 break;
             }
             if (failsafe-- < 0) {
-                alert("Infinite loop detected in renderChatUnits - 531");
                 break;
             }
         }
@@ -1635,6 +1644,11 @@ class ContentMapper {
     async showModal() {
         // If there is schedule to generate chatUnits, do it now and put 'generating..' label
         if (this.generationTimeout !== null) await this.scheduleGenerateChatUnits(0);
+        
+        // Resolve the `promptResponseParent`, in case no longer connected due to chat switching
+        if (this.promptResponseParent.isConnected === false) {
+            await this.generateChatUnits();
+        }
 
         // Close PageLive main dialog if opened
         this.pl.pageInfoDialog.close();

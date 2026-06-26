@@ -4,10 +4,7 @@
 
 ### Updated
 
-- Claude: Fix update title in PageInfo dialog
-- Claude: Fix broken feature 'toogle sidebar'
-- Claude: Fix broken feature announce 'loading' for new response
-- Gemini: Fix chat title and number of responses on PageInfo not updated
+- none
 
 ### On Progress
 
@@ -15,7 +12,6 @@
 
 ### Planned
 
-- Gemini: Content Map not updated after switch chat
 - ChatGPT: Announce response once completely rendered
 - Add tests for page adapters' DOM hierarchy
 - When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
@@ -25,6 +21,14 @@
 ### Future Ideas
 
 - Observe the loading animation while waiting for the new response. The 'loading' state of the animation should be a hint when PageLive going to announce the received new response.
+
+## v4.1.3
+
+- Claude: Fix update title in PageInfo dialog
+- Claude: Fix broken feature 'toogle sidebar'
+- Claude: Fix broken feature announce 'loading' for new response
+- Gemini: Fix chat title and number of responses on PageInfo not updated
+- Gemini: Content Map not updated after switch chat
 
 ## v4.1.2
 
