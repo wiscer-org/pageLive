@@ -12,11 +12,9 @@
 
 ### Planned
 
+- ChatGPT: Fix inaccessible options after typing '/' in the chat input
 - ChatGPT: Announce response once completely rendered
 - Add tests for page adapters' DOM hierarchy
-- When waiting for new responses from Gemini, announce the incoming texts like 'Wait a sec..'.
-- TODO: Play sound as sign that a response is being received.
-- TODO: New shortcut to copy the last response
 
 ### Future Ideas
 
